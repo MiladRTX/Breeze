@@ -288,6 +288,7 @@ static void send_presets(int fd) {
 static void handle_presets_post(const char *body, int fd) {
     char action[24] = {0};
     char name[FC_PRESET_NAME_MAX + 1] = {0};
+    char to[FC_PRESET_NAME_MAX + 1] = {0}; /* new name for action=rename */
     curve_point pts[FC_CURVE_MAX_POINTS];
     int pts_count = 0;
     int has_points = 0;
@@ -309,6 +310,8 @@ static void handle_presets_post(const char *body, int fd) {
             snprintf(action, sizeof action, "%s", val);
         else if (!strcmp(key, "name"))
             fc_preset_name_clean(name, val, sizeof name);
+        else if (!strcmp(key, "to"))
+            fc_preset_name_clean(to, val, sizeof to);
         else if (key[0] == 'p') {
             int i = atoi(key + 1);
             int t = 0, s = 0;
@@ -396,6 +399,33 @@ static void handle_presets_post(const char *body, int fd) {
         for (int i = idx; i + 1 < ps.count; i++)
             ps.list[i] = ps.list[i + 1];
         ps.count--;
+        app_lock(g_state);
+        g_state->presets = ps;
+        app_unlock(g_state);
+        fc_presets_save(&ps);
+        send_presets(fd);
+    } else if (!strcmp(action, "rename")) {
+        if (!to[0]) {
+            send_resp(fd, "400 Bad Request", "text/plain", "name required\n",
+                      14);
+            return;
+        }
+        preset_store ps;
+        app_lock(g_state);
+        ps = g_state->presets;
+        app_unlock(g_state);
+        int idx = fc_presets_find(&ps, name);
+        if (idx < 0) {
+            send_resp(fd, "404 Not Found", "text/plain", "no such preset\n",
+                      15);
+            return;
+        }
+        int clash = fc_presets_find(&ps, to);
+        if (clash >= 0 && clash != idx) {
+            send_resp(fd, "409 Conflict", "text/plain", "name taken\n", 11);
+            return;
+        }
+        snprintf(ps.list[idx].name, sizeof ps.list[idx].name, "%s", to);
         app_lock(g_state);
         g_state->presets = ps;
         app_unlock(g_state);

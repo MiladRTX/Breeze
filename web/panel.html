@@ -138,6 +138,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 .prow:last-child{border-bottom:0}
 .prow .nm{flex:0 1 auto;min-width:0;max-width:48%}
 .prow .pn{display:flex;align-items:center;gap:7px;min-width:0}
+.prow .field.rn{height:28px;padding:0 8px;font-size:13px;font-weight:600;width:100%}
 .prow .pn span:first-child{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .prow svg.mini{flex:1;min-width:40px;height:36px}
 .prow .meta{display:flex;align-items:center;gap:6px;color:var(--faint);font-size:11.5px;font-weight:500}
@@ -611,7 +612,8 @@ function renderPresets(){
     h+='<div class="prow">'+
       '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points</div></div>'+
       miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" title="This curve is running">Active</span>':'<button class="btn" data-pa="load,'+i+'" title="Load into the editor">Load</button>')+
-      '<button class="btn icon ghost" data-pa="over,'+i+'" title="Overwrite with the editor curve" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
+      '<button class="btn icon ghost" data-pa="ren,'+i+'" title="Rename" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
+      '<button class="btn icon ghost" data-pa="over,'+i+'" title="Overwrite with the editor curve" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg></button>'+
       '<button class="btn icon ghost danger" data-pa="del,'+i+'" title="Delete" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div></div>';
   }
   $('plist').innerHTML=h||'<div class="empty">No presets yet.</div>';drawMinis();
@@ -659,9 +661,26 @@ async function sendConfig(pts,en,web,okMsg){
   catch(e){fail(e,'Could not reach the console');refresh()}
 }
 function apply(){if(dirty())sendConfig(draft,st&&st.enabled,st?st.web_enabled:1,'Curve applied')}
-async function presetAction(body,ok){
+async function presetAction(body,ok,conflict){
   try{var r=await post('api/presets',body);if(!r.ok)throw r.status;presets=await r.json();renderPresets();toast(ok);return true}
-  catch(e){fail(e,e===409?'Preset limit reached (10)':'Preset action failed');return false}
+  catch(e){fail(e,e===409?(conflict||'Preset limit reached (10)'):'Preset action failed');return false}
+}
+/* Inline rename: the name turns into a field. Enter or leaving the field
+ * saves, Escape cancels. */
+function startRename(i){
+  var p=presets[i],row=$('plist').querySelectorAll('.prow')[i];if(!p||!row)return;
+  var pn=row.querySelector('.pn'),done=false;
+  pn.innerHTML='<input class="field rn" maxlength="40" autocomplete="off">';
+  var inp=pn.firstChild;inp.value=p.name;inp.focus();inp.select();
+  function finish(save){
+    if(done)return;done=true;
+    var n=inp.value.trim();
+    if(!save||!n||n===p.name){renderPresets();return}
+    presetAction('action=rename&name='+encodeURIComponent(p.name)+'&to='+encodeURIComponent(n),'Renamed to “'+n+'”','There is already a preset called “'+n+'”')
+      .then(function(ok){if(!ok)renderPresets()});
+  }
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();finish(true)}else if(e.key==='Escape')finish(false)});
+  inp.addEventListener('blur',function(){finish(true)});
 }
 
 /* ---------- wiring ---------- */
@@ -692,6 +711,7 @@ $('rows').addEventListener('click',function(e){var b=e.target.closest('[data-del
 $('plist').addEventListener('click',function(e){
   var b=e.target.closest('[data-pa]');if(!b)return;var a=b.dataset.pa.split(','),p=presets[+a[1]];if(!p)return;
   if(a[0]==='load'){commit();setDraft(copy(p.points));toast('Loaded “'+p.name+'”, Apply to use it')}
+  else if(a[0]==='ren')startRename(+a[1]);
   else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?'))presetAction('action=save&name='+encodeURIComponent(p.name)+pointQuery(draft),'Preset updated')}
   else if(confirm('Delete preset “'+p.name+'”?'))presetAction('action=delete&name='+encodeURIComponent(p.name),'Preset deleted');
 });
