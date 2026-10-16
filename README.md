@@ -103,4 +103,6 @@ Thanks to [John Törnblom](https://github.com/john-tornblom) for the PS5 payload
 
 ## License
 
-[GPL-3.0](LICENSE). Unofficial homebrew, not affiliated with or endorsed by Sony.
+[GPL-3.0](LICENSE).
+
+> Breeze is an unofficial homebrew project and is not affiliated with or endorsed by Sony Interactive Entertainment. It changes how your console's fan behaves: use it only on hardware you own, keep an eye on temperatures, and use it at your own risk. No warranty is provided.
