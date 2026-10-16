@@ -46,7 +46,18 @@ button,input{font:inherit;color:inherit}
 
 /* tiles */
 .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
-.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px 12px}
+.tile{position:relative;outline:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px 12px}
+/* hover (or tap) explanation under each tile */
+.tile[data-tip]:after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);z-index:10;width:max-content;max-width:230px;
+  transform:translate(-50%,-4px);padding:8px 11px;border-radius:9px;background:#1c2128;border:1px solid var(--line2);
+  box-shadow:0 8px 24px rgba(0,0,0,.45);color:var(--text);font-size:12px;font-weight:500;line-height:1.45;
+  opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+.tile[data-tip]:hover:after,.tile[data-tip]:focus:after{opacity:1;transform:translate(-50%,0)}
+/* edge tiles anchor their tip to the outer edge so it stays on screen */
+.tiles .tile:first-child:after{left:0;transform:translate(0,-4px)}
+.tiles .tile:last-child:after{left:auto;right:0;transform:translate(0,-4px)}
+.tiles .tile:first-child:hover:after,.tiles .tile:first-child:focus:after,
+.tiles .tile:last-child:hover:after,.tiles .tile:last-child:focus:after{transform:none}
 .tile .v{display:flex;align-items:baseline;gap:3px;margin-top:6px;font:600 30px/1 var(--mono);letter-spacing:-.04em}
 .tile .v small{font:500 13px var(--sans);letter-spacing:0;color:var(--faint)}
 .tile.t .v{color:var(--temp)}.tile.f .v{color:var(--fan)}.tile.w .v{color:var(--accent)}
@@ -187,6 +198,11 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   .tiles{grid-template-columns:repeat(6,1fr);gap:8px}
   .tiles .tile{grid-column:span 2}
   .tiles .tile:nth-child(n+4){grid-column:span 3}
+  /* 3 + 2 rows: Fan ends row one, Curve wants starts row two */
+  .tiles .tile:nth-child(3):after{left:auto;right:0;transform:translate(0,-4px)}
+  .tiles .tile:nth-child(4):after{left:0;transform:translate(0,-4px)}
+  .tiles .tile:nth-child(3):hover:after,.tiles .tile:nth-child(3):focus:after,
+  .tiles .tile:nth-child(4):hover:after,.tiles .tile:nth-child(4):focus:after{transform:none}
 }
 @media (max-width:640px){
   .wrap{padding:16px 12px calc(16px + env(safe-area-inset-bottom))}
@@ -214,11 +230,11 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   </header>
 
   <section class="tiles">
-    <div class="tile t"><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
-    <div class="tile t"><div class="eyebrow">SoC</div><div class="v"><span id="vSoc">–</span><small>°C</small></div></div>
-    <div class="tile f"><div class="eyebrow">Fan</div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
-    <div class="tile w"><div class="eyebrow">Curve wants</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
-    <div class="tile"><div class="eyebrow">ICC target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
+    <div class="tile t" tabindex="0" data-tip="CPU temperature. Breeze reads the fan speed off your curve at this temp."><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
+    <div class="tile t" tabindex="0" data-tip="Second sensor on the main chip. Shown for reference only."><div class="eyebrow">SoC</div><div class="v"><span id="vSoc">–</span><small>°C</small></div></div>
+    <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan</div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
+    <div class="tile w" tabindex="0" data-tip="What your curve asks for at the current CPU temp. Close to Fan means it is working."><div class="eyebrow">Curve wants</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
+    <div class="tile" tabindex="0" data-tip="The thermostat setting Breeze steers. Lower means more fan; above the CPU temp means stay quiet."><div class="eyebrow">ICC target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
   </section>
 
   <div class="grid">
