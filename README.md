@@ -54,8 +54,8 @@ nc -q0 <ps5-ip> 9021 < breeze.elf
 
 On start the console shows a notification with the panel address, for example:
 
-> Breeze 1.0 running (custom curve on)
-> Panel: http://192.168.0.191:2878
+> Breeze running (custom curve on)<br>
+> Panel: `http://<PS5-IP>:2878`
 
 ## The web panel
 
