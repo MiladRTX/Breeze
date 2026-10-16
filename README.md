@@ -78,6 +78,18 @@ The PS5 has no "set fan to X %" switch. Its fan controller works like a thermost
 
 The console reacts a few seconds late and in large jumps, so Breeze waits for each step to settle, ignores one-second spikes and dips, and backs off quickly if the fan overshoots.
 
+## Known limitations
+
+Breeze is new and has only been tested on one console, so expect some rough edges:
+
+- **The fan readout may be a little off.** The fan speed comes from an undocumented system call, and its scale is a best guess. Treat the % as a close estimate rather than an exact RPM.
+- **The fan won't always land exactly on the curve.** The console moves the fan in steps, so it can sit a few percent above or below what the curve asks for.
+- **There's a minimum the console won't go below.** At a given temperature the console keeps its own minimum fan speed, so a curve below that line can't be followed.
+- **Short spikes can still happen.** Right as a game launches, the fan can briefly rise for a few seconds before Breeze pulls it back.
+- **The history graph resets** when Breeze restarts.
+
+Found something off? [Open an issue](https://github.com/MiladRx/Breeze/issues) and include `/data/breeze/breeze.log` if you can.
+
 ## Files on the console
 
 | Path | What |
