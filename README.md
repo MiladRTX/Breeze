@@ -22,6 +22,10 @@
   <a href="#build">Build</a>
 </p>
 
+<p align="center">
+  <img src="docs/demo.gif" alt="Breeze web panel: live readouts, dragging the fan curve, presets and history" width="880">
+</p>
+
 ---
 
 ## Features
