@@ -213,7 +213,13 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   .tools::-webkit-scrollbar{display:none}
   .tools>*{flex:none}
   .hide-sm{display:none}
-  .insp{gap:10px}
+  /* point editor: label + Remove on one row, the two steppers side by side below */
+  .insp{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;padding:12px}
+  .insp .hint{grid-column:1/-1}
+  .insp .grow{display:none}
+  .insp #bDel{grid-column:2;grid-row:1;justify-self:end;height:30px;padding:0 8px}
+  .insp .step{display:flex;width:100%}
+  .insp .step input{flex:1;width:auto;min-width:0}
   .step button{width:38px;height:38px}.step input{height:38px;width:50px}
   .btn{height:36px}.btn.icon{width:36px}.seg .btn{height:34px}
 }
