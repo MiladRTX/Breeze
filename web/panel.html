@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0d10">
+<title>Breeze</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0d10;--surface:#12151a;--surface2:#171b21;--line:#20262e;--line2:#2b323c;
+  --text:#e9ecf1;--muted:#8d96a5;--faint:#5c6573;
+  --accent:#8ea2ff;--accent-dim:rgba(142,162,255,.13);
+  --fan:#4fd1a5;--temp:#f2b25c;--danger:#f2777a;
+  --r:14px;--r-sm:9px;
+  --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.5 var(--sans);
+  font-feature-settings:"cv11","ss01";-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button,input{font:inherit;color:inherit}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.wrap{max-width:1240px;margin:0 auto;padding:24px 22px 20px}
+
+/* header */
+.top{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.brand{font-size:19px;font-weight:700;letter-spacing:-.025em}
+.ver{font:500 11.5px var(--mono);color:var(--faint);margin-left:8px;letter-spacing:0}
+.grow{flex:1}
+.master{display:flex;align-items:center;gap:11px;font-size:13.5px;font-weight:600;cursor:pointer}
+
+/* switch */
+.sw{position:relative;width:42px;height:24px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;border-radius:99px;background:var(--line2);transition:.18s}
+.sw i:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#cfd5de;transition:.18s}
+.sw input:checked+i{background:var(--accent)}
+.sw input:checked+i:after{transform:translateX(18px);background:#fff}
+.sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px 12px}
+.tile .v{display:flex;align-items:baseline;gap:3px;margin-top:6px;font:600 30px/1 var(--mono);letter-spacing:-.04em}
+.tile .v small{font:500 13px var(--sans);letter-spacing:0;color:var(--faint)}
+.tile.t .v{color:var(--temp)}.tile.f .v{color:var(--fan)}.tile.w .v{color:var(--accent)}
+
+/* layout */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:stretch}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+/* both columns end on the same line: the last card in each takes up the slack */
+.col>.card:last-child{flex:1;display:flex;flex-direction:column}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.hd{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:52px;border-bottom:1px solid var(--line)}
+.hd h2{margin:0;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.hd .sub{color:var(--faint);font-size:12px;font-weight:500}
+.bd{padding:14px 16px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:var(--r-sm);
+  border:1px solid var(--line2);background:var(--surface2);cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap;
+  transition:background .12s,border-color .12s,color .12s}
+.btn:hover{border-color:#3a434f;background:#1c2128}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#0b0d10;font-weight:600}
+.btn.pri:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--text);background:var(--surface2)}
+.btn.icon{width:32px;padding:0}
+.btn.danger{color:var(--danger)}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:var(--r-sm);overflow:hidden}
+.seg .btn{border:0;border-radius:0;height:30px}
+.seg .btn+.btn{border-left:1px solid var(--line2)}
+.sep{width:1px;height:20px;background:var(--line)}
+
+/* editor */
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.chart{position:relative;height:440px;touch-action:none;user-select:none;-webkit-user-select:none}
+.chart svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.chart text{font-family:var(--mono)}
+.readout{position:absolute;pointer-events:none;padding:5px 9px;border-radius:8px;background:rgba(11,13,16,.94);border:1px solid var(--line2);
+  font:500 12px var(--mono);white-space:nowrap;opacity:0;transition:opacity .1s}
+.legend{display:flex;flex-wrap:wrap;gap:16px;padding:11px 16px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:500}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend b{display:inline-block;width:14px;height:2px;border-radius:2px}
+.insp{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);min-height:58px}
+.insp .lbl{font-size:13px;font-weight:600}
+.insp .lbl span{color:var(--faint);font-weight:500}
+.step{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:var(--r-sm);overflow:hidden;background:var(--surface2)}
+.step button{width:32px;height:32px;border:0;background:transparent;cursor:pointer;color:var(--muted);font-size:16px}
+.step button:hover{color:var(--text);background:#1c2128}
+.step input{width:46px;height:32px;border:0;border-left:1px solid var(--line2);border-right:1px solid var(--line2);background:transparent;text-align:center;
+  font:500 13px var(--mono);-moz-appearance:textfield}
+.step input:focus{outline:none;background:var(--accent-dim)}
+.step input::-webkit-inner-spin-button,.step input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.step .u{padding:0 8px 0 2px;color:var(--faint);font-size:12px}
+.hint{color:var(--faint);font-size:12.5px}
+kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;color:var(--muted)}
+
+/* table */
+.ptbl{max-height:340px;overflow:auto;padding:0 16px 12px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.tbl{width:100%;border-collapse:collapse}
+.tbl thead th{position:sticky;top:0;z-index:1;background:var(--surface);text-align:left;padding:12px 6px 8px}
+/* line the headings up with the text inside the inputs (td 6 + border 1 + padding 10) */
+.tbl thead th+th{padding-left:17px}
+.tbl td{padding:3px 6px}
+.tbl tr.sel td{background:var(--accent-dim)}
+.tbl tr.sel td:first-child{border-radius:8px 0 0 8px}.tbl tr.sel td:last-child{border-radius:0 8px 8px 0}
+.tbl input{width:100%;height:30px;border:1px solid var(--line2);border-radius:8px;background:var(--surface2);padding:0 10px;font:500 13px var(--mono)}
+.tbl input:focus{outline:none;border-color:var(--accent)}
+.tbl .n{color:var(--faint);font:500 11.5px var(--mono);width:26px}
+.tbl .x{width:34px;text-align:right}
+
+/* presets */
+.prow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.prow .acts{display:flex;align-items:center;gap:2px;flex:none}
+.prow .acts .btn{height:30px}
+.prow .acts .btn:not(.icon){padding:0 11px;min-width:62px}
+.prow .acts .btn.icon{width:28px}
+.prow:last-child{border-bottom:0}
+.prow .nm{flex:0 1 auto;min-width:0;max-width:48%}
+.prow .pn{display:flex;align-items:center;gap:7px;min-width:0}
+.prow .pn span:first-child{font-weight:600;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.prow svg.mini{flex:1;min-width:40px;height:36px}
+.prow .meta{display:flex;align-items:center;gap:6px;color:var(--faint);font-size:11.5px;font-weight:500}
+.prow .acts .btn.active{cursor:default;border-color:rgba(79,209,165,.35);background:rgba(79,209,165,.1);color:var(--fan);font-weight:600}
+.newp{display:flex;gap:8px;margin-top:12px}
+.field{flex:1;min-width:0;height:32px;border:1px solid var(--line2);border-radius:var(--r-sm);background:var(--surface2);padding:0 11px;font-size:13px}
+.field::placeholder{color:var(--faint)}
+.field:focus{outline:none;border-color:var(--accent)}
+.empty{color:var(--faint);font-size:12.5px;padding:6px 0}
+
+/* settings */
+.row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .t{flex:1;min-width:0}
+.row .t div:first-child{font-weight:600;font-size:13.5px}
+.row .t div+div{color:var(--faint);font-size:12px}
+
+/* history */
+.hist{position:relative;flex:1;min-height:150px}
+.hist svg{position:absolute;inset:0;width:100%;height:100%}
+.hist text{font-family:var(--mono)}
+.hist{touch-action:pan-y;cursor:crosshair}
+.htip{line-height:1.6;min-width:118px}
+.htip div{display:flex;justify-content:space-between;gap:14px}
+.htip .k{color:var(--muted)}
+.htip .t{color:var(--faint);margin-bottom:2px}
+#ranges .btn{padding:0 10px;font:500 12px var(--mono)}
+#ranges .btn.on{background:var(--accent-dim);color:var(--accent)}
+
+/* apply bar */
+/* floats over the page, so it takes no space while hidden */
+.bar{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));left:50%;width:min(1196px,calc(100% - 24px));z-index:5;display:flex;align-items:center;gap:10px;padding:10px 12px 10px 16px;
+  background:rgba(23,27,33,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--line2);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.45);
+  transform:translate(-50%,10px);opacity:0;pointer-events:none;transition:.18s}
+.bar.show{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+.bar .msg{flex:1;color:var(--muted);font-size:13px}
+.bar .msg b{color:var(--text);font-weight:600}
+
+/* toast */
+/* credit */
+.credit{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:22px;color:var(--faint);font-size:12.5px}
+.credit a{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:99px;
+  color:var(--muted);text-decoration:none;font-weight:500;transition:color .12s,border-color .12s}
+.credit a:hover{color:var(--text);border-color:var(--line2)}
+.credit svg{width:15px;height:15px;fill:currentColor}
+
+.toast{position:fixed;left:50%;top:16px;transform:translate(-50%,-12px);opacity:0;z-index:20;padding:9px 14px;border-radius:10px;
+  background:#1c2128;border:1px solid var(--line2);font-size:13px;font-weight:500;transition:.2s;pointer-events:none;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.err{border-color:rgba(242,119,122,.5);color:#ffc9ca}
+
+@media (max-width:1020px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .ptbl{max-height:none}   /* one column: no need to balance heights */
+}
+@media (max-width:760px){
+  .tiles{grid-template-columns:repeat(6,1fr);gap:8px}
+  .tiles .tile{grid-column:span 2}
+  .tiles .tile:nth-child(n+4){grid-column:span 3}
+}
+@media (max-width:640px){
+  .wrap{padding:16px 12px calc(16px + env(safe-area-inset-bottom))}
+  .top{flex-wrap:wrap;gap:10px;margin-bottom:14px}
+  .tile{padding:10px 12px}.tile .v{font-size:22px;margin-top:4px}
+  .chart{height:min(78vw,380px)}
+  .tools{padding:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .tools::-webkit-scrollbar{display:none}
+  .tools>*{flex:none}
+  .hide-sm{display:none}
+  .insp{gap:10px}
+  .step button{width:38px;height:38px}.step input{height:38px;width:50px}
+  .btn{height:36px}.btn.icon{width:36px}.seg .btn{height:34px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">Breeze<span class="ver" id="ver"></span></div>
+    <div class="grow"></div>
+    <label class="master">Custom curve<span class="sw"><input type="checkbox" id="enabled"><i></i></span></label>
+  </header>
+
+  <section class="tiles">
+    <div class="tile t"><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
+    <div class="tile t"><div class="eyebrow">SoC</div><div class="v"><span id="vSoc">–</span><small>°C</small></div></div>
+    <div class="tile f"><div class="eyebrow">Fan</div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
+    <div class="tile w"><div class="eyebrow">Curve wants</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
+    <div class="tile"><div class="eyebrow">ICC target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="card">
+        <div class="hd"><h2>Curve</h2><span class="sub" id="ptCount"></span><div class="grow"></div>
+          <span class="sub num hide-sm" id="hoverTxt"></span></div>
+        <div class="tools">
+          <div class="seg">
+            <button class="btn icon" id="bUndo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+            <button class="btn icon" id="bRedo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+          </div>
+          <button class="btn" id="bAdd" title="Add a point in the widest gap"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+          <div class="sep hide-sm"></div>
+          <span class="eyebrow hide-sm">Shift</span>
+          <div class="seg">
+            <button class="btn" data-shift="0,-5" title="All fan values −5%">Fan −</button>
+            <button class="btn" data-shift="0,5" title="All fan values +5%">Fan +</button>
+          </div>
+          <div class="seg">
+            <button class="btn" data-shift="-2,0" title="All temperatures −2°C">←</button>
+            <button class="btn" data-shift="2,0" title="All temperatures +2°C">→</button>
+          </div>
+        </div>
+        <div class="chart" id="chart">
+          <svg id="svg" aria-label="Fan curve editor"></svg>
+          <div class="readout" id="readout"></div>
+        </div>
+        <div class="insp" id="insp"></div>
+        <div class="legend">
+          <span><b style="background:var(--accent)"></b>Your curve</span>
+          <span><b style="background:var(--temp)"></b>Current temp</span>
+          <span><b style="background:var(--fan)"></b>Actual fan</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>History</h2><div class="grow"></div>
+          <div class="seg" id="ranges">
+            <button class="btn" data-range="300">5m</button><button class="btn" data-range="900">15m</button><button class="btn" data-range="1800">30m</button><button class="btn" data-range="3600">1h</button><button class="btn" data-range="10800">3h</button>
+          </div></div>
+        <div class="hist" id="hist"><svg id="hsvg"></svg><div class="readout htip" id="htip"></div></div>
+        <div class="legend">
+          <span><b style="background:var(--temp)"></b>Temp °C</span>
+          <span><b style="background:var(--fan)"></b>Fan %</span>
+          <span><b style="background:var(--accent)"></b>Curve wanted %</span>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card">
+        <div class="hd"><h2>Presets</h2><span class="sub num" id="pCount"></span></div>
+        <div class="bd" style="padding-top:4px">
+          <div id="plist"></div>
+          <div class="newp"><input class="field" id="pName" maxlength="40" placeholder="Save current curve as…" autocomplete="off">
+            <button class="btn" id="bSaveAs">Save</button></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Points</h2><span class="sub">°C → fan %</span><div class="grow"></div>
+          <button class="btn ghost" id="bReset" title="Reset to the default curve">Reset</button></div>
+        <div class="ptbl"><table class="tbl"><thead><tr><th></th><th class="eyebrow">Temp °C</th><th class="eyebrow">Fan %</th><th></th></tr></thead>
+          <tbody id="rows"></tbody></table></div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Settings</h2></div>
+        <div class="bd" style="padding-top:2px;padding-bottom:4px">
+          <div class="row"><div class="t"><div>Web panel</div><div>Serve this page on port <span class="num" id="port">–</span></div></div>
+            <span class="sw"><input type="checkbox" id="webEnabled" aria-label="Web panel"><i></i></span></div>
+          <div class="row"><div class="t"><div>Stock fan control</div><div>Turn the curve off and hand the fan back to the console</div></div>
+            <button class="btn danger" id="bStock">Restore</button></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="credit">
+    <span>Made by Milad</span>
+    <a href="https://github.com/MiladRx" target="_blank" rel="noopener" aria-label="MiladRx on GitHub" title="MiladRx on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      MiladRx
+    </a>
+  </footer>
+
+  <div class="bar" id="bar">
+    <div class="msg"><b>Unsaved changes</b><span class="hide-sm"> · <kbd>Ctrl</kbd> <kbd>S</kbd> to apply</span></div>
+    <button class="btn ghost" id="bRevert">Revert</button>
+    <button class="btn pri" id="bApply">Apply</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var TK='@@FC_TOKEN@@';
+var XMIN=30,XMAX=100,MAXP=30,MINP=2;
+var DEF=[[55,25],[63,35],[70,50],[76,70],[82,92]];
+var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
+
+var $=function(id){return document.getElementById(id)};
+var st=null,server=[],draft=[],sel=-1,undo=[],redo=[];
+var drag=null,hover=null,lastTap=null,presets=[],offline=false;
+var hist={step:2,d:[]},histRange=300,histTimer=null,hHover=null,hl=null;
+function ago2(s){return s>=3600?Math.floor(s/3600)+'h '+Math.round(s%3600/60)+'m':s>=60?Math.floor(s/60)+'m '+(s%60)+'s':s+'s'}
+try{histRange=+localStorage.getItem('fcRange')||300}catch(e){}
+var W=0,H=0,P={l:40,r:16,t:14,b:30};
+
+/* ---------- helpers ---------- */
+function clamp(v,a,b){return v<a?a:v>b?b:v}
+function copy(a){return a.map(function(p){return[p[0],p[1]]})}
+function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function dirty(){return !same(draft,server)}
+function evalCurve(p,t){
+  if(!p.length)return 0;if(t<=p[0][0])return p[0][1];
+  for(var i=1;i<p.length;i++)if(t<=p[i][0]){var a=p[i-1],b=p[i],dt=b[0]-a[0];return dt<=0?b[1]:Math.trunc(a[1]+(t-a[0])*(b[1]-a[1])/dt)}
+  return p[p.length-1][1];
+}
+var tt;
+function toast(m,bad){var e=$('toast');e.textContent=m;e.className='toast on'+(bad?' err':'');clearTimeout(tt);tt=setTimeout(function(){e.className='toast'+(bad?' err':'')},2200)}
+
+/* ---------- geometry ---------- */
+function X(t){return P.l+(t-XMIN)/(XMAX-XMIN)*(W-P.l-P.r)}
+function Y(s){return P.t+(1-s/100)*(H-P.t-P.b)}
+function tAt(x){return XMIN+(x-P.l)/(W-P.l-P.r)*(XMAX-XMIN)}
+function sAt(y){return(1-(y-P.t)/(H-P.t-P.b))*100}
+
+/* ---------- edits ---------- */
+function commit(){undo.push(copy(draft));if(undo.length>100)undo.shift();redo=[]}
+function setDraft(p){draft=p;sel=-1;renderAll()}
+function doUndo(){if(!undo.length)return;redo.push(copy(draft));draft=undo.pop();sel=Math.min(sel,draft.length-1);renderAll()}
+function doRedo(){if(!redo.length)return;undo.push(copy(draft));draft=redo.pop();sel=Math.min(sel,draft.length-1);renderAll()}
+function setPoint(i,t,s){
+  var lo=i>0?draft[i-1][0]+1:XMIN,hi=i<draft.length-1?draft[i+1][0]-1:XMAX;
+  draft[i]=[clamp(Math.round(t),lo,hi),clamp(Math.round(s),0,100)];
+}
+function addAt(t,s){
+  if(draft.length>=MAXP){toast('Up to '+MAXP+' points',true);return}
+  t=clamp(Math.round(t),XMIN,XMAX);s=clamp(Math.round(s),0,100);
+  for(var i=0;i<draft.length;i++)if(draft[i][0]===t){toast('There is already a point at '+t+'°C',true);return}
+  commit();draft.push([t,s]);draft.sort(function(a,b){return a[0]-b[0]});
+  for(i=0;i<draft.length;i++)if(draft[i][0]===t)sel=i;
+  renderAll();
+}
+function addInGap(){
+  if(draft.length<2){addAt(60,40);return}
+  var best=0,bi=0;
+  for(var i=1;i<draft.length;i++){var g=draft[i][0]-draft[i-1][0];if(g>best){best=g;bi=i}}
+  if(best<2){toast('No room for another point',true);return}
+  var t=Math.round((draft[bi-1][0]+draft[bi][0])/2);addAt(t,evalCurve(draft,t));
+}
+function removeAt(i){
+  if(draft.length<=MINP){toast('A curve needs at least '+MINP+' points',true);return}
+  commit();draft.splice(i,1);sel=Math.min(i,draft.length-1);renderAll();
+}
+function shiftAll(dt,ds){
+  var n=draft.map(function(p){return[p[0]+dt,clamp(p[1]+ds,0,100)]});
+  if(n[0][0]<XMIN||n[n.length-1][0]>XMAX){toast('The curve would leave the '+XMIN+'–'+XMAX+'°C range',true);return}
+  commit();draft=n;renderAll();
+}
+
+/* ---------- curve chart ---------- */
+function resize(){
+  var r=$('chart').getBoundingClientRect();W=Math.round(r.width);H=Math.round(r.height);
+  var small=W<520;P={l:small?34:42,r:small?20:16,t:14,b:30};
+  $('svg').setAttribute('viewBox','0 0 '+W+' '+H);
+  var h=$('hist').getBoundingClientRect();$('hsvg').setAttribute('viewBox','0 0 '+Math.round(h.width)+' '+Math.round(h.height));
+  drawMinis();
+  drawCurve();drawHist();
+}
+function label(x,y,txt,anchor,col){return '<text x="'+x+'" y="'+y+'" text-anchor="'+anchor+'" fill="'+(col||'#5c6573')+'" font-size="10.5" font-family="'+MONO+'">'+txt+'</text>'}
+function drawCurve(){
+  if(!W)return;
+  var o='',i,x,y,small=W<520;
+  for(var s=0;s<=100;s+=10){y=Y(s);o+='<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="'+(s%20?'#15191f':'#1c2129')+'"/>';
+    // y labels give way to the live fan badge on the same column
+    var nearFan=st&&st.duty>=0&&Math.abs(y-Y(clamp(st.duty,0,100)))<16;
+    if(s%20===0&&!nearFan)o+=label(P.l-9,y+3.5,s+'%','end')}
+  for(var t=XMIN;t<=XMAX;t+=5){x=X(t);
+    if(t%10===0||!small)o+='<line y1="'+P.t+'" y2="'+(H-P.b)+'" x1="'+x+'" x2="'+x+'" stroke="'+(t%10===0?'#1c2129':'#15191f')+'"/>';
+    // axis labels give way to the live temp badge drawn on the same row
+    var nearBadge=st&&st.cpu>=0&&Math.abs(x-X(clamp(st.cpu,XMIN,XMAX)))<34;
+    if(t%10===0&&!nearBadge)o+=label(x,H-P.b+19,t+'°','middle')}
+  if(draft.length){
+    var d='M'+X(XMIN)+' '+Y(draft[0][1]);
+    for(i=0;i<draft.length;i++)d+=' L'+X(draft[i][0])+' '+Y(draft[i][1]);
+    d+=' L'+X(XMAX)+' '+Y(draft[draft.length-1][1]);
+    o+='<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ea2ff" stop-opacity=".22"/><stop offset="1" stop-color="#8ea2ff" stop-opacity="0"/></linearGradient></defs>';
+    o+='<path d="'+d+' L'+X(XMAX)+' '+Y(0)+' L'+X(XMIN)+' '+Y(0)+'Z" fill="url(#g)"/>';
+    if(dirty()&&server.length){
+      var sd='M'+X(XMIN)+' '+Y(server[0][1]);
+      for(i=0;i<server.length;i++)sd+=' L'+X(server[i][0])+' '+Y(server[i][1]);
+      sd+=' L'+X(XMAX)+' '+Y(server[server.length-1][1]);
+      o+='<path d="'+sd+'" fill="none" stroke="#8d96a5" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="4 4"/>';
+    }
+    o+='<path d="'+d+'" fill="none" stroke="#8ea2ff" stroke-width="2.4" stroke-linejoin="round"/>';
+  }
+  if(st&&st.cpu>=0){
+    // "Now" marker: a dashed line for the temp (badge on the x axis) and
+    // one for the real fan speed (badge on the y axis).
+    x=X(clamp(st.cpu,XMIN,XMAX));
+    o+='<line x1="'+x+'" x2="'+x+'" y1="'+P.t+'" y2="'+(H-P.b)+'" stroke="#f2b25c" stroke-opacity=".35" stroke-dasharray="2 4"/>';
+    if(st.duty>=0){var yf=Y(clamp(st.duty,0,100)),bw=P.l-4;
+      o+='<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+yf+'" y2="'+yf+'" stroke="#4fd1a5" stroke-opacity=".35" stroke-dasharray="2 4"/>'+
+        '<rect x="1" y="'+(yf-9.5)+'" width="'+bw+'" height="19" rx="6" fill="#4fd1a5"/>'+
+        label(1+bw/2,yf+3.5,st.duty+'%','middle','#0b0d10').replace('font-size','font-weight="600" font-size')}
+    o+='<rect x="'+(x-21)+'" y="'+(H-P.b+5)+'" width="42" height="19" rx="6" fill="#f2b25c"/>'+label(x,H-P.b+18.5,st.cpu+'°','middle','#0b0d10').replace('font-size','font-weight="600" font-size');
+  }
+  if(hover&&!drag){
+    x=X(hover.t);y=Y(evalCurve(draft,hover.t));
+    o+='<line x1="'+x+'" x2="'+x+'" y1="'+P.t+'" y2="'+(H-P.b)+'" stroke="#8d96a5" stroke-opacity=".3"/><circle cx="'+x+'" cy="'+y+'" r="3.5" fill="#8ea2ff"/>';
+  }
+  var R=small?7:6;
+  for(i=0;i<draft.length;i++){
+    x=X(draft[i][0]);y=Y(draft[i][1]);var on=i===sel;
+    if(on)o+='<circle cx="'+x+'" cy="'+y+'" r="'+(R+7)+'" fill="rgba(142,162,255,.18)"/>';
+    o+='<circle cx="'+x+'" cy="'+y+'" r="'+(on?R+1:R)+'" fill="'+(on?'#fff':'#0b0d10')+'" stroke="#8ea2ff" stroke-width="2.2"/>';
+  }
+  $('svg').innerHTML=o;
+}
+
+/* ---------- pointer ---------- */
+function local(e){var r=$('svg').getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+function nearest(p,touch){
+  var best=-1,bd=touch?26*26:16*16;
+  for(var i=0;i<draft.length;i++){var dx=X(draft[i][0])-p.x,dy=Y(draft[i][1])-p.y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=i}}
+  return best;
+}
+function inPlot(p){return p.x>=P.l-8&&p.x<=W-P.r+8&&p.y>=P.t-8&&p.y<=H-P.b+8}
+function onDown(e){
+  var p=local(e),i=nearest(p,e.pointerType!=='mouse');
+  if(i>=0){sel=i;drag={i:i,id:e.pointerId,moved:false,start:copy(draft)};
+    $('svg').setPointerCapture(e.pointerId);renderAll();e.preventDefault();return}
+  if(!inPlot(p))return;
+  var now=Date.now();
+  if(lastTap&&now-lastTap.t<380&&Math.abs(lastTap.x-p.x)<24&&Math.abs(lastTap.y-p.y)<24){lastTap=null;addAt(tAt(p.x),sAt(p.y));e.preventDefault();return}
+  lastTap={t:now,x:p.x,y:p.y};
+  if(sel>=0){sel=-1;renderAll()}
+}
+function onMove(e){
+  var p=local(e);
+  if(drag&&e.pointerId===drag.id){
+    if(!drag.moved){drag.moved=true;undo.push(drag.start);if(undo.length>100)undo.shift();redo=[]}
+    setPoint(drag.i,tAt(p.x),sAt(p.y));renderAll();
+    var q=draft[drag.i];showReadout(X(q[0]),Y(q[1]),q[0]+'°C → '+q[1]+'%');return;
+  }
+  if(e.pointerType==='mouse'&&inPlot(p)){
+    var t=clamp(Math.round(tAt(p.x)),XMIN,XMAX);hover={t:t};
+    $('hoverTxt').textContent=t+'°C → '+evalCurve(draft,t)+'%';
+    $('svg').style.cursor=nearest(p,false)>=0?'grab':'crosshair';drawCurve();
+  }else if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}
+}
+function onUp(e){if(drag&&e.pointerId===drag.id){drag=null;hideReadout();renderAll()}}
+function onLeave(){if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}}
+function showReadout(x,y,txt){var r=$('readout');r.textContent=txt;r.style.opacity=1;
+  r.style.left=clamp(x+14,4,W-150)+'px';r.style.top=clamp(y-36,4,H-30)+'px'}
+function hideReadout(){$('readout').style.opacity=0}
+
+/* ---------- inspector / table ---------- */
+function renderInsp(){
+  var el=$('insp');
+  if(sel<0||sel>=draft.length){
+    el.innerHTML='<span class="hint">Drag a point to move it. Double-click or double-tap empty space to add one.'+
+      '<span class="hide-sm"> Select a point and use <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> to nudge, <kbd>Del</kbd> to remove.</span></span>';
+    return;
+  }
+  var p=draft[sel];
+  el.innerHTML='<span class="lbl">Point '+(sel+1)+' <span>of '+draft.length+'</span></span>'+
+    '<span class="step"><button data-n="t,-1" aria-label="Temperature down">−</button><input id="iT" inputmode="numeric" value="'+p[0]+'"><span class="u">°C</span><button data-n="t,1" aria-label="Temperature up">+</button></span>'+
+    '<span class="step"><button data-n="s,-1" aria-label="Fan down">−</button><input id="iS" inputmode="numeric" value="'+p[1]+'"><span class="u">%</span><button data-n="s,1" aria-label="Fan up">+</button></span>'+
+    '<div class="grow"></div><button class="btn ghost danger" id="bDel">Remove</button>';
+}
+function renderRows(){
+  var h='';
+  for(var i=0;i<draft.length;i++){
+    h+='<tr'+(i===sel?' class="sel"':'')+' data-i="'+i+'"><td class="n">'+(i+1)+'</td>'+
+      '<td><input data-r="'+i+',0" inputmode="numeric" value="'+draft[i][0]+'"></td>'+
+      '<td><input data-r="'+i+',1" inputmode="numeric" value="'+draft[i][1]+'"></td>'+
+      '<td class="x"><button class="btn icon ghost" data-del="'+i+'" aria-label="Remove point '+(i+1)+'">×</button></td></tr>';
+  }
+  $('rows').innerHTML=h;
+}
+function nudge(axis,d){
+  if(sel<0)return;var p=draft[sel];commit();
+  if(axis==='t')setPoint(sel,p[0]+d,p[1]);else setPoint(sel,p[0],p[1]+d);renderAll();
+}
+function renderAll(){
+  drawCurve();renderInsp();
+  var a=document.activeElement;if(!(a&&a.dataset&&a.dataset.r))renderRows();
+  $('ptCount').textContent=draft.length+' / '+MAXP+' points';
+  $('bUndo').disabled=!undo.length;$('bRedo').disabled=!redo.length;
+  $('bar').classList.toggle('show',dirty());
+}
+
+/* ---------- history chart ---------- */
+function drawHist(){
+  var svg=$('hsvg'),vb=svg.getAttribute('viewBox');if(!vb)return;
+  var s=vb.split(' '),w=+s[2],h=+s[3],pl=36,pr=14,pt=12,pb=22,o='',R=histRange,d=hist.d,n=d.length;
+  function hx(age){return w-pr-age/R*(w-pl-pr)}
+  function hy(v){return pt+(1-v/100)*(h-pt-pb)}
+  function ago(sec){return sec>=3600?'−'+(sec/3600)+'h':'−'+(sec/60)+'m'}
+  for(var v=0;v<=100;v+=25)o+='<line x1="'+pl+'" x2="'+(w-pr)+'" y1="'+hy(v)+'" y2="'+hy(v)+'" stroke="#1c2129"/>'+label(pl-8,hy(v)+3.5,v,'end');
+  var tick={300:60,900:300,1800:600,3600:900,10800:1800}[R]||R/5;
+  for(var a=tick;a<=R;a+=tick){var x=hx(a);
+    o+='<line x1="'+x+'" x2="'+x+'" y1="'+pt+'" y2="'+(h-pb)+'" stroke="#15191f"/>'+label(x,h-5,ago(a),a===R?'start':'middle')}
+  o+=label(w-pr,h-5,'now','end');
+  // one path per series; a missing value (-1) breaks the line
+  function line(k,col,wd,dash){
+    var p='',up=false;
+    for(var i=0;i<n;i++){var val=d[i][k];if(val<0){up=false;continue}
+      p+=(up?' L':'M')+hx((n-1-i)*hist.step).toFixed(1)+' '+hy(clamp(val,0,100)).toFixed(1);up=true}
+    if(p)o+='<path d="'+p+'" fill="none" stroke="'+col+'" stroke-width="'+wd+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+' stroke-linejoin="round"/>';
+  }
+  line(2,'#8ea2ff',1.4,'3 3');line(0,'#f2b25c',1.8);line(1,'#4fd1a5',1.8);
+  // hover: crosshair + dots on the nearest bucket, values in the tooltip
+  var tip=$('htip');
+  hl={w:w,pl:pl,pr:pr};
+  if(hHover!==null&&n){
+    var i=clamp(hHover,0,n-1),age=(n-1-i)*hist.step,hxv=hx(age),row=d[i];
+    o+='<line x1="'+hxv+'" x2="'+hxv+'" y1="'+pt+'" y2="'+(h-pb)+'" stroke="#8d96a5" stroke-opacity=".4"/>';
+    [[0,'#f2b25c'],[1,'#4fd1a5'],[2,'#8ea2ff']].forEach(function(c){if(row[c[0]]>=0)
+      o+='<circle cx="'+hxv+'" cy="'+hy(clamp(row[c[0]],0,100))+'" r="3.5" fill="'+c[1]+'" stroke="#0b0d10" stroke-width="1.5"/>'});
+    var when=new Date(Date.now()-age*1000),hh=('0'+when.getHours()).slice(-2)+':'+('0'+when.getMinutes()).slice(-2)+':'+('0'+when.getSeconds()).slice(-2);
+    function v(x,u){return x<0?'–':x+u}
+    tip.innerHTML='<div class="t">'+hh+(age?' · '+ago2(age)+' ago':' · now')+'</div>'+
+      '<div><span class="k">Temp</span><span style="color:var(--temp)">'+v(row[0],'°C')+'</span></div>'+
+      '<div><span class="k">Fan</span><span style="color:var(--fan)">'+v(row[1],'%')+'</span></div>'+
+      '<div><span class="k">Wanted</span><span style="color:var(--accent)">'+v(row[2],'%')+'</span></div>';
+    tip.style.opacity=1;
+    tip.style.left=(hxv>w/2?hxv-tip.offsetWidth-12:hxv+12)+'px';tip.style.top=pt+'px';
+  }else tip.style.opacity=0;
+  svg.innerHTML=o;
+}
+
+/* ---------- presets ---------- */
+/* Preset preview: a small copy of the main chart (same 30-100 C / 0-100 %
+ * axes, fill and midline). Drawn at the element's real pixel
+ * size after layout so it never looks squashed. */
+function miniSvg(p,on,i){return '<svg class="mini" data-mini="'+i+'"></svg>'}
+function drawMinis(){
+  document.querySelectorAll('svg.mini').forEach(function(svg){
+    var p=presets[+svg.dataset.mini]&&presets[+svg.dataset.mini].points;if(!p||!p.length)return;
+    var w=svg.clientWidth,h=svg.clientHeight;if(!w||!h)return;
+    var on=same(p,server),col=on?'#4fd1a5':'#8ea2ff',pad=3;
+    function mx(t){return pad+(t-XMIN)/(XMAX-XMIN)*(w-2*pad)}function my(s){return pad+(1-s/100)*(h-2*pad)}
+    var d='M'+mx(XMIN).toFixed(1)+' '+my(p[0][1]).toFixed(1);
+    for(var i=0;i<p.length;i++)d+=' L'+mx(p[i][0]).toFixed(1)+' '+my(p[i][1]).toFixed(1);
+    d+=' L'+mx(XMAX).toFixed(1)+' '+my(p[p.length-1][1]).toFixed(1);
+    svg.setAttribute('viewBox','0 0 '+w+' '+h);
+    svg.innerHTML='<line x1="'+pad+'" x2="'+(w-pad)+'" y1="'+my(50)+'" y2="'+my(50)+'" stroke="#1c2129"/>'+
+      '<path d="'+d+' L'+mx(XMAX).toFixed(1)+' '+my(0)+' L'+mx(XMIN).toFixed(1)+' '+my(0)+'Z" fill="'+col+'" fill-opacity=".12"/>'+
+      '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.6" stroke-linejoin="round"/>';
+  });
+}
+function renderPresets(){
+  var h='';
+  for(var i=0;i<presets.length;i++){var p=presets[i],on=same(p.points,server);
+    h+='<div class="prow">'+
+      '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points</div></div>'+
+      miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" title="This curve is running">Active</span>':'<button class="btn" data-pa="load,'+i+'" title="Load into the editor">Load</button>')+
+      '<button class="btn icon ghost" data-pa="over,'+i+'" title="Overwrite with the editor curve" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
+      '<button class="btn icon ghost danger" data-pa="del,'+i+'" title="Delete" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div></div>';
+  }
+  $('plist').innerHTML=h||'<div class="empty">No presets yet.</div>';drawMinis();
+  $('pCount').textContent=presets.length+' / 10';
+}
+function pointQuery(p){var s='';for(var i=0;i<p.length;i++)s+='&p'+i+'='+p[i][0]+','+p[i][1];return s}
+
+/* ---------- network ---------- */
+function post(path,body){return fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-FC-Token':TK},body:body||''})}
+function fail(e,what){toast(e===403?'Session expired, reload the page':what,true)}
+function applyState(s){
+  st=s;
+  $('ver').textContent=s.ver?'v'+s.ver:'';
+  $('vCpu').textContent=s.cpu<0?'–':s.cpu;$('vSoc').textContent=s.soc<0?'–':s.soc;
+  $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
+  $('vTgt').textContent=s.target<0?'–':s.target;$('port').textContent=s.web_port;
+  var a=document.activeElement;
+  if(a!==$('enabled'))$('enabled').checked=!!s.enabled;
+  if(a!==$('webEnabled'))$('webEnabled').checked=!!s.web_enabled;
+  var sp=copy(s.points),clean=!dirty();
+  if(!same(sp,server)){server=sp;if(clean&&!drag){draft=copy(sp);sel=-1}renderAll();renderPresets()}
+}
+async function refresh(){
+  try{var r=await fetch('api/state',{cache:'no-store'});var s=await r.json();applyState(s);
+    if(offline){offline=false;toast('Console back online')}}
+  catch(e){if(!offline){offline=true;toast('Console unreachable',true)}}
+  if(!drag)drawCurve();
+}
+/* History lives in the plugin, so it survives a page reload. Longer ranges
+ * change slower, so they are polled less often. */
+async function loadHist(){
+  clearTimeout(histTimer);
+  try{var r=await fetch('api/history?s='+histRange,{cache:'no-store'});hist=await r.json();drawHist()}catch(e){}
+  histTimer=setTimeout(loadHist,Math.max(2000,Math.min(30000,hist.step*1000)));
+}
+function setRange(sec){
+  histRange=sec;try{localStorage.setItem('fcRange',sec)}catch(e){}
+  document.querySelectorAll('#ranges .btn').forEach(function(b){b.classList.toggle('on',+b.dataset.range===sec)});
+  hist={step:2,d:[]};drawHist();loadHist();
+}
+async function sendConfig(pts,en,web,okMsg){
+  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+'&n='+pts.length+pointQuery(pts);
+  try{var r=await post('api/config',body);if(!r.ok)throw r.status;var s=await r.json();
+    var applied=pts===draft;applyState(s);if(applied){draft=copy(server);renderAll()}toast(okMsg)}
+  catch(e){fail(e,'Could not reach the console');refresh()}
+}
+function apply(){if(dirty())sendConfig(draft,st&&st.enabled,st?st.web_enabled:1,'Curve applied')}
+async function presetAction(body,ok){
+  try{var r=await post('api/presets',body);if(!r.ok)throw r.status;presets=await r.json();renderPresets();toast(ok);return true}
+  catch(e){fail(e,e===409?'Preset limit reached (10)':'Preset action failed');return false}
+}
+
+/* ---------- wiring ---------- */
+var svg=$('svg');
+svg.addEventListener('pointerdown',onDown);svg.addEventListener('pointermove',onMove);
+svg.addEventListener('pointerup',onUp);svg.addEventListener('pointercancel',onUp);svg.addEventListener('pointerleave',onLeave);
+$('bUndo').onclick=doUndo;$('bRedo').onclick=doRedo;$('bAdd').onclick=addInGap;
+document.querySelectorAll('[data-shift]').forEach(function(b){b.onclick=function(){var v=b.dataset.shift.split(',');shiftAll(+v[0],+v[1])}});
+$('bApply').onclick=apply;
+$('bRevert').onclick=function(){commit();setDraft(copy(server))};
+$('bReset').onclick=function(){commit();setDraft(copy(DEF));toast('Default curve loaded, Apply to keep it')};
+$('insp').addEventListener('click',function(e){
+  var b=e.target.closest('button');if(!b)return;
+  if(b.id==='bDel'){removeAt(sel);return}
+  if(b.dataset.n){var v=b.dataset.n.split(',');nudge(v[0],+v[1])}
+});
+$('insp').addEventListener('change',function(e){
+  if(sel<0)return;var v=parseInt(e.target.value,10);if(isNaN(v)){renderInsp();return}
+  commit();if(e.target.id==='iT')setPoint(sel,v,draft[sel][1]);else setPoint(sel,draft[sel][0],v);renderAll();
+});
+$('rows').addEventListener('change',function(e){
+  var r=e.target.dataset.r;if(!r)return;var a=r.split(','),i=+a[0],v=parseInt(e.target.value,10);
+  if(isNaN(v)){renderRows();return}
+  commit();if(a[1]==='0')setPoint(i,v,draft[i][1]);else setPoint(i,draft[i][0],v);sel=i;e.target.blur();renderAll();
+});
+$('rows').addEventListener('focusin',function(e){var tr=e.target.closest('tr');if(tr){sel=+tr.dataset.i;drawCurve();renderInsp()}});
+$('rows').addEventListener('click',function(e){var b=e.target.closest('[data-del]');if(b)removeAt(+b.dataset.del)});
+$('plist').addEventListener('click',function(e){
+  var b=e.target.closest('[data-pa]');if(!b)return;var a=b.dataset.pa.split(','),p=presets[+a[1]];if(!p)return;
+  if(a[0]==='load'){commit();setDraft(copy(p.points));toast('Loaded “'+p.name+'”, Apply to use it')}
+  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?'))presetAction('action=save&name='+encodeURIComponent(p.name)+pointQuery(draft),'Preset updated')}
+  else if(confirm('Delete preset “'+p.name+'”?'))presetAction('action=delete&name='+encodeURIComponent(p.name),'Preset deleted');
+});
+function saveAs(){var n=$('pName').value.trim();if(!n){$('pName').focus();return}
+  presetAction('action=save&name='+encodeURIComponent(n)+pointQuery(draft),'Saved “'+n+'”').then(function(ok){if(ok)$('pName').value=''})}
+$('bSaveAs').onclick=saveAs;
+$('pName').addEventListener('keydown',function(e){if(e.key==='Enter')saveAs()});
+$('enabled').addEventListener('change',function(){
+  sendConfig(server.length?server:draft,this.checked,st?st.web_enabled:1,this.checked?'Custom curve on':'Stock fan control')});
+$('webEnabled').addEventListener('change',function(){
+  if(!this.checked&&!confirm('Turn off the web panel? This page goes offline until you set web_enabled=1 in /data/breeze/breeze.conf over FTP.')){this.checked=true;return}
+  sendConfig(server.length?server:draft,st&&st.enabled,this.checked,this.checked?'Web panel on':'Web panel off');
+});
+$('bStock').onclick=async function(){
+  if(!confirm('Turn the custom curve off and restore stock fan control?'))return;
+  try{var r=await post('api/restore');if(!r.ok)throw r.status;applyState(await r.json());toast('Stock fan control restored')}catch(e){fail(e,'Restore failed')}
+};
+document.addEventListener('keydown',function(e){
+  var a=document.activeElement,typing=a&&a.tagName==='INPUT'&&a.type!=='checkbox',mod=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();
+  if(mod&&k==='s'){e.preventDefault();apply();return}
+  if(typing)return;
+  if(mod&&k==='z'){e.preventDefault();e.shiftKey?doRedo():doUndo();return}
+  if(mod&&k==='y'){e.preventDefault();doRedo();return}
+  if(sel<0)return;var n=e.shiftKey?5:1;
+  if(e.key==='ArrowLeft')nudge('t',-n);else if(e.key==='ArrowRight')nudge('t',n);
+  else if(e.key==='ArrowUp')nudge('s',n);else if(e.key==='ArrowDown')nudge('s',-n);
+  else if(e.key==='Delete'||e.key==='Backspace')removeAt(sel);
+  else if(e.key==='Escape'){sel=-1;renderAll()}
+  else if(e.key==='Tab'&&draft.length){sel=(sel+(e.shiftKey?-1:1)+draft.length)%draft.length;renderAll()}
+  else return;
+  e.preventDefault();
+});
+window.addEventListener('beforeunload',function(e){if(dirty()){e.preventDefault();e.returnValue=''}});
+if(window.ResizeObserver){var ro=new ResizeObserver(resize);ro.observe($('chart'));ro.observe($('hist'))}
+window.addEventListener('resize',resize);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
+
+resize();renderAll();
+fetch('api/presets',{cache:'no-store'}).then(function(r){return r.json()}).then(function(p){presets=p;renderPresets()}).catch(function(){});
+refresh();setInterval(refresh,2000);
+function histPoint(e){
+  if(!hl||!hist.d.length)return;
+  var r=$('hsvg').getBoundingClientRect(),x=e.clientX-r.left;
+  var age=(hl.w-hl.pr-x)/(hl.w-hl.pl-hl.pr)*histRange;
+  var i=hist.d.length-1-Math.round(age/hist.step);
+  hHover=i<0?null:clamp(i,0,hist.d.length-1);drawHist();
+}
+$('hist').addEventListener('pointermove',histPoint);
+$('hist').addEventListener('pointerdown',histPoint);
+$('hist').addEventListener('pointerleave',function(){hHover=null;drawHist()});
+$('ranges').addEventListener('click',function(e){var b=e.target.closest('[data-range]');if(b)setRange(+b.dataset.range)});
+setRange([300,900,1800,3600,10800].indexOf(histRange)>=0?histRange:300);
+</script>
+</body>
+</html>

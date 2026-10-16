@@ -1,0 +1,106 @@
+<h1 align="center">Breeze</h1>
+
+<p align="center">
+  A fan curve for your PS5, as a single payload.<br>
+  Set how loud the fan gets at each temperature, from your phone or PC.
+</p>
+
+<p align="center">
+  <a href="https://github.com/MiladRx/Breeze/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/MiladRx/Breeze?style=flat-square&color=8ea2ff"></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-PS5-4fd1a5?style=flat-square">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-GPL--3.0-f2b25c?style=flat-square"></a>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#the-web-panel">Web panel</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#build">Build</a>
+</p>
+
+---
+
+## Features
+
+- **Your own fan curve.** Up to 30 points, each a temperature → fan %. Breeze measures the real fan speed every second and keeps it on your curve.
+- **Web panel on your LAN.** Drag points on a live chart, type exact values, undo and redo, shift the whole curve. Works on phones too.
+- **Presets.** Save up to 10 curves and switch between them with one tap.
+- **Live readouts.** CPU and SoC temperature, fan speed, what the curve wants, and up to 3 hours of history you can hover over.
+- **Smooth, not jumpy.** Loading screens, game launches and sensor spikes are filtered, so the fan doesn't surge every time a scene loads.
+- **Safe by default.** Past 88 °C Breeze always asks for maximum cooling, and when it stops it hands the fan back to the console's stock control.
+- **No setup.** One ELF, no daemon or plugin framework needed. Launch it again and the new copy replaces the running one.
+
+## Install
+
+Breeze is a normal `ps5-payload-sdk` ELF, so any ELF loader works.
+
+**Payload Manager (recommended)**
+1. Download `breeze.elf` from the [latest release](https://github.com/MiladRx/Breeze/releases/latest).
+2. In Payload Manager, choose **Upload ELF Payload** and pick the file.
+3. Launch it. Add it to **Autoload** so it starts on every boot.
+
+**elfldr directly**
+```sh
+nc -q0 <ps5-ip> 9021 < breeze.elf
+```
+
+On start the console shows a notification with the panel address, for example:
+
+> Breeze 1.0 running (custom curve on)
+> Panel: http://192.168.0.191:2878
+
+## The web panel
+
+Open the address from the notification in any browser on the same network.
+
+| Part | What it does |
+| --- | --- |
+| **Custom curve** switch | Turns Breeze's control on or off. Off means the console's stock fan behaviour. |
+| **Curve** | Drag points, double-click (or double-tap) to add one, select one to nudge it with the arrow keys. The dashed lines show the current temperature and fan speed. |
+| **History** | Temperature, fan speed and what the curve asked for, over 5 minutes up to 3 hours. |
+| **Presets** | Load, overwrite or delete saved curves. The one running is marked **Active**. |
+| **Points** | The same curve as a table, for exact values. |
+| **Settings** | Turn the panel off, or hand the fan back to the console. |
+
+Changes stay in the editor until you press **Apply** (or <kbd>Ctrl</kbd>+<kbd>S</kbd>).
+
+## How it works
+
+The PS5 has no "set fan to X %" switch. Its fan controller works like a thermostat: you give it a **target temperature** and it spins the fan to cool towards it. Breeze closes the loop around that:
+
+1. Every second it reads the CPU temperature and the actual fan speed.
+2. It looks up what fan speed your curve wants at that temperature.
+3. It nudges the controller's target up or down until the measured fan speed matches.
+
+The console reacts a few seconds late and in large jumps, so Breeze waits for each step to settle, ignores one-second spikes and dips, and backs off quickly if the fan overshoots.
+
+## Files on the console
+
+| Path | What |
+| --- | --- |
+| `/data/breeze/breeze.conf` | Curve, on/off, panel port, panel token |
+| `/data/breeze/presets.conf` | Saved presets |
+| `/data/breeze/breeze.log` | Controller log |
+
+The history graph lives in memory and starts over when Breeze restarts.
+
+## Build
+
+Needs [ps5-payload-sdk](https://github.com/ps5-payload-dev/sdk), CMake and Ninja.
+
+```sh
+PS5_PAYLOAD_SDK=/path/to/ps5-payload-sdk ./build.sh   # -> build/breeze.elf
+```
+
+The panel is plain HTML in [`web/panel.html`](web/panel.html); the build embeds it into the ELF.
+
+## Credits
+
+Made by [**Milad** (MiladRx)](https://github.com/MiladRx).
+
+Thanks to [John Törnblom](https://github.com/john-tornblom) for the PS5 payload SDK, and to the OnionHEN project, where the fan controller interface was first worked out.
+
+## License
+
+[GPL-3.0](LICENSE). Unofficial homebrew, not affiliated with or endorsed by Sony.
