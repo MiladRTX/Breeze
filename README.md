@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MiladRx/Breeze/releases/latest"><img src="https://img.shields.io/github/v/release/MiladRx/Breeze?style=flat&label=Release&color=8ea2ff" alt="Release"/></a>
+  <a href="https://github.com/MiladRx/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.2-8ea2ff?style=flat" alt="Release v1.2"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License GPLv3"/></a>
   <img src="https://img.shields.io/badge/Platform-PlayStation%205-003791?style=flat&logo=playstation" alt="PlayStation 5"/>
   <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c&logoColor=white" alt="C"/>
