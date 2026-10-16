@@ -70,7 +70,7 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 
 ## The panel
 
-| | |
+| Part | What it does |
 | --- | --- |
 | **Readouts** | CPU and SoC temperature, fan speed, what your curve wants, and the controller target. Hover (or tap) any of them for a short explanation. |
 | **Curve** | Drag points, double-click to add one, arrow keys to nudge. The dashed lines show where the temperature and fan are right now. |
