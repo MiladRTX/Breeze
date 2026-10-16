@@ -347,6 +347,45 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 <script>
 "use strict";
 var TK='@@FC_TOKEN@@';
+
+/* Demo mode. Breeze swaps the token in when it serves this page; if it is
+ * still the placeholder, the page was opened some other way (a saved copy,
+ * GitHub, a design tool), so answer the API from built-in sample data
+ * instead of showing empty readouts. Never active on the console. */
+if(TK.charAt(0)==='@')(function(){
+  var pts=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]];
+  var presets=[{name:'2nd',points:pts}];
+  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,points:pts};
+  function want(t){return evalCurve(st.points,t)}
+  function form(b){var o={};String(b||'').split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '))});return o}
+  function points(f){var p=[];for(var i=0;i<30;i++)if(f['p'+i]){var v=f['p'+i].split(',');p.push([+v[0],+v[1]])}return p}
+  function find(n){for(var i=0;i<presets.length;i++)if(presets[i].name===n)return i;return -1}
+  /* 3 h of history: idle, a gaming stretch in the middle, idle again */
+  function history(sec){
+    var n=Math.min(300,Math.floor(sec/2)),step=Math.max(2,Math.round(sec/n/2)*2),d=[];
+    for(var i=0;i<n;i++){var age=(n-1-i)*step,g=age>2400&&age<7800?1:0;
+      var c=Math.round(g?68+3*Math.sin(age/240)+1.5*Math.sin(age/37):35+Math.sin(age/300));
+      var w=want(c);d.push([c,Math.max(13,w+Math.round(Math.sin(age/90))),w])}
+    return {step:step,d:d};
+  }
+  function reply(v,code){return Promise.resolve(new Response(code?'':JSON.stringify(v),{status:code||200,headers:{'Content-Type':'application/json'}}))}
+  window.fetch=function(url,opt){
+    var u=String(url),post=opt&&opt.method==='POST',f=form(opt&&opt.body);
+    if(u.indexOf('api/history')>=0)return reply(history(+(u.split('s=')[1])||300));
+    if(u.indexOf('api/presets')>=0){
+      if(post){var i=find(f.name);
+        if(f.action==='apply'&&i>=0)st.points=presets[i].points;
+        else if(f.action==='delete'&&i>=0)presets.splice(i,1);
+        else if(f.action==='rename'&&i>=0){if(find(f.to)>=0)return reply(0,409);presets[i].name=f.to}
+        else if(f.action==='save'){var p=points(f);if(i>=0)presets[i].points=p;else if(presets.length<10)presets.push({name:f.name,points:p});else return reply(0,409)}}
+      return reply(presets);
+    }
+    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;var p=points(f);if(p.length)st.points=p}
+    if(post&&u.indexOf('api/restore')>=0)st.enabled=0;
+    st.desired=st.enabled?want(st.cpu):-1;st.duty=st.enabled?Math.max(13,st.desired):13;
+    return reply(st);
+  };
+})();
 var XMIN=30,XMAX=100,MAXP=30,MINP=2;
 var DEF=[[55,25],[63,35],[70,50],[76,70],[82,92]];
 var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
