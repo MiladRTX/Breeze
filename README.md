@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo/logo-gradient.svg" alt="Breeze logo" width="120">
+</p>
+
 <h1 align="center">Breeze</h1>
 
 <p align="center">
