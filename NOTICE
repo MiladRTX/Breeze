@@ -1,0 +1,20 @@
+Breeze - a fan curve payload for the PS5
+Copyright (C) 2026 MiladRx (https://github.com/MiladRx)
+
+Breeze is free software: you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. See LICENSE for the full text.
+
+Breeze is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.
+
+Credits
+- ps5-payload-sdk by John Törnblom (https://github.com/ps5-payload-dev/sdk):
+  the toolchain Breeze is built with. Not included in this repository.
+- The PS5 fan controller interface used in source/fan.c was first worked out
+  by the onionHEN project (GPL-3.0, https://github.com/aydencharles/onionHEN).
+
+Breeze is an unofficial homebrew project and is not affiliated with or
+endorsed by Sony Interactive Entertainment. Use it only on hardware you own.
