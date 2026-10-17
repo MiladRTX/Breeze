@@ -7,12 +7,15 @@ void fc_defaults(curve_config *c) {
     c->enabled = 0;
     c->web_enabled = 1;
     c->web_port = FC_DEFAULT_WEB_PORT;
-    c->points_count = 5;
-    c->points[0] = (curve_point){55, 25};
-    c->points[1] = (curve_point){63, 35};
-    c->points[2] = (curve_point){70, 50};
-    c->points[3] = (curve_point){76, 70};
-    c->points[4] = (curve_point){82, 92};
+    /* The "Safe" preset (see fc_presets_defaults). Off until the user picks
+     * a curve, so a first start never changes the fan. */
+    c->points_count = 6;
+    c->points[0] = (curve_point){50, 15};
+    c->points[1] = (curve_point){60, 20};
+    c->points[2] = (curve_point){68, 30};
+    c->points[3] = (curve_point){74, 45};
+    c->points[4] = (curve_point){78, 65};
+    c->points[5] = (curve_point){82, 85};
 }
 
 void fc_sanitize_points(int *count, curve_point *points) {

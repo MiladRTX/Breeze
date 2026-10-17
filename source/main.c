@@ -155,6 +155,9 @@ static void notify_started(int replaced) {
     char ip[INET_ADDRSTRLEN];
     const char *mode = cfg.enabled ? "custom curve on" : "stock fan";
     const char *verb = replaced ? "restarted" : "running";
+    /* With the curve off (always the case on a first start) the panel is
+     * where you pick one. */
+    const char *lead = cfg.enabled ? "Panel:" : "Pick a curve at";
     if (!cfg.web_enabled)
         notify("%s %s %s (%s)\nWeb panel is off", FC_PLUGIN_NAME,
                FC_PLUGIN_VERSION, verb, mode);
@@ -162,11 +165,11 @@ static void notify_started(int replaced) {
         notify("%s %s %s (%s)\nWeb panel failed to start on port %d",
                FC_PLUGIN_NAME, FC_PLUGIN_VERSION, verb, mode, cfg.web_port);
     else if (local_ipv4(ip, sizeof ip) == 0)
-        notify("%s %s %s (%s)\nPanel: http://%s:%d", FC_PLUGIN_NAME,
-               FC_PLUGIN_VERSION, verb, mode, ip, srv_port);
+        notify("%s %s %s (%s)\n%s http://%s:%d", FC_PLUGIN_NAME,
+               FC_PLUGIN_VERSION, verb, mode, lead, ip, srv_port);
     else
-        notify("%s %s %s (%s)\nPanel: port %d", FC_PLUGIN_NAME,
-               FC_PLUGIN_VERSION, verb, mode, srv_port);
+        notify("%s %s %s (%s)\n%s port %d", FC_PLUGIN_NAME,
+               FC_PLUGIN_VERSION, verb, mode, lead, srv_port);
 }
 
 static void *launcher_thread(void *arg) {
@@ -257,19 +260,25 @@ int main(void) {
             ensure_server_sync();
     }
 
+    /* Hand the fan back before anything slow. Payload Manager's kill sends
+     * SIGTERM and SIGKILL 1.5 s later, which used to land mid-teardown and
+     * leave the fan on Breeze's last target. Under the lock, so the control
+     * thread (which re-checks `stopping` there) can't write after this. */
+    app_lock(&g_state);
+    g_state.stopping = 1;
+    g_state.current_setpoint = -1;
+    int was_on = g_state.cfg.enabled;
+    if (was_on)
+        fan_write_setpoint(FC_STOCK_TARGET_C);
+    app_unlock(&g_state);
+    if (was_on)
+        fc_log("ctl: stock target restored on exit");
+
     if (srv_port) {
         httpd_stop();
         srv_port = 0;
     }
     pthread_join(ctl_thread, NULL);
-
-    app_lock(&g_state);
-    cfg = g_state.cfg;
-    app_unlock(&g_state);
-    if (cfg.enabled) {
-        fan_write_setpoint(FC_STOCK_TARGET_C);
-        fc_log("ctl: stock target restored on exit");
-    }
     fc_log("stopped");
     fc_log_close();
     close(lock_fd);

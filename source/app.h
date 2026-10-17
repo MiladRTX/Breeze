@@ -18,6 +18,7 @@ typedef struct app_state {
     fan_sample sample;
     int current_setpoint; /* -1 when not holding a custom setpoint */
     int ui_dirty;         /* set by out-of-process changes (web) */
+    int stopping;         /* fan handed back; the control loop must not write */
 } app_state;
 
 void app_state_init(app_state *st);

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **First start:**
+  - Breeze starts on stock fan control, and the popup says where to pick a curve.
+  - A new **Safe** preset (also the default curve) never cools less than stock.
+  - New presets: Safe, Quiet (play-tested), Balanced, Cool. Existing presets are kept.
+- **Apply turns the custom curve on** if it was off, and a loaded preset can be applied straight away.
+- **No preset is marked Active while the curve is off.**
+- **A one-line hint** on the first visit says how to start.
+- **The fan goes back to stock first** when Breeze is asked to stop, before the slower shutdown.
 - **Hover tips** on the panel buttons.
 - **Only one preset is marked Active,** even when two presets hold the same curve.
 - **Saving under an existing name asks first** instead of silently replacing that preset.

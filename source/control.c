@@ -233,7 +233,7 @@ void *fc_control_loop(void *arg) {
              * lock, and a custom write landing after it would stick. */
             int still_on, rc = 0;
             app_lock(st);
-            still_on = st->cfg.enabled;
+            still_on = st->cfg.enabled && !st->stopping;
             if (still_on) {
                 rc = fan_write_setpoint(target);
                 st->current_setpoint = rc == 0 ? target : -1;
