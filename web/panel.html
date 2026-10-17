@@ -254,7 +254,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   <section class="tiles">
     <div class="tile t" tabindex="0" data-tip="CPU temperature. Breeze reads the fan speed off your curve at this temp."><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
     <div class="tile t" tabindex="0" data-tip="Second sensor on the main chip. Shown for reference only."><div class="eyebrow">SoC</div><div class="v"><span id="vSoc">–</span><small>°C</small></div></div>
-    <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan</div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
+    <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan<span id="fanMin" hidden> · console min</span></div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
     <div class="tile w" tabindex="0" data-tip="What your curve asks for at the current CPU temp. Close to Fan means it is working."><div class="eyebrow">Curve wants</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
     <div class="tile" tabindex="0" data-tip="The thermostat setting Breeze steers. Lower means more fan; above the CPU temp means stay quiet."><div class="eyebrow">ICC target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
   </section>
@@ -397,7 +397,11 @@ if(TK.charAt(0)==='@')(function(){
   };
 })();
 var XMIN=30,XMAX=100,MAXP=30,MINP=2;
-var DEF=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]]; /* the "Breeze" preset */
+/* The slowest the PS5 itself runs the fan: 13% while cool, 23% from about
+ * 52 C (measured). Breeze can add fan on top, never go below. */
+var MIN_LO=13,MIN_HI=23,MIN_AT=52;
+function consoleMin(t){return t<MIN_AT?MIN_LO:MIN_HI}
+var DEF=[[50,13],[55,23],[70,24],[75,28],[79,32],[82,38],[85,49]]; /* the "Breeze" preset */
 var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
 
 var $=function(id){return document.getElementById(id)};
@@ -484,6 +488,12 @@ function drawCurve(){
     // axis labels give way to the live temp badge drawn on the same row
     var nearBadge=st&&st.cpu>=0&&Math.abs(x-X(clamp(st.cpu,XMIN,XMAX)))<34;
     if(t%10===0&&!nearBadge)o+=label(x,H-P.b+19,t+'°','middle')}
+  // The console's own minimum fan speed: the curve can't go below this band.
+  o+='<path d="M'+X(XMIN)+' '+Y(0)+' L'+X(XMIN)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_HI)+
+    ' L'+X(XMAX)+' '+Y(MIN_HI)+' L'+X(XMAX)+' '+Y(0)+'Z" fill="#ffffff" fill-opacity=".035"/>'+
+    '<path d="M'+X(XMIN)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_HI)+' L'+X(XMAX)+' '+Y(MIN_HI)+
+    '" fill="none" stroke="#5c6573" stroke-opacity=".7" stroke-dasharray="3 4"/>'+
+    label(X(XMAX)-8,Y(MIN_HI)+14,'console minimum','end');
   if(draft.length){
     var d='M'+X(XMIN)+' '+Y(draft[0][1]);
     for(i=0;i<draft.length;i++)d+=' L'+X(draft[i][0])+' '+Y(draft[i][1]);
@@ -710,6 +720,10 @@ function applyState(s){
   $('ver').textContent=s.ver?'v'+s.ver:'';
   $('vCpu').textContent=s.cpu<0?'–':s.cpu;$('vSoc').textContent=s.soc<0?'–':s.soc;
   $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
+  // Fan above the curve only because the console won't go lower: say so.
+  var lo=s.cpu>=0?consoleMin(s.cpu):-1,atMin=s.enabled&&s.desired>=0&&s.duty>=0&&s.desired<lo&&s.duty<=lo+2;
+  $('fanMin').hidden=!atMin;
+  $('vFan').closest('.tile').dataset.tip=atMin?'The PS5 won\'t run the fan slower than this at '+s.cpu+'°C, so it sits above your curve.':'How fast the fan is spinning right now.';
   $('vTgt').textContent=s.target<0?'–':s.target;$('port').textContent=s.web_port;
   var a=document.activeElement;
   if(a!==$('enabled'))$('enabled').checked=!!s.enabled;
