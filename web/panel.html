@@ -365,7 +365,7 @@ var TK='@@FC_TOKEN@@';
 if(TK.charAt(0)==='@')(function(){
   var pts=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]];
   var presets=[{name:'2nd',points:pts}];
-  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,points:pts};
+  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,points:pts};
   function want(t){return evalCurve(st.points,t)}
   function form(b){var o={};String(b||'').split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '))});return o}
   function points(f){var p=[];for(var i=0;i<30;i++)if(f['p'+i]){var v=f['p'+i].split(',');p.push([+v[0],+v[1]])}return p}
@@ -397,11 +397,11 @@ if(TK.charAt(0)==='@')(function(){
   };
 })();
 var XMIN=30,XMAX=100,MAXP=30,MINP=2;
-/* The slowest the PS5 itself runs the fan: 13% while cool, 23% from about
- * 52 C (measured). Breeze can add fan on top, never go below. */
-var MIN_LO=13,MIN_HI=23,MIN_AT=52;
-function consoleMin(t){return t<MIN_AT?MIN_LO:MIN_HI}
-var DEF=[[50,13],[55,23],[70,24],[75,28],[79,32],[82,38],[85,49]]; /* the "Breeze" preset */
+/* The slowest the PS5 itself runs the fan right now (13% in the menus, 23%
+ * in a game), measured live by Breeze; -1 until known. Breeze can add fan on
+ * top, never go below. */
+function consoleMin(){return st&&st.min>0?st.min:-1}
+var DEF=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]]; /* the "Breeze" preset */
 var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
 
 var $=function(id){return document.getElementById(id)};
@@ -488,12 +488,12 @@ function drawCurve(){
     // axis labels give way to the live temp badge drawn on the same row
     var nearBadge=st&&st.cpu>=0&&Math.abs(x-X(clamp(st.cpu,XMIN,XMAX)))<34;
     if(t%10===0&&!nearBadge)o+=label(x,H-P.b+19,t+'°','middle')}
-  // The console's own minimum fan speed: the curve can't go below this band.
-  o+='<path d="M'+X(XMIN)+' '+Y(0)+' L'+X(XMIN)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_HI)+
-    ' L'+X(XMAX)+' '+Y(MIN_HI)+' L'+X(XMAX)+' '+Y(0)+'Z" fill="#ffffff" fill-opacity=".035"/>'+
-    '<path d="M'+X(XMIN)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_LO)+' L'+X(MIN_AT)+' '+Y(MIN_HI)+' L'+X(XMAX)+' '+Y(MIN_HI)+
-    '" fill="none" stroke="#5c6573" stroke-opacity=".7" stroke-dasharray="3 4"/>'+
-    label(X(XMAX)-8,Y(MIN_HI)+14,'console minimum','end');
+  // The console's own minimum fan speed right now: the curve can't go below this band.
+  var cm=consoleMin();
+  if(cm>0){y=Y(cm);
+    o+='<rect x="'+P.l+'" y="'+y+'" width="'+(W-P.l-P.r)+'" height="'+(Y(0)-y)+'" fill="#ffffff" fill-opacity=".035"/>'+
+      '<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="#5c6573" stroke-opacity=".7" stroke-dasharray="3 4"/>'+
+      label(X(XMAX)-8,y+14,'console minimum','end')}
   if(draft.length){
     var d='M'+X(XMIN)+' '+Y(draft[0][1]);
     for(i=0;i<draft.length;i++)d+=' L'+X(draft[i][0])+' '+Y(draft[i][1]);
@@ -721,9 +721,9 @@ function applyState(s){
   $('vCpu').textContent=s.cpu<0?'–':s.cpu;$('vSoc').textContent=s.soc<0?'–':s.soc;
   $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
   // Fan above the curve only because the console won't go lower: say so.
-  var lo=s.cpu>=0?consoleMin(s.cpu):-1,atMin=s.enabled&&s.desired>=0&&s.duty>=0&&s.desired<lo&&s.duty<=lo+2;
+  var lo=s.min>0?s.min:-1,atMin=s.enabled&&lo>0&&s.desired>=0&&s.duty>=0&&s.desired<lo&&s.duty<=lo+2;
   $('fanMin').hidden=!atMin;
-  $('vFan').closest('.tile').dataset.tip=atMin?'The PS5 won\'t run the fan slower than this at '+s.cpu+'°C, so it sits above your curve.':'How fast the fan is spinning right now.';
+  $('vFan').closest('.tile').dataset.tip=atMin?'The PS5 won\'t run the fan slower than '+lo+'% right now (13% in the menus, 23% in a game), so it sits above your curve.':'How fast the fan is spinning right now.';
   $('vTgt').textContent=s.target<0?'–':s.target;$('port').textContent=s.web_port;
   var a=document.activeElement;
   if(a!==$('enabled'))$('enabled').checked=!!s.enabled;

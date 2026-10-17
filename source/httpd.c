@@ -111,6 +111,7 @@ static void handle_state(int fd) {
     int setp;
     int desired = -1;
     int floor_state = 0;
+    int cmin;
     char buf[1024];
     size_t off = 0;
 
@@ -118,6 +119,7 @@ static void handle_state(int fd) {
     cfg = g_state->cfg;
     s = g_state->sample;
     setp = g_state->current_setpoint;
+    cmin = g_state->console_min;
     app_unlock(g_state);
 
     if (cfg.enabled) {
@@ -132,10 +134,10 @@ static void handle_state(int fd) {
     catf(buf, sizeof buf, &off,
          "{\"ver\":\"%s\",\"enabled\":%d,\"web_enabled\":%d,\"web_port\":%d,"
          "\"cpu\":%d,\"soc\":%d,\"duty\":%d,\"desired\":%d,\"target\":%d,"
-         "\"floor\":%d,\"points\":[",
+         "\"floor\":%d,\"min\":%d,\"points\":[",
          FC_PLUGIN_VERSION, cfg.enabled ? 1 : 0, cfg.web_enabled ? 1 : 0,
          cfg.web_port, s.cpu_c, s.soc_c, s.duty_pct, desired, setp,
-         floor_state);
+         floor_state, cmin);
     for (int i = 0; i < cfg.points_count; i++)
         catf(buf, sizeof buf, &off, "%s[%d,%d]", i ? "," : "",
              cfg.points[i].temp_c, cfg.points[i].fan_pct);

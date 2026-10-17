@@ -23,6 +23,32 @@ static int median_duty(const int *v, int n) {
     return a[n / 2];
 }
 
+/* The console's own minimum fan speed. It isn't fixed: 13% in the system
+ * menus, 23% while a game runs. Whenever the ICC target has sat well above
+ * the temperature for a while, nothing is adding fan, so the (median) duty
+ * is exactly that minimum. Measured live for the panel; -1 until seen. */
+#define MIN_GAP_C 5
+#define MIN_SETTLE_TICKS 4 /* ICC duty lag after the target went up */
+static void track_console_min(app_state *st, int eff_target, int temp_raw,
+                              int duty) {
+    static int ring[7], n, settled;
+    if (duty < 0 || temp_raw < 0 || eff_target < temp_raw + MIN_GAP_C) {
+        settled = 0;
+        n = 0;
+        return;
+    }
+    if (++settled <= MIN_SETTLE_TICKS)
+        return;
+    ring[n % 7] = duty;
+    n++;
+    if (n < 5)
+        return;
+    int m = median_duty(ring, n < 7 ? n : 7);
+    app_lock(st);
+    st->console_min = m;
+    app_unlock(st);
+}
+
 /* Closed loop: every second, read temp + real fan duty, look up the desired
  * duty, and steer the ICC target up/down until they match. The ICC target is
  * a temperature the firmware controller cools toward; lower target = more
@@ -64,6 +90,9 @@ void *fc_control_loop(void *arg) {
                                                 : -1;
         app_unlock(st);
         fc_hist_record(temp_raw, s.duty_pct, hist_want);
+        /* With the curve off the ICC runs at the stock target. */
+        track_console_min(st, enabled ? target : FC_STOCK_TARGET_C, temp_raw,
+                          s.duty_pct);
 
         if (!enabled) {
             desired = -1;

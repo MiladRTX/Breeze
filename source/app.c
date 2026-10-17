@@ -13,6 +13,7 @@ void app_state_init(app_state *st) {
     memset(st, 0, sizeof *st);
     pthread_mutex_init(&st->lock, NULL);
     st->current_setpoint = -1;
+    st->console_min = -1;
 }
 
 void app_lock(app_state *st) {
