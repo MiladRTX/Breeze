@@ -7,6 +7,7 @@
 #include "config.h"
 #include "control.h"
 #include "httpd.h"
+#include "launcher.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -18,6 +19,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
@@ -157,6 +159,11 @@ static void notify_started(int replaced) {
                FC_PLUGIN_VERSION, verb, mode, srv_port);
 }
 
+static void *launcher_thread(void *arg) {
+    fc_launcher_ensure((int)(intptr_t)arg);
+    return NULL;
+}
+
 int main(void) {
     signal(SIGINT, on_signal);
     signal(SIGTERM, on_signal);
@@ -223,6 +230,12 @@ int main(void) {
 
     ensure_server_sync();
     notify_started(replaced);
+    /* Home screen tile; a no-op once it's installed and current. */
+    if (srv_port) {
+        pthread_t lt;
+        if (pthread_create(&lt, NULL, launcher_thread, (void *)(intptr_t)srv_port) == 0)
+            pthread_detach(lt);
+    }
 
     for (int tick = 0; g_running; tick++) {
         usleep(100000);

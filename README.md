@@ -56,6 +56,8 @@
    > Breeze running (custom curve on)<br>
    > Panel: `http://<PS5-IP>:2878`
 
+   On the first start Breeze also adds a **Breeze tile to your home screen**: open it and the panel comes up in the PS5 browser.
+
 > [!TIP]
 > Add Breeze to Payload Manager's **Autoload** list so your curve is back after every reboot. To update, just launch the new version: it replaces the running one by itself.
 
