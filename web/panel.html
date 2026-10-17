@@ -311,7 +311,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
       <section class="card">
         <div class="hd"><h2>Presets</h2><span class="sub num" id="pCount"></span></div>
         <div class="bd" style="padding-top:4px">
-          <div class="first hint" id="firstHint" hidden>Breeze is on stock fan control. Load a preset and press Apply. <b>Safe</b> is a good start.</div>
+          <div class="first hint" id="firstHint" hidden>Breeze is on stock fan control. Load the <b>Breeze</b> preset and press Apply to start.</div>
           <div id="plist"></div>
           <div class="newp"><input class="field" id="pName" maxlength="40" placeholder="Save current curve as…" autocomplete="off">
             <button class="btn" id="bSaveAs" data-tip="Save the curve in the editor as a new preset">Save</button></div>
@@ -397,7 +397,7 @@ if(TK.charAt(0)==='@')(function(){
   };
 })();
 var XMIN=30,XMAX=100,MAXP=30,MINP=2;
-var DEF=[[50,15],[60,20],[68,30],[74,45],[78,65],[82,85]]; /* the "Safe" preset */
+var DEF=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]]; /* the "Breeze" preset */
 var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
 
 var $=function(id){return document.getElementById(id)};

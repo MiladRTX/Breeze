@@ -7,15 +7,14 @@ void fc_defaults(curve_config *c) {
     c->enabled = 0;
     c->web_enabled = 1;
     c->web_port = FC_DEFAULT_WEB_PORT;
-    /* The "Safe" preset (see fc_presets_defaults). Off until the user picks
-     * a curve, so a first start never changes the fan. */
-    c->points_count = 6;
-    c->points[0] = (curve_point){50, 15};
-    c->points[1] = (curve_point){60, 20};
-    c->points[2] = (curve_point){68, 30};
-    c->points[3] = (curve_point){74, 45};
-    c->points[4] = (curve_point){78, 65};
-    c->points[5] = (curve_point){82, 85};
+    /* Also the "Breeze" starting preset: the curve play-tested on hardware.
+     * Off until the user picks a curve, so a first start never changes the
+     * fan. */
+    static const curve_point def[] = {
+        {50, 13}, {55, 15}, {60, 17}, {65, 20}, {70, 24},
+        {75, 28}, {79, 32}, {82, 38}, {85, 49}};
+    c->points_count = (int)(sizeof def / sizeof def[0]);
+    memcpy(c->points, def, sizeof def);
 }
 
 void fc_sanitize_points(int *count, curve_point *points) {

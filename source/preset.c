@@ -44,22 +44,10 @@ static void add_default(preset_store *ps, const char *name,
 
 void fc_presets_defaults(preset_store *ps) {
     memset(ps, 0, sizeof *ps);
-    /* Safe first: at the console's own minimum while cool, ramping ahead of
-     * the stock 77 C target so it never cools less than stock. Quiet is
-     * the curve play-tested on hardware. */
-    static const curve_point safe[] = {
-        {50, 15}, {60, 20}, {68, 30}, {74, 45}, {78, 65}, {82, 85}};
-    static const curve_point quiet[] = {
-        {50, 13}, {55, 15}, {60, 17}, {65, 20}, {70, 24},
-        {75, 28}, {79, 32}, {82, 38}, {85, 49}};
-    static const curve_point balanced[] = {
-        {50, 15}, {60, 22}, {70, 35}, {78, 50}, {84, 70}};
-    static const curve_point cool[] = {
-        {50, 20}, {60, 30}, {68, 45}, {75, 62}, {82, 85}};
-    add_default(ps, "Safe", safe, 6);
-    add_default(ps, "Quiet", quiet, 9);
-    add_default(ps, "Balanced", balanced, 5);
-    add_default(ps, "Cool", cool, 5);
+    /* One starting preset: the default curve, play-tested on hardware. */
+    curve_config def;
+    fc_defaults(&def);
+    add_default(ps, "Breeze", def.points, def.points_count);
 }
 
 int fc_presets_load(preset_store *ps) {
