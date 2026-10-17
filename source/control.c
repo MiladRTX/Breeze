@@ -37,7 +37,7 @@ void *fc_control_loop(void *arg) {
     int pending = -1;
     int pending_n = 0;
     int target = -1;
-    int temp_ema = -1;
+    int ema_x16 = -1; /* smoothed temp, 1/16 C */
     int prev_duty = -1;
     int cooldown = 0;
     int duty_hist[7] = {0};
@@ -71,7 +71,7 @@ void *fc_control_loop(void *arg) {
             pending_n = 0;
             rewrite_tick = 0;
             target = -1;
-            temp_ema = -1;
+            ema_x16 = -1;
             prev_duty = -1;
             cooldown = 0;
             duty_n = 0;
@@ -85,7 +85,13 @@ void *fc_control_loop(void *arg) {
          * larger of raw and smoothed temperature, so a rise is seen at once
          * (a lagging demand left the fan at 100% while the curve said 25%)
          * while a falling temperature still decays slowly. */
-        temp_ema = (temp_ema < 0) ? temp_raw : (temp_ema * 3 + temp_raw) / 4;
+        /* Kept in 1/16 C and rounded: the old whole-degree average
+         * truncated, so after a climb it stalled up to 3 C under a steady
+         * temp, and the rise gate (raw >= ema + 3) read "still rising" for
+         * as long as that lasted, leaving the fan at the console's minimum. */
+        ema_x16 = (ema_x16 < 0) ? temp_raw * 16
+                                : ema_x16 + (temp_raw * 16 - ema_x16) / 4;
+        int temp_ema = (ema_x16 + 8) / 16;
         int temp = temp_raw > temp_ema ? temp_raw : temp_ema;
 
         /* Post-dip hold. A loading-screen dip (raw well under the EMA) drops
