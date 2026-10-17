@@ -26,6 +26,10 @@
  * wind-up from an idle the console keeps louder than the curve (target up at
  * 88 C while gaming at 74 C, fan held at 23% with the curve at 27%). */
 #define FC_CTL_PARK_PCT 3
+/* A target this far over the temp is wound up, not steering: any shortfall
+ * at all parks it (in game the curve sits 1-2% over the console's minimum,
+ * which a 3% threshold never saw, so the fan read as stuck). */
+#define FC_CTL_WOUND_C 4
 /* Ticks (1 s) to hold after a target step before the next one: the ICC's
  * duty response lags a few seconds and the 7-sample median adds ~3 more, so
  * stepping sooner acts on a duty reading that predates the last step. */

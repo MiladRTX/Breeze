@@ -179,8 +179,9 @@ void *fc_control_loop(void *arg) {
             /* Park: a shortfall inside the deadband still pulls a wound-up
              * target back to just above the temp (FC_CTL_PARK_PCT), unless
              * the temp is dipping or climbing fast. */
-            int park = adje == 0 && err >= FC_CTL_PARK_PCT && dip_hold == 0 &&
-                       !rising;
+            int short_by = err >= FC_CTL_PARK_PCT ||
+                           (err >= 1 && new_target > temp + FC_CTL_WOUND_C);
+            int park = adje == 0 && short_by && dip_hold == 0 && !rising;
             int skip = ((adje > 0 && !hold_down) || park) &&
                        temp_raw >= temp_ema && new_target > temp + 1;
             if (skip)
