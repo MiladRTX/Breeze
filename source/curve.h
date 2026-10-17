@@ -21,6 +21,11 @@
 #define FC_TARGET_MAX_C 90
 #define FC_CTL_DEADBAND_PCT 4    /* fan over the curve by more -> less fan */
 #define FC_CTL_DEADBAND_UP_PCT 8 /* fan under the curve by more -> more fan */
+/* Fan under the curve by this much with the target far above the temp: park
+ * the target just above the temp. A no-op for the fan, but it undoes the
+ * wind-up from an idle the console keeps louder than the curve (target up at
+ * 88 C while gaming at 74 C, fan held at 23% with the curve at 27%). */
+#define FC_CTL_PARK_PCT 3
 /* Ticks (1 s) to hold after a target step before the next one: the ICC's
  * duty response lags a few seconds and the 7-sample median adds ~3 more, so
  * stepping sooner acts on a duty reading that predates the last step. */

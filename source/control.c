@@ -176,8 +176,13 @@ void *fc_control_loop(void *arg) {
             int rising = temp_raw >= temp_ema + FC_RISE_C;
             int hold_down =
                 adje > 0 && (dip_hold > 0 || (rising && new_target < temp_raw));
-            int skip = adje > 0 && !hold_down && temp_raw >= temp_ema &&
-                       new_target > temp + 1;
+            /* Park: a shortfall inside the deadband still pulls a wound-up
+             * target back to just above the temp (FC_CTL_PARK_PCT), unless
+             * the temp is dipping or climbing fast. */
+            int park = adje == 0 && err >= FC_CTL_PARK_PCT && dip_hold == 0 &&
+                       !rising;
+            int skip = ((adje > 0 && !hold_down) || park) &&
+                       temp_raw >= temp_ema && new_target > temp + 1;
             if (skip)
                 new_target = temp + 1;
             /* Fast escape, the mirror case: a target parked just above a quiet
