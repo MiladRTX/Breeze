@@ -4,12 +4,13 @@
 
 void fc_defaults(curve_config *c) {
     memset(c, 0, sizeof *c);
-    c->enabled = 1;
+    /* Off until the user switches it on once; that choice is saved and
+     * kept on every launch after. */
+    c->enabled = 0;
     c->web_enabled = 1;
     c->web_port = FC_DEFAULT_WEB_PORT;
-    /* Also the "Breeze" starting preset: the curve play-tested on hardware.
-     * On from the first start, so Breeze works without a visit to the
-     * panel. Past FC_SAFETY_TEMP_C it asks for full cooling regardless. */
+    /* Also the "Breeze" starting preset: the curve play-tested on hardware,
+     * so switching on is all a first start needs. */
     static const curve_point def[] = {
         {50, 13}, {55, 15}, {60, 17}, {65, 20}, {70, 24},
         {75, 28}, {79, 32}, {82, 38}, {85, 49}};

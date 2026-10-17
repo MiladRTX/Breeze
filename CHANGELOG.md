@@ -3,9 +3,8 @@
 ## Unreleased
 
 - **First start:**
-  - Breeze runs its default curve straight away; nothing needs to be applied first.
+  - Breeze starts on stock fan control until you switch **Custom curve** on once; it remembers that on every launch after. The popup and a one-line hint in the panel say where.
   - One starting preset, **Breeze**: the play-tested quiet curve, which is also the default curve. Existing presets are kept.
-  - If the curve is ever off, the popup says where to pick one.
 - **Apply turns the custom curve on** if it was off, and a loaded preset can be applied straight away.
 - **No preset is marked Active while the curve is off.**
 - **A one-line hint** on the first visit says how to start.

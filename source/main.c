@@ -157,7 +157,7 @@ static void notify_started(int replaced) {
     const char *verb = replaced ? "restarted" : "running";
     /* With the curve off (always the case on a first start) the panel is
      * where you pick one. */
-    const char *lead = cfg.enabled ? "Panel:" : "Pick a curve at";
+    const char *lead = cfg.enabled ? "Panel:" : "Turn the curve on at";
     if (!cfg.web_enabled)
         notify("%s %s %s (%s)\nWeb panel is off", FC_PLUGIN_NAME,
                FC_PLUGIN_VERSION, verb, mode);
