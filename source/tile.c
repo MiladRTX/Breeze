@@ -67,12 +67,17 @@ static int panel_port(void) {
     FILE *f = fopen(CONF, "r");
     if (!f)
         return port;
-    while (fgets(line, sizeof line, f))
-        if (!strncmp(line, "web_port=", 9)) {
-            int p = atoi(line + 9);
-            if (p >= 1024 && p <= 65535)
-                port = p;
+    /* Same parsing as the config loader, or the two can disagree on the
+     * port and the tile gets reinstalled on every start. */
+    while (fgets(line, sizeof line, f)) {
+        char *l = line;
+        while (*l == ' ' || *l == '\t')
+            l++;
+        if (!strncmp(l, "web_port=", 9)) {
+            int p = atoi(l + 9);
+            port = (p >= 1024 && p <= 65535) ? p : 2878;
         }
+    }
     fclose(f);
     return port;
 }

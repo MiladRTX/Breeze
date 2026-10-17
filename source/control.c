@@ -56,6 +56,8 @@ void *fc_control_loop(void *arg) {
         app_lock(st);
         st->sample = s;
         enabled = st->cfg.enabled;
+        if (!enabled)
+            st->current_setpoint = -1;
         int temp_raw = s.cpu_c >= 0 ? s.cpu_c : s.soc_c;
         /* Same "wants" the panel shows live (curve at the raw temp). */
         int hist_want = enabled && temp_raw > 0 ? fc_evaluate(&st->cfg, temp_raw)
@@ -226,18 +228,25 @@ void *fc_control_loop(void *arg) {
         target = new_target;
         if (changed || ++rewrite_tick >= 2) {
             rewrite_tick = 0;
-            if (fan_write_setpoint(target) == 0) {
-                app_lock(st);
-                st->current_setpoint = target;
-                app_unlock(st);
+            /* Written under the lock, and only if still enabled: the panel
+             * turning the curve off restores the stock target under the same
+             * lock, and a custom write landing after it would stick. */
+            int still_on, rc = 0;
+            app_lock(st);
+            still_on = st->cfg.enabled;
+            if (still_on) {
+                rc = fan_write_setpoint(target);
+                st->current_setpoint = rc == 0 ? target : -1;
+            }
+            app_unlock(st);
+            if (!still_on) {
+                target = -1;
+            } else if (rc == 0) {
                 if (changed)
                     fc_log("ctl: target %dC (fan %d%% -> want %d%%, temp %dC)",
                            target, duty_f, desired, temp_raw);
             } else {
                 target = -1;
-                app_lock(st);
-                st->current_setpoint = -1;
-                app_unlock(st);
                 fc_log("ctl: write failed");
             }
         }

@@ -15,11 +15,15 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #define HTTP_REQ_MAX 16384
 #define HTTP_BODY_MAX 4096
 #define HTTPD_POLL_MS 500
+/* Whole-request read budget. The server handles one connection at a time,
+ * so an idle or trickling client must not hold the panel for long. */
+#define HTTPD_READ_MS 1500
 
 static pthread_t g_thread;
 static volatile int g_running;
@@ -171,14 +175,41 @@ static void url_decode(char *s) {
     *d = 0;
 }
 
-static void apply_form(const char *body) {
-    curve_config cfg;
-    int was_enabled;
-    int n_pts = -1;
+/* pN=temp,fan form fields. Only indices actually sent count, compacted in
+ * index order, so a gap never becomes a fake 0/0 point. */
+typedef struct {
+    curve_point pts[FC_CURVE_MAX_POINTS];
+    unsigned char seen[FC_CURVE_MAX_POINTS];
+} form_points;
 
+static void form_point(form_points *fp, const char *key, const char *val) {
+    if (key[0] != 'p' || !isdigit((unsigned char)key[1]))
+        return;
+    int i = atoi(key + 1);
+    int t = 0, s = 0;
+    if (i < 0 || i >= FC_CURVE_MAX_POINTS || sscanf(val, "%d,%d", &t, &s) != 2)
+        return;
+    fp->pts[i].temp_c = t;
+    fp->pts[i].fan_pct = s;
+    fp->seen[i] = 1;
+}
+
+static int form_points_take(const form_points *fp, curve_point *out) {
+    int n = 0;
+    for (int i = 0; i < FC_CURVE_MAX_POINTS; i++)
+        if (fp->seen[i])
+            out[n++] = fp->pts[i];
+    return n;
+}
+
+/* Returns -1 when the change is live but could not be written to /data. */
+static int apply_form(const char *body) {
+    curve_config cfg;
+    form_points fp;
+
+    memset(&fp, 0, sizeof fp);
     app_lock(g_state);
     cfg = g_state->cfg;
-    was_enabled = cfg.enabled;
     app_unlock(g_state);
 
     char tmp[HTTP_BODY_MAX + 1];
@@ -199,40 +230,36 @@ static void apply_form(const char *body) {
             cfg.web_enabled = atoi(val) ? 1 : 0;
         } else if (!strcmp(key, "web_port")) {
             cfg.web_port = atoi(val);
-        } else if (!strcmp(key, "n")) {
-            n_pts = atoi(val);
-        } else if (key[0] == 'p') {
-            int i = atoi(key + 1);
-            int t = 0, s = 0;
-            if (i >= 0 && i < FC_CURVE_MAX_POINTS &&
-                sscanf(val, "%d,%d", &t, &s) == 2) {
-                if (i + 1 > cfg.points_count)
-                    cfg.points_count = i + 1;
-                cfg.points[i].temp_c = t;
-                cfg.points[i].fan_pct = s;
-            }
+        } else {
+            form_point(&fp, key, val);
         }
     }
 
-    /* The panel sends its row count; without it a removed point would
-     * survive as a stale tail entry (points_count only ever grew). */
-    if (n_pts >= 0)
-        cfg.points_count = n_pts;
+    /* Sent points replace the whole curve; a form without any (a toggle)
+     * leaves it alone, whatever row count n= says. */
+    int n = form_points_take(&fp, cfg.points);
+    if (n > 0)
+        cfg.points_count = n;
     fc_sanitize(&cfg);
 
+    /* Swap and hand the fan back under the lock: the control thread writes
+     * its target under the same lock after re-checking enabled, so it can't
+     * slip a custom target in after the stock one. */
     app_lock(g_state);
+    int was_enabled = g_state->cfg.enabled;
     g_state->cfg = cfg;
     g_state->ui_dirty = 1;
-    if (!cfg.enabled)
+    if (!cfg.enabled) {
         g_state->current_setpoint = -1;
+        if (was_enabled)
+            fan_write_setpoint(FC_STOCK_TARGET_C);
+    }
     app_unlock(g_state);
 
-    fc_config_save(&cfg);
-    if (was_enabled && !cfg.enabled)
-        fan_write_setpoint(FC_STOCK_TARGET_C);
+    return fc_config_save(&cfg);
 }
 
-static void do_restore(void) {
+static int do_restore(void) {
     curve_config cfg;
 
     app_lock(g_state);
@@ -241,10 +268,16 @@ static void do_restore(void) {
     g_state->cfg = cfg;
     g_state->current_setpoint = -1;
     g_state->ui_dirty = 1;
+    fan_write_setpoint(FC_STOCK_TARGET_C);
     app_unlock(g_state);
 
-    fan_write_setpoint(FC_STOCK_TARGET_C);
-    fc_config_save(&cfg);
+    return fc_config_save(&cfg);
+}
+
+static void send_save_failed(int fd) {
+    const char msg[] = "applied, but saving to /data failed\n";
+    send_resp(fd, "500 Internal Server Error", "text/plain", msg,
+              sizeof msg - 1);
 }
 
 /* GET /api/history?s=<seconds>: averaged into at most 300 points. */
@@ -290,10 +323,10 @@ static void handle_presets_post(const char *body, int fd) {
     char name[FC_PRESET_NAME_MAX + 1] = {0};
     char to[FC_PRESET_NAME_MAX + 1] = {0}; /* new name for action=rename */
     curve_point pts[FC_CURVE_MAX_POINTS];
-    int pts_count = 0;
-    int has_points = 0;
+    form_points fp;
+    int overwrite = 0;
 
-    memset(pts, 0, sizeof pts);
+    memset(&fp, 0, sizeof fp);
 
     char tmp[HTTP_BODY_MAX + 1];
     snprintf(tmp, sizeof tmp, "%s", body);
@@ -312,19 +345,13 @@ static void handle_presets_post(const char *body, int fd) {
             fc_preset_name_clean(name, val, sizeof name);
         else if (!strcmp(key, "to"))
             fc_preset_name_clean(to, val, sizeof to);
-        else if (key[0] == 'p') {
-            int i = atoi(key + 1);
-            int t = 0, s = 0;
-            if (i >= 0 && i < FC_CURVE_MAX_POINTS &&
-                sscanf(val, "%d,%d", &t, &s) == 2) {
-                if (i + 1 > pts_count)
-                    pts_count = i + 1;
-                pts[i].temp_c = t;
-                pts[i].fan_pct = s;
-                has_points = 1;
-            }
-        }
+        else if (!strcmp(key, "overwrite"))
+            overwrite = atoi(val) != 0;
+        else
+            form_point(&fp, key, val);
     }
+    memset(pts, 0, sizeof pts);
+    int pts_count = form_points_take(&fp, pts);
 
     if (!strcmp(action, "apply")) {
         preset_store ps;
@@ -347,8 +374,10 @@ static void handle_presets_post(const char *body, int fd) {
         g_state->cfg = cfg;
         g_state->ui_dirty = 1;
         app_unlock(g_state);
-        fc_config_save(&cfg);
-        send_presets(fd);
+        if (fc_config_save(&cfg) != 0)
+            send_save_failed(fd);
+        else
+            send_presets(fd);
     } else if (!strcmp(action, "save")) {
         if (!name[0]) {
             send_resp(fd, "400 Bad Request", "text/plain", "name required\n",
@@ -362,6 +391,11 @@ static void handle_presets_post(const char *body, int fd) {
         cfg = g_state->cfg;
         app_unlock(g_state);
         int idx = fc_presets_find(&ps, name);
+        /* Replacing an existing preset has to be asked for explicitly. */
+        if (idx >= 0 && !overwrite) {
+            send_resp(fd, "409 Conflict", "text/plain", "name taken\n", 11);
+            return;
+        }
         if (idx < 0) {
             if (ps.count >= FC_PRESET_MAX) {
                 send_resp(fd, "409 Conflict", "text/plain",
@@ -371,7 +405,7 @@ static void handle_presets_post(const char *body, int fd) {
             idx = ps.count++;
         }
         snprintf(ps.list[idx].name, sizeof ps.list[idx].name, "%s", name);
-        if (has_points) {
+        if (pts_count > 0) {
             ps.list[idx].points_count = pts_count;
             memcpy(ps.list[idx].points, pts, sizeof ps.list[idx].points);
         } else {
@@ -383,8 +417,10 @@ static void handle_presets_post(const char *body, int fd) {
         app_lock(g_state);
         g_state->presets = ps;
         app_unlock(g_state);
-        fc_presets_save(&ps);
-        send_presets(fd);
+        if (fc_presets_save(&ps) != 0)
+            send_save_failed(fd);
+        else
+            send_presets(fd);
     } else if (!strcmp(action, "delete")) {
         preset_store ps;
         app_lock(g_state);
@@ -402,8 +438,10 @@ static void handle_presets_post(const char *body, int fd) {
         app_lock(g_state);
         g_state->presets = ps;
         app_unlock(g_state);
-        fc_presets_save(&ps);
-        send_presets(fd);
+        if (fc_presets_save(&ps) != 0)
+            send_save_failed(fd);
+        else
+            send_presets(fd);
     } else if (!strcmp(action, "rename")) {
         if (!to[0]) {
             send_resp(fd, "400 Bad Request", "text/plain", "name required\n",
@@ -429,8 +467,10 @@ static void handle_presets_post(const char *body, int fd) {
         app_lock(g_state);
         g_state->presets = ps;
         app_unlock(g_state);
-        fc_presets_save(&ps);
-        send_presets(fd);
+        if (fc_presets_save(&ps) != 0)
+            send_save_failed(fd);
+        else
+            send_presets(fd);
     } else {
         send_resp(fd, "400 Bad Request", "text/plain", "bad action\n", 11);
     }
@@ -492,15 +532,33 @@ static int token_ok(char *buf, const char *hdr_end) {
     return diff == 0;
 }
 
+static long long now_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+/* recv bounded by an absolute deadline shared by the whole request. */
+static ssize_t recv_by(int fd, char *b, size_t cap, long long deadline) {
+    long long left = deadline - now_ms();
+    if (left <= 0)
+        return -1;
+    struct pollfd pfd = {.fd = fd, .events = POLLIN, .revents = 0};
+    if (poll(&pfd, 1, (int)left) <= 0)
+        return -1;
+    return recv(fd, b, cap, 0);
+}
+
 static void handle_conn(int fd) {
     char buf[HTTP_REQ_MAX];
     size_t len = 0;
     char *hdr_end = NULL;
+    long long deadline = now_ms() + HTTPD_READ_MS;
 
     for (;;) {
         if (len >= sizeof buf - 1)
             break;
-        ssize_t n = recv(fd, buf + len, sizeof buf - 1 - len, 0);
+        ssize_t n = recv_by(fd, buf + len, sizeof buf - 1 - len, deadline);
         if (n <= 0)
             break;
         len += (size_t)n;
@@ -529,24 +587,42 @@ static void handle_conn(int fd) {
         query = qmark + 1;
     }
 
-    const char *body = hdr_end + 4;
+    char *body = hdr_end + 4;
     size_t body_len = len - (size_t)(body - buf);
 
     if (!strcmp(method, "POST")) {
-        size_t content_length = 0;
-        char *cl = find_ci(buf, "content-length:");
-        if (cl)
-            content_length = (size_t)strtoul(cl + 15, NULL, 10);
-        if (content_length > HTTP_BODY_MAX)
-            content_length = HTTP_BODY_MAX;
+        /* A cut-off or oversized body is refused, never applied in part:
+         * a truncated form would silently drop curve points. */
+        char clv[24] = {0};
+        char *endp = clv;
+        unsigned long content_length = 0;
+        if (header_value(buf, hdr_end, "content-length", clv, sizeof clv))
+            content_length = strtoul(clv, &endp, 10);
+        if (endp == clv && clv[0]) {
+            const char bad[] = "bad content-length\n";
+            send_resp(fd, "400 Bad Request", "text/plain", bad, sizeof bad - 1);
+            return;
+        }
+        if (content_length > HTTP_BODY_MAX) {
+            const char big[] = "body too large\n";
+            send_resp(fd, "413 Payload Too Large", "text/plain", big,
+                      sizeof big - 1);
+            return;
+        }
         while (body_len < content_length && len < sizeof buf - 1) {
-            ssize_t n = recv(fd, buf + len, sizeof buf - 1 - len, 0);
+            ssize_t n = recv_by(fd, buf + len, sizeof buf - 1 - len, deadline);
             if (n <= 0)
                 break;
             len += (size_t)n;
             buf[len] = 0;
             body_len = len - (size_t)(body - buf);
         }
+        if (body_len < content_length) {
+            const char bad[] = "incomplete body\n";
+            send_resp(fd, "400 Bad Request", "text/plain", bad, sizeof bad - 1);
+            return;
+        }
+        body[content_length] = 0;
     }
 
     if (!strcmp(method, "GET")) {
@@ -565,11 +641,15 @@ static void handle_conn(int fd) {
             const char bad[] = "bad token - reload the panel\n";
             send_resp(fd, "403 Forbidden", "text/plain", bad, sizeof bad - 1);
         } else if (!strcmp(path, "/api/config")) {
-            apply_form(body);
-            handle_state(fd);
+            if (apply_form(body) != 0)
+                send_save_failed(fd);
+            else
+                handle_state(fd);
         } else if (!strcmp(path, "/api/restore")) {
-            do_restore();
-            handle_state(fd);
+            if (do_restore() != 0)
+                send_save_failed(fd);
+            else
+                handle_state(fd);
         } else if (!strcmp(path, "/api/presets")) {
             handle_presets_post(body, fd);
         } else {
@@ -597,10 +677,11 @@ static void *httpd_thread(void *arg) {
             continue;
         int one = 1;
         setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof one);
+        /* Reads are bounded by HTTPD_READ_MS; this bounds a client that
+         * stops reading the response. */
         struct timeval tv;
-        tv.tv_sec = 3;
+        tv.tv_sec = 2;
         tv.tv_usec = 0;
-        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
         setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv);
         handle_conn(fd);
         close(fd);

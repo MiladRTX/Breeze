@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int token_valid(const char *t) {
     size_t n = 0;
@@ -26,6 +27,23 @@ static void token_generate(char *out) {
     out[FC_TOKEN_LEN] = 0;
 }
 
+int fc_file_commit(FILE *f, const char *tmp, const char *path) {
+    /* Only replace the real file once the new one is fully on disk: a full
+     * /data or a failed write must not swap in a short or empty file. */
+    int bad = ferror(f);
+    if (fflush(f) != 0)
+        bad = 1;
+    if (fsync(fileno(f)) != 0)
+        bad = 1;
+    if (fclose(f) != 0)
+        bad = 1;
+    if (bad || rename(tmp, path) != 0) {
+        unlink(tmp);
+        return -1;
+    }
+    return 0;
+}
+
 int fc_config_save(const curve_config *c) {
     char tmp[256];
     snprintf(tmp, sizeof tmp, "%s.tmp", FC_CONFIG_PATH);
@@ -45,9 +63,7 @@ int fc_config_save(const curve_config *c) {
     for (int i = 0; i < c->points_count; i++)
         fprintf(f, "point%d=%d,%d\n", i, c->points[i].temp_c,
                 c->points[i].fan_pct);
-    fflush(f);
-    fclose(f);
-    return rename(tmp, FC_CONFIG_PATH);
+    return fc_file_commit(f, tmp, FC_CONFIG_PATH);
 }
 
 int fc_config_load(curve_config *c) {
@@ -61,7 +77,9 @@ int fc_config_load(curve_config *c) {
     }
 
     int legacy = 1;
-    int points_read = 0; /* highest pointN index + 1 seen in the file */
+    int points_read = 0; /* pointN lines read */
+    curve_point file_pts[FC_CURVE_MAX_POINTS];
+    unsigned char seen[FC_CURVE_MAX_POINTS] = {0};
     char line[160];
     while (fgets(line, sizeof line, f)) {
         char *p = line;
@@ -86,21 +104,26 @@ int fc_config_load(curve_config *c) {
             int i = 0, t = 0, v = 0;
             if (sscanf(p, "point%d=%d,%d", &i, &t, &v) == 3 && i >= 0 &&
                 i < FC_CURVE_MAX_POINTS) {
-                /* The file's curve replaces the defaults outright; overlaying
-                 * it kept default points past a shorter saved curve. */
-                if (!points_read)
-                    memset(c->points, 0, sizeof c->points);
-                c->points[i].temp_c = t;
-                c->points[i].fan_pct = v;
-                if (i + 1 > points_read)
-                    points_read = i + 1;
+                file_pts[i].temp_c = t;
+                file_pts[i].fan_pct = v;
+                if (!seen[i])
+                    points_read++;
+                seen[i] = 1;
             }
         }
     }
     fclose(f);
 
-    if (points_read)
-        c->points_count = points_read;
+    /* The file's curve replaces the defaults outright (overlaying kept
+     * default points past a shorter saved curve). Only the indices actually
+     * present count: a gap must not turn into a fake 0/0 point. */
+    if (points_read) {
+        int n = 0;
+        for (int i = 0; i < FC_CURVE_MAX_POINTS; i++)
+            if (seen[i])
+                c->points[n++] = file_pts[i];
+        c->points_count = n;
+    }
 
     /* Pre-controller configs stored ICC temperature targets. Map them onto
      * the observed target -> duty response so old curves keep their intent.

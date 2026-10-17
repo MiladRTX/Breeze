@@ -119,12 +119,22 @@ static int wait_lock(int fd, int ms) {
 
 /* Stops the copy holding the lock and takes the lock over. SIGTERM first so
  * it restores the stock fan target and closes the panel; SIGKILL if it
- * hangs. Returns the replaced pid, or -1. */
+ * hangs. Returns the replaced pid, 0 if the holder went away on its own,
+ * or -1. */
 static int take_over(int lock_fd) {
-    char buf[16] = {0};
-    if (pread(lock_fd, buf, sizeof buf - 1, 0) <= 0)
-        return -1;
-    int pid = atoi(buf);
+    int pid = 0;
+    /* A copy that has only just taken the lock may not have written its pid
+     * yet: never signal a stale one, wait for the real one instead. */
+    for (int i = 0; i < 20; i++) {
+        char buf[16] = {0};
+        if (pread(lock_fd, buf, sizeof buf - 1, 0) > 0)
+            pid = atoi(buf);
+        if (pid > 1)
+            break;
+        if (flock(lock_fd, LOCK_EX | LOCK_NB) == 0)
+            return 0;
+        usleep(100000);
+    }
     if (pid <= 1 || pid == getpid())
         return -1;
 
@@ -196,18 +206,22 @@ int main(void) {
     int replaced = 0;
     if (flock(lock_fd, LOCK_EX | LOCK_NB) != 0) {
         int replaced_pid = take_over(lock_fd);
-        if (replaced_pid <= 0) {
+        if (replaced_pid < 0) {
             notify("%s is already running and would not stop", FC_PLUGIN_NAME);
             fc_log_close();
             return 1;
         }
-        fc_log("replaced running copy (pid %d)", replaced_pid);
-        replaced = 1;
+        if (replaced_pid > 0) {
+            fc_log("replaced running copy (pid %d)", replaced_pid);
+            replaced = 1;
+        }
     }
+    /* Overwrite, then trim: truncating first left a moment where the file
+     * was empty and a new launch could read no pid. */
     char pid_txt[16];
     int pid_len = snprintf(pid_txt, sizeof pid_txt, "%d\n", (int)getpid());
-    if (ftruncate(lock_fd, 0) == 0)
-        (void)pwrite(lock_fd, pid_txt, (size_t)pid_len, 0);
+    if (pwrite(lock_fd, pid_txt, (size_t)pid_len, 0) == pid_len)
+        (void)ftruncate(lock_fd, pid_len);
 
     app_state_init(&g_state);
     curve_config cfg;

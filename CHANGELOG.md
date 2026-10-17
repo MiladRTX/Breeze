@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- **Hover tips** on the panel buttons.
+- **Only one preset is marked Active,** even when two presets hold the same curve.
+- **Saving under an existing name asks first** instead of silently replacing that preset.
+- **Settings are only replaced once they're fully written,** and the panel tells you if saving on the console failed.
+- **Turning the custom curve off always hands the fan back to stock.** Before, a target written at the same moment could stick.
+- **Panel fixes:**
+  - The switches wait for the first connection, and flip back if a request fails.
+  - <kbd>Ctrl</kbd> + <kbd>S</kbd> includes the value you were typing.
+  - Two quick swipes on a phone no longer add a point.
+  - Edits made while Apply is in flight are kept.
+  - Tab moves through the page again.
+- **The panel can't be stalled** by a half-sent or idle connection.
+- **A new launch never signals the wrong process** while taking over from the running copy.
+
 ## 1.3
 
 - **Home screen tile.** Breeze adds a "Breeze" tile with the logo to the PS5 home screen; opening it brings up the panel in the browser. Breeze checks the tile on every start and reinstalls it only when it's missing or out of date (for example after changing the panel port).

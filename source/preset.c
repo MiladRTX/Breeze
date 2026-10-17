@@ -1,5 +1,6 @@
 #include "preset.h"
 #include "app.h"
+#include "config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -127,9 +128,7 @@ int fc_presets_save(const preset_store *ps) {
             fprintf(f, "point=%d,%d\n", ps->list[i].points[j].temp_c,
                     ps->list[i].points[j].fan_pct);
     }
-    fflush(f);
-    fclose(f);
-    return rename(tmp, FC_PRESETS_PATH);
+    return fc_file_commit(f, tmp, FC_PRESETS_PATH);
 }
 
 int fc_presets_find(const preset_store *ps, const char *name) {

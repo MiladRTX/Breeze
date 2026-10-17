@@ -376,7 +376,7 @@ if(TK.charAt(0)==='@')(function(){
       var w=want(c);d.push([c,Math.max(13,w+Math.round(Math.sin(age/90))),w])}
     return {step:step,d:d};
   }
-  function reply(v,code){return Promise.resolve(new Response(code?'':JSON.stringify(v),{status:code||200,headers:{'Content-Type':'application/json'}}))}
+  function reply(v,code){return Promise.resolve(new Response(code?String(v||''):JSON.stringify(v),{status:code||200,headers:{'Content-Type':'application/json'}}))}
   window.fetch=function(url,opt){
     var u=String(url),post=opt&&opt.method==='POST',f=form(opt&&opt.body);
     if(u.indexOf('api/history')>=0)return reply(history(+(u.split('s=')[1])||300));
@@ -384,8 +384,8 @@ if(TK.charAt(0)==='@')(function(){
       if(post){var i=find(f.name);
         if(f.action==='apply'&&i>=0)st.points=presets[i].points;
         else if(f.action==='delete'&&i>=0)presets.splice(i,1);
-        else if(f.action==='rename'&&i>=0){if(find(f.to)>=0)return reply(0,409);presets[i].name=f.to}
-        else if(f.action==='save'){var p=points(f);if(i>=0)presets[i].points=p;else if(presets.length<10)presets.push({name:f.name,points:p});else return reply(0,409)}}
+        else if(f.action==='rename'&&i>=0){if(find(f.to)>=0)return reply('name taken',409);presets[i].name=f.to}
+        else if(f.action==='save'){var p=points(f);if(i>=0){if(!+f.overwrite)return reply('name taken',409);presets[i].points=p}else if(presets.length<10)presets.push({name:f.name,points:p});else return reply('preset limit reached',409)}}
       return reply(presets);
     }
     if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;var p=points(f);if(p.length)st.points=p}
@@ -528,18 +528,28 @@ function nearest(p,touch){
   return best;
 }
 function inPlot(p){return p.x>=P.l-8&&p.x<=W-P.r+8&&p.y>=P.t-8&&p.y<=H-P.b+8}
+/* Double-tap/click adds a point. Taps are counted on release and only if the
+ * pointer barely moved, so two quick swipes over the chart don't add one. */
+var tapStart=null;
 function onDown(e){
   var p=local(e),i=nearest(p,e.pointerType!=='mouse');
   if(i>=0){sel=i;drag={i:i,id:e.pointerId,moved:false,start:copy(draft)};
     $('svg').setPointerCapture(e.pointerId);renderAll();e.preventDefault();return}
-  if(!inPlot(p))return;
-  var now=Date.now();
-  if(lastTap&&now-lastTap.t<380&&Math.abs(lastTap.x-p.x)<24&&Math.abs(lastTap.y-p.y)<24){lastTap=null;addAt(tAt(p.x),sAt(p.y));e.preventDefault();return}
-  lastTap={t:now,x:p.x,y:p.y};
+  if(!inPlot(p)){tapStart=null;return}
+  tapStart={id:e.pointerId,t:Date.now(),x:p.x,y:p.y};
   if(sel>=0){sel=-1;renderAll()}
+}
+function onTapUp(e){
+  var s=tapStart;tapStart=null;
+  if(!s||s.id!==e.pointerId||e.type!=='pointerup')return;
+  var p=local(e),now=Date.now();
+  if(now-s.t>350||Math.abs(p.x-s.x)>8||Math.abs(p.y-s.y)>8){lastTap=null;return}
+  if(lastTap&&now-lastTap.t<400&&Math.abs(lastTap.x-p.x)<24&&Math.abs(lastTap.y-p.y)<24){lastTap=null;addAt(tAt(p.x),sAt(p.y));return}
+  lastTap={t:now,x:p.x,y:p.y};
 }
 function onMove(e){
   var p=local(e);
+  if(tapStart&&tapStart.id===e.pointerId&&(Math.abs(p.x-tapStart.x)>8||Math.abs(p.y-tapStart.y)>8))tapStart=null;
   if(drag&&e.pointerId===drag.id){
     if(!drag.moved){drag.moved=true;undo.push(drag.start);if(undo.length>100)undo.shift();redo=[]}
     setPoint(drag.i,tAt(p.x),sAt(p.y));renderAll();
@@ -551,7 +561,7 @@ function onMove(e){
     $('svg').style.cursor=nearest(p,false)>=0?'grab':'crosshair';drawCurve();
   }else if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}
 }
-function onUp(e){if(drag&&e.pointerId===drag.id){drag=null;hideReadout();renderAll()}}
+function onUp(e){if(drag&&e.pointerId===drag.id){drag=null;hideReadout();renderAll();return}onTapUp(e)}
 function onLeave(){if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}}
 function showReadout(x,y,txt){var r=$('readout');r.textContent=txt;r.style.opacity=1;
   r.style.left=clamp(x+14,4,W-150)+'px';r.style.top=clamp(y-36,4,H-30)+'px'}
@@ -639,10 +649,11 @@ function drawHist(){
  * size after layout so it never looks squashed. */
 function miniSvg(p,on,i){return '<svg class="mini" data-mini="'+i+'"></svg>'}
 function drawMinis(){
+  var act=activeIndex();
   document.querySelectorAll('svg.mini').forEach(function(svg){
-    var p=presets[+svg.dataset.mini]&&presets[+svg.dataset.mini].points;if(!p||!p.length)return;
+    var idx=+svg.dataset.mini,p=presets[idx]&&presets[idx].points;if(!p||!p.length)return;
     var w=svg.clientWidth,h=svg.clientHeight;if(!w||!h)return;
-    var on=same(p,server),col=on?'#4fd1a5':'#8ea2ff',pad=3;
+    var on=idx===act,col=on?'#4fd1a5':'#8ea2ff',pad=3;
     function mx(t){return pad+(t-XMIN)/(XMAX-XMIN)*(w-2*pad)}function my(s){return pad+(1-s/100)*(h-2*pad)}
     var d='M'+mx(XMIN).toFixed(1)+' '+my(p[0][1]).toFixed(1);
     for(var i=0;i<p.length;i++)d+=' L'+mx(p[i][0]).toFixed(1)+' '+my(p[i][1]).toFixed(1);
@@ -653,9 +664,21 @@ function drawMinis(){
       '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.6" stroke-linejoin="round"/>';
   });
 }
+/* Which preset is "Active": several can hold the same points (save the
+ * running curve twice), so only one is marked: the one you last loaded,
+ * saved, overwrote or renamed, if it still matches the running curve,
+ * otherwise the first that matches. */
+var picked='';
+try{picked=localStorage.getItem('fcActive')||''}catch(e){}
+function pick(n){picked=n;try{localStorage.setItem('fcActive',n)}catch(e){}}
+function activeIndex(){
+  var first=-1;
+  for(var i=0;i<presets.length;i++)if(same(presets[i].points,server)){if(presets[i].name===picked)return i;if(first<0)first=i}
+  return first;
+}
 function renderPresets(){
-  var h='';
-  for(var i=0;i<presets.length;i++){var p=presets[i],on=same(p.points,server);
+  var h='',act=activeIndex();
+  for(var i=0;i<presets.length;i++){var p=presets[i],on=i===act;
     h+='<div class="prow">'+
       '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points</div></div>'+
       miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" data-tip="This preset is the curve running now">Active</span>':'<button class="btn" data-pa="load,'+i+'" data-tip="Load this preset into the editor (Apply to use it)">Load</button>')+
@@ -683,35 +706,64 @@ function applyState(s){
   var sp=copy(s.points),clean=!dirty();
   if(!same(sp,server)){server=sp;if(clean&&!drag){draft=copy(sp);sel=-1}renderAll();renderPresets()}
 }
+/* GET with a time limit, so a request the console never answers can't hold
+ * up the polling behind it. */
+function get(url){
+  var c=window.AbortController?new AbortController():null,t=c&&setTimeout(function(){c.abort()},6000);
+  return fetch(url,{cache:'no-store',signal:c?c.signal:undefined}).then(function(r){clearTimeout(t);if(!r.ok)throw r.status;return r.json()},function(e){clearTimeout(t);throw e});
+}
+var polling=false;
 async function refresh(){
-  try{var r=await fetch('api/state',{cache:'no-store'});var s=await r.json();applyState(s);
-    if(offline){offline=false;toast('Console back online')}}
+  if(polling)return;polling=true;
+  try{applyState(await get('api/state'));
+    if(offline){offline=false;toast('Console back online');if(!presetsLoaded)loadPresets()}}
   catch(e){if(!offline){offline=true;toast('Console unreachable',true)}}
+  polling=false;
   if(!drag)drawCurve();
 }
 /* History lives in the plugin, so it survives a page reload. Longer ranges
- * change slower, so they are polled less often. */
+ * change slower, so they are polled less often. A range switch starts a new
+ * generation: an older request still in flight is dropped when it lands. */
+var histGen=0;
 async function loadHist(){
-  clearTimeout(histTimer);
-  try{var r=await fetch('api/history?s='+histRange,{cache:'no-store'});hist=await r.json();drawHist()}catch(e){}
+  var g=++histGen;clearTimeout(histTimer);
+  try{var h=await get('api/history?s='+histRange);if(g!==histGen)return;hist=h;drawHist()}catch(e){if(g!==histGen)return}
   histTimer=setTimeout(loadHist,Math.max(2000,Math.min(30000,hist.step*1000)));
+}
+var presetsLoaded=false;
+function loadPresets(){
+  get('api/presets').then(function(p){presets=p;presetsLoaded=true;renderPresets()})
+    .catch(function(){setTimeout(function(){if(!presetsLoaded)loadPresets()},3000)});
 }
 function setRange(sec){
   histRange=sec;try{localStorage.setItem('fcRange',sec)}catch(e){}
   document.querySelectorAll('#ranges .btn').forEach(function(b){b.classList.toggle('on',+b.dataset.range===sec)});
   hist={step:2,d:[]};drawHist();loadHist();
 }
+/* pts null = leave the curve alone (the toggles). A curve is sent as a
+ * snapshot: edits made while the request is out stay in the editor. */
 async function sendConfig(pts,en,web,okMsg){
-  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+'&n='+pts.length+pointQuery(pts);
-  try{var r=await post('api/config',body);if(!r.ok)throw r.status;var s=await r.json();
-    var applied=pts===draft;applyState(s);if(applied){draft=copy(server);renderAll()}toast(okMsg)}
-  catch(e){fail(e,'Could not reach the console');refresh()}
+  var sent=pts?copy(pts):null;
+  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent):'');
+  try{var r=await post('api/config',body);if(r.status===500)throw 500;if(!r.ok)throw r.status;var s=await r.json();
+    applyState(s);if(sent&&same(draft,sent)){draft=copy(server);renderAll()}toast(okMsg);return true}
+  catch(e){fail(e,e===500?'Applied, but it could not be saved on the console':'Could not reach the console');refresh();return e===500}
 }
-function apply(){if(dirty())sendConfig(draft,st&&st.enabled,st?st.web_enabled:1,'Curve applied')}
+function apply(){
+  if(!st){toast('Still connecting to the console',true);return}
+  if(dirty())sendConfig(draft,st.enabled,st.web_enabled,'Curve applied');
+}
 async function presetAction(body,ok,conflict){
-  try{var r=await post('api/presets',body);if(!r.ok)throw r.status;presets=await r.json();renderPresets();toast(ok);return true}
-  catch(e){fail(e,e===409?(conflict||'Preset limit reached (10)'):'Preset action failed');return false}
+  try{var r=await post('api/presets',body);
+    if(!r.ok){var why=r.status===409?await r.text().catch(function(){return''}):'';throw{code:r.status,taken:why.indexOf('taken')>=0}}
+    presets=await r.json();presetsLoaded=true;renderPresets();toast(ok);return true}
+  catch(e){var c=e&&e.code;
+    fail(c,c===409?(e.taken?conflict||'That name is taken':'Preset limit reached (10)'):c===500?'Could not save presets on the console':'Preset action failed');
+    if(c===500)loadPresets();return false}
 }
+/* Same cleanup the console applies, so the name checked here is the name
+ * it stores. */
+function cleanName(n){return String(n).replace(/[^\x20-\x7e]|[="\\]/g,'').slice(0,40).trim()}
 /* Inline rename: the name turns into a field. Enter or leaving the field
  * saves, Escape cancels. */
 function startRename(i){
@@ -721,10 +773,11 @@ function startRename(i){
   var inp=pn.firstChild;inp.value=p.name;inp.focus();inp.select();
   function finish(save){
     if(done)return;done=true;
-    var n=inp.value.trim();
+    var n=cleanName(inp.value);
     if(!save||!n||n===p.name){renderPresets();return}
+    var wasPicked=picked===p.name;
     presetAction('action=rename&name='+encodeURIComponent(p.name)+'&to='+encodeURIComponent(n),'Renamed to “'+n+'”','There is already a preset called “'+n+'”')
-      .then(function(ok){if(!ok)renderPresets()});
+      .then(function(ok){if(ok&&wasPicked){pick(n);renderPresets()}else if(!ok)renderPresets()});
   }
   inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();finish(true)}else if(e.key==='Escape')finish(false)});
   inp.addEventListener('blur',function(){finish(true)});
@@ -757,20 +810,30 @@ $('rows').addEventListener('focusin',function(e){var tr=e.target.closest('tr');i
 $('rows').addEventListener('click',function(e){var b=e.target.closest('[data-del]');if(b)removeAt(+b.dataset.del)});
 $('plist').addEventListener('click',function(e){
   var b=e.target.closest('[data-pa]');if(!b)return;var a=b.dataset.pa.split(','),p=presets[+a[1]];if(!p)return;
-  if(a[0]==='load'){commit();setDraft(copy(p.points));toast('Loaded “'+p.name+'”, Apply to use it')}
+  if(a[0]==='load'){commit();pick(p.name);setDraft(copy(p.points));renderPresets();toast('Loaded “'+p.name+'”, Apply to use it')}
   else if(a[0]==='ren')startRename(+a[1]);
-  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?'))presetAction('action=save&name='+encodeURIComponent(p.name)+pointQuery(draft),'Preset updated')}
+  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?')){pick(p.name);presetAction('action=save&overwrite=1&name='+encodeURIComponent(p.name)+pointQuery(draft),'Preset updated').then(function(ok){if(ok)renderPresets()})}}
   else if(confirm('Delete preset “'+p.name+'”?'))presetAction('action=delete&name='+encodeURIComponent(p.name),'Preset deleted');
 });
-function saveAs(){var n=$('pName').value.trim();if(!n){$('pName').focus();return}
-  presetAction('action=save&name='+encodeURIComponent(n)+pointQuery(draft),'Saved “'+n+'”').then(function(ok){if(ok)$('pName').value=''})}
+function saveAs(){var n=cleanName($('pName').value);if(!n){toast('Type a name first',true);$('pName').focus();return}
+  var taken=findPreset(n)>=0;
+  if(taken&&!confirm('A preset called “'+n+'” already exists. Overwrite it with the curve in the editor?'))return;
+  presetAction('action=save'+(taken?'&overwrite=1':'')+'&name='+encodeURIComponent(n)+pointQuery(draft),(taken?'Updated “':'Saved “')+n+'”','There is already a preset called “'+n+'”').then(function(ok){if(ok){$('pName').value='';pick(n);renderPresets()}})}
+function findPreset(n){for(var i=0;i<presets.length;i++)if(presets[i].name===n)return i;return -1}
 $('bSaveAs').onclick=saveAs;
 $('pName').addEventListener('keydown',function(e){if(e.key==='Enter')saveAs()});
-$('enabled').addEventListener('change',function(){
-  sendConfig(server.length?server:draft,this.checked,st?st.web_enabled:1,this.checked?'Custom curve on':'Stock fan control')});
-$('webEnabled').addEventListener('change',function(){
-  if(!this.checked&&!confirm('Turn off the web panel? This page goes offline until you set web_enabled=1 in /data/breeze/breeze.conf over FTP.')){this.checked=true;return}
-  sendConfig(server.length?server:draft,st&&st.enabled,this.checked,this.checked?'Web panel on':'Web panel off');
+/* The toggles only flip their own setting; until the first state arrives
+ * there is nothing to pair them with, so they wait. A failed request puts
+ * the switch back. */
+$('enabled').addEventListener('change',async function(){
+  var el=this,on=el.checked;
+  if(!st){el.checked=!on;toast('Still connecting to the console',true);return}
+  if(!await sendConfig(null,on,st.web_enabled,on?'Custom curve on':'Stock fan control'))el.checked=!!st.enabled});
+$('webEnabled').addEventListener('change',async function(){
+  var el=this,on=el.checked;
+  if(!st){el.checked=!on;toast('Still connecting to the console',true);return}
+  if(!on&&!confirm('Turn off the web panel? This page goes offline until you set web_enabled=1 in /data/breeze/breeze.conf over FTP.')){el.checked=true;return}
+  if(!await sendConfig(null,st.enabled,on,on?'Web panel on':'Web panel off'))el.checked=!!st.web_enabled;
 });
 $('bStock').onclick=async function(){
   if(!confirm('Turn the custom curve off and restore stock fan control?'))return;
@@ -778,7 +841,8 @@ $('bStock').onclick=async function(){
 };
 document.addEventListener('keydown',function(e){
   var a=document.activeElement,typing=a&&a.tagName==='INPUT'&&a.type!=='checkbox',mod=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();
-  if(mod&&k==='s'){e.preventDefault();apply();return}
+  /* Blur first: a value typed into a field only lands on change. */
+  if(mod&&k==='s'){e.preventDefault();if(typing)a.blur();apply();return}
   if(typing)return;
   if(mod&&k==='z'){e.preventDefault();e.shiftKey?doRedo():doUndo();return}
   if(mod&&k==='y'){e.preventDefault();doRedo();return}
@@ -787,7 +851,7 @@ document.addEventListener('keydown',function(e){
   else if(e.key==='ArrowUp')nudge('s',n);else if(e.key==='ArrowDown')nudge('s',-n);
   else if(e.key==='Delete'||e.key==='Backspace')removeAt(sel);
   else if(e.key==='Escape'){sel=-1;renderAll()}
-  else if(e.key==='Tab'&&draft.length){sel=(sel+(e.shiftKey?-1:1)+draft.length)%draft.length;renderAll()}
+  else if(e.key==='Tab'&&draft.length&&(a===document.body||a===svg||!a)){sel=(sel+(e.shiftKey?-1:1)+draft.length)%draft.length;renderAll()}
   else return;
   e.preventDefault();
 });
@@ -797,7 +861,7 @@ window.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
 
 resize();renderAll();
-fetch('api/presets',{cache:'no-store'}).then(function(r){return r.json()}).then(function(p){presets=p;renderPresets()}).catch(function(){});
+loadPresets();
 refresh();setInterval(refresh,2000);
 function histPoint(e){
   if(!hl||!hist.d.length)return;
