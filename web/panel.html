@@ -180,6 +180,12 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 .bar .msg b{color:var(--text);font-weight:600}
 
 /* toast */
+/* button tips: one floating label, placed by script so it is never clipped */
+.btip{position:fixed;z-index:30;max-width:240px;padding:7px 10px;border-radius:8px;background:#1c2128;border:1px solid var(--line2);
+  box-shadow:0 8px 24px rgba(0,0,0,.45);color:var(--text);font-size:12px;font-weight:500;line-height:1.4;
+  opacity:0;transform:translateY(3px);pointer-events:none;transition:opacity .12s,transform .12s}
+.btip.on{opacity:1;transform:none}
+
 /* credit */
 .credit{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:22px;color:var(--faint);font-size:12.5px}
 .credit a{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:99px;
@@ -259,19 +265,19 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
           <span class="sub num hide-sm" id="hoverTxt"></span></div>
         <div class="tools">
           <div class="seg">
-            <button class="btn icon" id="bUndo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-            <button class="btn icon" id="bRedo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+            <button class="btn icon" id="bUndo" data-tip="Undo the last change (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+            <button class="btn icon" id="bRedo" data-tip="Redo (Ctrl+Shift+Z)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
           </div>
-          <button class="btn" id="bAdd" title="Add a point in the widest gap"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="add-txt">Add</span></button>
+          <button class="btn" id="bAdd" data-tip="Add a point in the biggest gap of the curve"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="add-txt">Add</span></button>
           <div class="sep hide-sm"></div>
           <span class="eyebrow hide-sm">Shift</span>
           <div class="seg fanseg">
-            <button class="btn" data-shift="0,-5" title="All fan values −5%">Fan −</button>
-            <button class="btn" data-shift="0,5" title="All fan values +5%">Fan +</button>
+            <button class="btn" data-shift="0,-5" data-tip="Lower the whole curve by 5% (quieter)">Fan −</button>
+            <button class="btn" data-shift="0,5" data-tip="Raise the whole curve by 5% (cooler)">Fan +</button>
           </div>
           <div class="seg">
-            <button class="btn" data-shift="-2,0" title="All temperatures −2°C">←</button>
-            <button class="btn" data-shift="2,0" title="All temperatures +2°C">→</button>
+            <button class="btn" data-shift="-2,0" data-tip="Move the whole curve 2°C left (fan kicks in earlier)">←</button>
+            <button class="btn" data-shift="2,0" data-tip="Move the whole curve 2°C right (fan kicks in later)">→</button>
           </div>
         </div>
         <div class="chart" id="chart">
@@ -306,13 +312,13 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
         <div class="bd" style="padding-top:4px">
           <div id="plist"></div>
           <div class="newp"><input class="field" id="pName" maxlength="40" placeholder="Save current curve as…" autocomplete="off">
-            <button class="btn" id="bSaveAs">Save</button></div>
+            <button class="btn" id="bSaveAs" data-tip="Save the curve in the editor as a new preset">Save</button></div>
         </div>
       </section>
 
       <section class="card">
         <div class="hd"><h2>Points</h2><span class="sub">°C → fan %</span><div class="grow"></div>
-          <button class="btn ghost" id="bReset" title="Reset to the default curve">Reset</button></div>
+          <button class="btn ghost" id="bReset" data-tip="Load the default curve into the editor">Reset</button></div>
         <div class="ptbl"><table class="tbl"><thead><tr><th></th><th class="eyebrow">Temp °C</th><th class="eyebrow">Fan %</th><th></th></tr></thead>
           <tbody id="rows"></tbody></table></div>
       </section>
@@ -323,7 +329,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
           <div class="row"><div class="t"><div>Web panel</div><div>Serve this page on port <span class="num" id="port">–</span></div></div>
             <span class="sw"><input type="checkbox" id="webEnabled" aria-label="Web panel"><i></i></span></div>
           <div class="row"><div class="t"><div>Stock fan control</div><div>Turn the curve off and hand the fan back to the console</div></div>
-            <button class="btn danger" id="bStock">Restore</button></div>
+            <button class="btn danger" id="bStock" data-tip="Turn the custom curve off and give the fan back to the console">Restore</button></div>
         </div>
       </section>
     </div>
@@ -339,11 +345,12 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 
   <div class="bar" id="bar">
     <div class="msg"><b>Unsaved changes</b><span class="hide-sm"> · <kbd>Ctrl</kbd> <kbd>S</kbd> to apply</span></div>
-    <button class="btn ghost" id="bRevert">Revert</button>
-    <button class="btn pri" id="bApply">Apply</button>
+    <button class="btn ghost" id="bRevert" data-tip="Throw away your edits and go back to the running curve">Revert</button>
+    <button class="btn pri" id="bApply" data-tip="Start using this curve (Ctrl+S)">Apply</button>
   </div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="btip" id="btip" role="tooltip"></div>
 
 <script>
 "use strict";
@@ -562,7 +569,7 @@ function renderInsp(){
   el.innerHTML='<span class="lbl">Point '+(sel+1)+' <span>of '+draft.length+'</span></span>'+
     '<span class="step"><button data-n="t,-1" aria-label="Temperature down">−</button><input id="iT" inputmode="numeric" value="'+p[0]+'"><span class="u">°C</span><button data-n="t,1" aria-label="Temperature up">+</button></span>'+
     '<span class="step"><button data-n="s,-1" aria-label="Fan down">−</button><input id="iS" inputmode="numeric" value="'+p[1]+'"><span class="u">%</span><button data-n="s,1" aria-label="Fan up">+</button></span>'+
-    '<div class="grow"></div><button class="btn ghost danger" id="bDel">Remove</button>';
+    '<div class="grow"></div><button class="btn ghost danger" id="bDel" data-tip="Remove this point from the curve">Remove</button>';
 }
 function renderRows(){
   var h='';
@@ -570,7 +577,7 @@ function renderRows(){
     h+='<tr'+(i===sel?' class="sel"':'')+' data-i="'+i+'"><td class="n">'+(i+1)+'</td>'+
       '<td><input data-r="'+i+',0" inputmode="numeric" value="'+draft[i][0]+'"></td>'+
       '<td><input data-r="'+i+',1" inputmode="numeric" value="'+draft[i][1]+'"></td>'+
-      '<td class="x"><button class="btn icon ghost" data-del="'+i+'" aria-label="Remove point '+(i+1)+'">×</button></td></tr>';
+      '<td class="x"><button class="btn icon ghost" data-del="'+i+'" data-tip="Remove this point" aria-label="Remove point '+(i+1)+'">×</button></td></tr>';
   }
   $('rows').innerHTML=h;
 }
@@ -651,10 +658,10 @@ function renderPresets(){
   for(var i=0;i<presets.length;i++){var p=presets[i],on=same(p.points,server);
     h+='<div class="prow">'+
       '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points</div></div>'+
-      miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" title="This curve is running">Active</span>':'<button class="btn" data-pa="load,'+i+'" title="Load into the editor">Load</button>')+
-      '<button class="btn icon ghost" data-pa="ren,'+i+'" title="Rename" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
-      '<button class="btn icon ghost" data-pa="over,'+i+'" title="Overwrite with the editor curve" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg></button>'+
-      '<button class="btn icon ghost danger" data-pa="del,'+i+'" title="Delete" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div></div>';
+      miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" data-tip="This preset is the curve running now">Active</span>':'<button class="btn" data-pa="load,'+i+'" data-tip="Load this preset into the editor (Apply to use it)">Load</button>')+
+      '<button class="btn icon ghost" data-pa="ren,'+i+'" data-tip="Rename this preset" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
+      '<button class="btn icon ghost" data-pa="over,'+i+'" data-tip="Overwrite this preset with the curve in the editor" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg></button>'+
+      '<button class="btn icon ghost danger" data-pa="del,'+i+'" data-tip="Delete this preset" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div></div>';
   }
   $('plist').innerHTML=h||'<div class="empty">No presets yet.</div>';drawMinis();
   $('pCount').textContent=presets.length+' / 10';
@@ -803,6 +810,30 @@ $('hist').addEventListener('pointermove',histPoint);
 $('hist').addEventListener('pointerdown',histPoint);
 $('hist').addEventListener('pointerleave',function(){hHover=null;drawHist()});
 $('ranges').addEventListener('click',function(e){var b=e.target.closest('[data-range]');if(b)setRange(+b.dataset.range)});
+
+/* Hover tips for buttons (mouse and keyboard focus; on touch the tap does
+ * the action, so no tip). Tiles use their own CSS tip. */
+(function(){
+  var tip=$('btip'),cur=null,timer=0;
+  function show(el){
+    cur=el;tip.textContent=el.dataset.tip;tip.className='btip';
+    var r=el.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;
+    var x=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8),y=r.top-h-8;
+    if(y<8)y=r.bottom+8;
+    tip.style.left=x+'px';tip.style.top=y+'px';tip.className='btip on';
+  }
+  function hide(){clearTimeout(timer);if(!cur)return;cur=null;tip.className='btip'}
+  document.addEventListener('pointerover',function(e){
+    if(e.pointerType!=='mouse')return;
+    var el=e.target.closest('[data-tip]:not(.tile)');
+    if(el===cur)return;hide();
+    if(el)timer=setTimeout(function(){show(el)},350);
+  });
+  document.addEventListener('focusin',function(e){var el=e.target.closest('[data-tip]:not(.tile)');if(el&&el.matches(':focus-visible'))show(el)});
+  document.addEventListener('focusout',hide);
+  document.addEventListener('pointerdown',hide,true);
+  addEventListener('scroll',hide);
+})();
 setRange([300,900,1800,3600,10800].indexOf(histRange)>=0?histRange:300);
 </script>
 </body>
