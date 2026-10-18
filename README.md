@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.3-8ea2ff?style=flat" alt="Release v1.3"/></a>
+  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.4-8ea2ff?style=flat" alt="Release v1.4"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License GPLv3"/></a>
   <img src="https://img.shields.io/badge/Platform-PlayStation%205-003791?style=flat&logo=playstation" alt="PlayStation 5"/>
   <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c&logoColor=white" alt="C"/>

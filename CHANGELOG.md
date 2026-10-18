@@ -1,30 +1,26 @@
 # Changelog
 
-## Unreleased
+## 1.4
 
-- **First start:**
-  - Breeze starts on stock fan control until you switch **Custom curve** on once; it remembers that on every launch after. The popup and a one-line hint in the panel say where.
-  - One starting preset, **Breeze**: the play-tested curve (23% up to 60 °C, rising gently to 34% at 81 °C), which is also the default curve. Existing presets are kept.
-- **Console minimum shown in the panel.** The PS5 won't run the fan below its own minimum: 13% in the menus, 23% while a game runs. Breeze measures that live, the curve chart shades it, and the Fan readout says "min" when that's why the fan sits above your curve.
-- **The curve chart starts at 13%,** the slowest the fan ever runs, and points can't go below it.
-- **Fixed: fan stuck at the console's minimum** (e.g. 23%) after starting at idle, until the curve was touched. Breeze now pulls its target back next to the temperature as soon as the fan falls behind the curve.
-- **Apply turns the custom curve on** if it was off, and a loaded preset can be applied straight away.
-- **No preset is marked Active while the curve is off.**
-- **A one-line hint** on the first visit says how to start.
-- **The fan goes back to stock first** when Breeze is asked to stop, before the slower shutdown.
-- **Hover tips** on the panel buttons.
-- **Only one preset is marked Active,** even when two presets hold the same curve.
-- **Saving under an existing name asks first** instead of silently replacing that preset.
-- **Settings are only replaced once they're fully written,** and the panel tells you if saving on the console failed.
-- **Turning the custom curve off always hands the fan back to stock.** Before, a target written at the same moment could stick.
-- **Panel fixes:**
-  - The switches wait for the first connection, and flip back if a request fails.
-  - <kbd>Ctrl</kbd> + <kbd>S</kbd> includes the value you were typing.
-  - Two quick swipes on a phone no longer add a point.
-  - Edits made while Apply is in flight are kept.
-  - Tab moves through the page again.
-- **The panel can't be stalled** by a half-sent or idle connection.
-- **A new launch never signals the wrong process** while taking over from the running copy.
+**First start**
+- Breeze starts on stock fan control until you switch **Custom curve** on once, and remembers it on every launch after. The popup and a one-line hint in the panel say where.
+- One starting preset, **Breeze**: the play-tested curve (23% up to 60 °C, rising gently to 34% at 81 °C), also the default curve. Existing curves and presets are kept.
+- **Apply turns the curve on** if it was off.
+
+**Fan control**
+- **Fixed: fan stuck at 23% in game** until the curve was touched. Breeze now takes over as soon as the fan falls behind the curve, and a rounding bug that made it think the console was still heating up is gone.
+- **Turning the curve off always hands the fan back to stock,** and stopping Breeze does that first, before anything slower.
+
+**Panel**
+- **Console minimum shown:** the chart starts at 13% (the menu minimum) with a dashed band at 23% (the minimum while a game runs), and the Fan readout says "min" when that's why the fan sits above your curve.
+- **Hover tips** on the buttons.
+- **Presets:** only one is marked Active, none while the curve is off, and saving under an existing name asks first.
+- **Fixes:** the switches flip back if a request fails, <kbd>Ctrl</kbd> + <kbd>S</kbd> includes the value you were typing, quick swipes on a phone no longer add a point, edits made during Apply are kept, and Tab works again.
+
+**Reliability**
+- Settings are only replaced once fully written, and the panel says if saving failed.
+- A half-sent or idle connection can't stall the panel.
+- A new launch never signals the wrong process when replacing the running copy.
 
 ## 1.3
 
