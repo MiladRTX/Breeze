@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.7
 
 **Curve**
 - **Optional smooth curve:** the **Smooth** switch on the Curve card bends the curve through your dots instead of joining them with straight lines. It never overshoots: between two dots the fan stays between their values. Off by default, applied with Apply like any edit, and each preset keeps its own setting.
@@ -16,6 +16,7 @@
 - **The target shows one decimal.**
 - **Sturdier in the PS5 browser:** no web fonts to wait for, switches and keys work on older browser engines, the layout holds without flex gap, and a stuck request can no longer stop the live updates.
 - **Fixed: the hover readout was 1% low on falling parts of the curve.**
+- **Fixes:** a switch could show the wrong state after a lost reply, holding a point without moving it could freeze the editor, the preset list now reloads after a failed action, and a single history reading between two gaps is drawn.
 - A diagnostics overlay for browser problems: add `?diag` to the address or click the Breeze name five times.
 
 **Reliability**
