@@ -496,7 +496,8 @@ function drawCurve(){
   if(cm>FMIN){y=Y(cm);
     o+='<rect x="'+P.l+'" y="'+y+'" width="'+(W-P.l-P.r)+'" height="'+(Y(FMIN)-y)+'" fill="#ffffff" fill-opacity=".035"/>'+
       '<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="#5c6573" stroke-opacity=".7" stroke-dasharray="3 4"/>'+
-      label(X(XMAX)-8,y+14,'console minimum','end')}
+      // The band only shows above 13%, which happens while an app or game runs.
+      label(X(XMAX)-8,y+14,small?'console min · app running':'console minimum while an app is running','end')}
   if(draft.length){
     var d='M'+X(XMIN)+' '+Y(draft[0][1]);
     for(i=0;i<draft.length;i++)d+=' L'+X(draft[i][0])+' '+Y(draft[i][1]);
