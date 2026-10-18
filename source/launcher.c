@@ -1,22 +1,28 @@
 #include "launcher.h"
 #include "app.h"
+#include "config.h"
 #include "tile_param.h"
 
 #include <arpa/inet.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
 
 #define ELFLDR_PORT 9021
+#define GUARD_LOCK_PATH FC_DATA_DIR "/guard.lock"
 
 extern const char kIcon0Png[];
 extern const size_t kIcon0PngLen;
 extern const char kTileElf[];
 extern const size_t kTileElfLen;
+extern const char kGuardElf[];
+extern const size_t kGuardElfLen;
 
 /* 1 when the file at `path` is missing or differs from `data`. */
 static int differs(const char *path, const void *data, size_t len) {
@@ -33,8 +39,7 @@ static int differs(const char *path, const void *data, size_t len) {
     return diff;
 }
 
-/* Sends an ELF to the loader on this console, as Payload Manager does. */
-static int send_to_loader(const char *elf, size_t len) {
+int fc_loader_send(const char *elf, size_t len) {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
         return -1;
@@ -67,10 +72,34 @@ int fc_launcher_ensure(int port) {
         !differs(TILE_SYS_DIR "/icon0.png", kIcon0Png, kIcon0PngLen))
         return 0;
 
-    if (send_to_loader(kTileElf, kTileElfLen) != 0) {
+    if (fc_loader_send(kTileElf, kTileElfLen) != 0) {
         fc_log("launcher: could not reach the ELF loader on port %d", ELFLDR_PORT);
         return -1;
     }
     fc_log("launcher: tile missing or outdated, installer started");
     return 1;
+}
+
+int fc_guard_probe(void) {
+    int fd = open(GUARD_LOCK_PATH, O_RDWR | O_CREAT, 0666);
+    if (fd < 0)
+        return -1;
+    int waiting = flock(fd, LOCK_EX | LOCK_NB) != 0;
+    close(fd);
+    return waiting;
+}
+
+void fc_guard_ensure(void) {
+    static int s_unreachable; /* log a missing loader once, not every probe */
+    if (fc_guard_probe() != 0)
+        return;
+
+    if (fc_loader_send(kGuardElf, kGuardElfLen) != 0) {
+        if (!s_unreachable)
+            fc_log("guard: could not reach the ELF loader on port %d", ELFLDR_PORT);
+        s_unreachable = 1;
+        return;
+    }
+    s_unreachable = 0;
+    fc_log("guard: started");
 }

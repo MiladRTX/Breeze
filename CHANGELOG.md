@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+**Curve**
+- **Optional smooth curve:** the **Smooth** switch on the Curve card bends the curve through your dots instead of joining them with straight lines. It never overshoots: between two dots the fan stays between their values. Off by default, applied with Apply like any edit, and each preset keeps its own setting.
+
+**Fan control**
+- **"Stock" is now really stock.** Breeze used to hand the fan back at 77 °C, which isn't the console's own setting. It now learns the console's own target (91 °C on a PS5 Slim) and puts that back, only if the fan still holds Breeze's last setting, and never anything warmer than 91 °C. A value another fan tool keeps writing is not mistaken for it.
+- **The fan goes back to stock even when Breeze is killed** from Payload Manager or crashes. A small helper, breeze-guard.elf, waits next to Breeze and restores the console's setting within about a second. Breeze restarts the helper within 10 seconds if it's stopped, and a new launch puts back a setting a stopped copy left behind. Before, the fan kept Breeze's last setting until a game was closed or started.
+- **Exact console minimum:** Breeze reads all four of the console's fan channels, so "min" is exact, and the Fan readout says "console" when another part of the console is asking for more fan than your curve.
+- Breeze reads the target back every second and only rewrites it when it changed.
+
+**Panel**
+- **History survives a restart:** it's saved every 5 minutes and when Breeze stops.
+- **The target shows one decimal.**
+- **Sturdier in the PS5 browser:** no web fonts to wait for, switches and keys work on older browser engines, the layout holds without flex gap, and a stuck request can no longer stop the live updates.
+- **Fixed: the hover readout was 1% low on falling parts of the curve.**
+- A diagnostics overlay for browser problems: add `?diag` to the address or click the Breeze name five times.
+
+**Reliability**
+- **breeze.log is capped at 256 KB;** the one before is kept as breeze.log.1, and each day starts with a date line.
+- A new launch no longer loses the previous log while replacing the running copy.
+
 ## 1.6
 
 - **New default curve** (the Breeze preset on a fresh install): 23% up to 60 °C, then 26% at 70 °C, 32% at 75 °C, 37% at 78 °C and 40% at 80 °C. Existing setups keep their own curve.

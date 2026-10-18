@@ -10,7 +10,6 @@
 
 /* ICC target used by the firmware's own curve (OnionHEN calls this the
  * automatic threshold). Writing it restores stock behavior. */
-#define FC_STOCK_TARGET_C 77
 
 /* Past this temperature the controller is overridden regardless of points. */
 #define FC_SAFETY_TEMP_C 88
@@ -65,6 +64,7 @@ typedef struct curve_config {
     int enabled;     /* custom curve active */
     int web_enabled; /* embedded web panel */
     int web_port;
+    int smooth;      /* 1: smooth curve through the points, 0: straight lines */
     int points_count;
     curve_point points[FC_CURVE_MAX_POINTS]; /* ascending by temp after sanitize */
     char token[FC_TOKEN_LEN + 1]; /* required on web panel POSTs */
@@ -78,7 +78,13 @@ void fc_sanitize(curve_config *c);
 /* Same point-level clamps for a bare count/array (used for presets). */
 void fc_sanitize_points(int *count, curve_point *points);
 
-/* Desired fan duty for a measured temperature. Linear interpolation between
- * the configured points; clamped to the first/last point outside the range.
- * This matches the line drawn by the web graph. */
+/* Fan duty at a temperature, for sorted points with strictly increasing
+ * temps. Straight lines between the points, or with smooth set a monotone
+ * cubic (PCHIP tangents, the segment's slope at the end points) that passes
+ * through every point and never leaves the range of the two around it.
+ * Flat at the first/last point outside the range. Integer math, truncated
+ * toward the left point; the web panel computes and draws the same values. */
+int fc_eval_points(const curve_point *p, int n, int smooth, int temp_c);
+
+/* fc_eval_points with the config's points and smooth flag. */
 int fc_evaluate(const curve_config *c, int temp_c);

@@ -38,11 +38,24 @@ add_custom_command(
     COMMENT "Embedding breeze-tile.elf"
     VERBATIM)
 
+# Same for breeze-guard.elf, which restores the stock fan target if
+# breeze.elf is killed hard or crashes (source/guard.c).
+set(BREEZE_GUARD_C ${CMAKE_CURRENT_BINARY_DIR}/guard_elf.c)
+add_custom_command(
+    OUTPUT ${BREEZE_GUARD_C}
+    COMMAND ${CMAKE_COMMAND} -DIN=$<TARGET_FILE:breeze-guard> -DOUT=${BREEZE_GUARD_C}
+            -DVAR=kGuardElf -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_web.cmake
+    DEPENDS breeze-guard ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_web.cmake
+    COMMENT "Embedding breeze-guard.elf"
+    VERBATIM)
+
 add_executable(breeze
     source/main.c
     source/launcher.c
     ${BREEZE_TILE_C}
     ${BREEZE_ICON_C}
+    source/guardctl.c
+    ${BREEZE_GUARD_C}
     source/control.c
     source/app.c
     source/fan.c
@@ -64,3 +77,12 @@ add_executable(breeze-tile source/tile.c ${BREEZE_ICON_C})
 target_compile_options(breeze-tile PRIVATE -Wall -Os)
 target_link_libraries(breeze-tile PRIVATE kernel_sys SceIpmi SceAppInstUtil)
 set_target_properties(breeze-tile PROPERTIES OUTPUT_NAME breeze-tile.elf)
+
+# Fan guard (see source/guard.c). It waits next to breeze.elf for as long as
+# it runs, so: kernel_sys only, no threads.
+add_executable(breeze-guard source/guard.c source/fan.c)
+target_include_directories(breeze-guard PRIVATE source)
+target_compile_options(breeze-guard PRIVATE -Wall -Os -ffunction-sections -fdata-sections)
+target_link_options(breeze-guard PRIVATE -Wl,--gc-sections)
+target_link_libraries(breeze-guard PRIVATE kernel_sys)
+set_target_properties(breeze-guard PROPERTIES OUTPUT_NAME breeze-guard.elf)

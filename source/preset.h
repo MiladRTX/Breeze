@@ -10,6 +10,7 @@
 
 typedef struct preset {
     char name[FC_PRESET_NAME_MAX + 1];
+    int smooth; /* as curve_config.smooth */
     int points_count;
     curve_point points[FC_CURVE_MAX_POINTS];
 } preset;

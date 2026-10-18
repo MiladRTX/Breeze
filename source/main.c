@@ -6,6 +6,8 @@
 #include "app.h"
 #include "config.h"
 #include "control.h"
+#include "guardctl.h"
+#include "history.h"
 #include "httpd.h"
 #include "launcher.h"
 
@@ -18,12 +20,15 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
+#include <sys/user.h>
 #include <unistd.h>
 
 #define FC_LOCK_PATH FC_DATA_DIR "/breeze.lock"
@@ -117,33 +122,82 @@ static int wait_lock(int fd, int ms) {
     return -1;
 }
 
-/* Stops the copy holding the lock and takes the lock over. SIGTERM first so
- * it restores the stock fan target and closes the panel; SIGKILL if it
- * hangs. Returns the replaced pid, 0 if the holder went away on its own,
- * or -1. */
-static int take_over(int lock_fd) {
+/* What `pid` is: 1 breeze.elf, 2 breeze-guard.elf, 0 anything else or gone,
+ * -1 unknown (the lookup failed). Its name goes to `comm`, "" if none. */
+static int proc_kind(int pid, char *comm, size_t n) {
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, pid};
+    struct kinfo_proc kp;
+    size_t len = sizeof kp;
+    memset(&kp, 0, sizeof kp);
+    comm[0] = 0;
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) != 0 && errno != ENOMEM)
+        return errno == ESRCH ? 0 : -1;
+    if (len < offsetof(struct kinfo_proc, ki_comm) + sizeof kp.ki_comm)
+        return len == 0 ? 0 : -1;
+    kp.ki_comm[sizeof kp.ki_comm - 1] = 0;
+    snprintf(comm, n, "%s", kp.ki_comm);
+    if (!strcmp(kp.ki_comm, "breeze.elf"))
+        return 1;
+    return !strcmp(kp.ki_comm, "breeze-guard.elf") ? 2 : 0;
+}
+
+/* The pid in the lock file once it is a breeze.elf or breeze-guard.elf
+ * (`*kind` from proc_kind), tried for 2 s. A copy that has only just taken
+ * the lock may not have written its pid yet, and the pid of one that died
+ * can belong to anything by now: those are never signalled. 0 if the lock
+ * came free (it is ours now), -1 if no such holder showed up. */
+static int find_holder(int lock_fd, int *kind) {
+    char comm[32];
     int pid = 0;
-    /* A copy that has only just taken the lock may not have written its pid
-     * yet: never signal a stale one, wait for the real one instead. */
     for (int i = 0; i < 20; i++) {
         char buf[16] = {0};
+        pid = 0;
+        comm[0] = 0;
         if (pread(lock_fd, buf, sizeof buf - 1, 0) > 0)
             pid = atoi(buf);
-        if (pid > 1)
-            break;
+        if (pid > 1 && pid != getpid() &&
+            (*kind = proc_kind(pid, comm, sizeof comm)) != 0)
+            return pid;
         if (flock(lock_fd, LOCK_EX | LOCK_NB) == 0)
             return 0;
         usleep(100000);
     }
-    if (pid <= 1 || pid == getpid())
-        return -1;
+    /* The name tells a stale pid from a process rename that didn't apply. */
+    if (comm[0])
+        fc_log("take-over: lock pid %d is '%s', not signalled", pid, comm);
+    else
+        fc_log("take-over: lock still held, pid %d in it is not running", pid);
+    return -1;
+}
 
-    if (kill(pid, SIGTERM) != 0 && errno != ESRCH)
-        return -1;
-    if (wait_lock(lock_fd, 6000) == 0)
-        return pid;
-    kill(pid, SIGKILL);
-    return wait_lock(lock_fd, 3000) == 0 ? pid : -1;
+/* Stops the copy holding the lock and takes the lock over. SIGTERM first so
+ * it restores the stock fan target and closes the panel; SIGKILL if it
+ * hangs. A guard holding the lock is restoring the fan after a copy that
+ * died: it gets a moment to finish, then SIGTERM (which ends it). The
+ * holder is looked up again before each signal, since the guard takes the
+ * lock when a copy dies. Returns the replaced pid, 0 if the holder went away
+ * on its own, or -1. */
+static int take_over(int lock_fd) {
+    int replaced = 0, termed = 0;
+    for (int round = 0; round < 3; round++) {
+        int kind = 0, pid = find_holder(lock_fd, &kind);
+        if (pid <= 0)
+            return pid < 0 ? -1 : replaced;
+        if (pid == termed) { /* still there after SIGTERM */
+            kill(pid, SIGKILL);
+            return wait_lock(lock_fd, 3000) == 0 ? replaced : -1;
+        }
+        if (kind == 2 && wait_lock(lock_fd, 3000) == 0)
+            return replaced;
+        if (kill(pid, SIGTERM) != 0 && errno != ESRCH)
+            return -1;
+        if (!replaced)
+            replaced = pid;
+        termed = pid;
+        if (wait_lock(lock_fd, kind == 2 ? 3000 : 6000) == 0)
+            return replaced;
+    }
+    return -1;
 }
 
 static void notify_started(int replaced) {
@@ -172,9 +226,73 @@ static void notify_started(int replaced) {
                FC_PLUGIN_VERSION, verb, mode, lead, srv_port);
 }
 
+static volatile int s_launching; /* a launcher thread is running */
+
 static void *launcher_thread(void *arg) {
-    fc_launcher_ensure((int)(intptr_t)arg);
+    int port = (int)(intptr_t)arg;
+    if (port)
+        fc_launcher_ensure(port);
+    fc_guard_ensure();
+    s_launching = 0;
     return NULL;
+}
+
+/* Home screen tile (port 0: skip it), then the guard. On its own thread:
+ * the loader can take seconds, and the main thread has to stay free for
+ * the stock restore on SIGTERM. One at a time. */
+static void start_launcher(int port) {
+    if (s_launching)
+        return;
+    s_launching = 1;
+    pthread_t lt;
+    if (pthread_create(&lt, NULL, launcher_thread, (void *)(intptr_t)port) == 0)
+        pthread_detach(lt);
+    else
+        s_launching = 0;
+}
+
+/* What the previous holder left in breeze.lock ("<pid> <c256> <stock>
+ * <prev>", guardctl.h; older lines have fewer fields). A target there means
+ * it ended with nothing to put the fan back: no guard waiting, a guard
+ * stopped before it was done, or a restore that failed. */
+typedef struct lock_record {
+    int c256, stock, prev;
+} lock_record;
+
+static lock_record read_record(int lock_fd) {
+    lock_record r = {-1, -1, -1};
+    char buf[64] = {0};
+    if (pread(lock_fd, buf, sizeof buf - 1, 0) > 0)
+        sscanf(buf, "%*d %d %d %d", &r.c256, &r.stock, &r.prev);
+    return r;
+}
+
+/* After fan_stock_load: its stock value if the line has a usable one (the
+ * guard does the same), else ours. Until this is done the record stays in
+ * breeze.lock; if the restore fails it stays as this copy's own failed
+ * restore, with that stock, and is retried like one (the control loop with
+ * the curve off, the exit, the crash handler, the guard, the next start). */
+static void restore_left(lock_record left) {
+    if (left.c256 < 0 && left.prev < 0)
+        return;
+    int stock = fan_stock_ok(left.stock) ? left.stock : fan_stock_c256();
+    app_lock(&g_state);
+    int r = fan_restore_if_ours(left.c256, left.prev, stock);
+    if (r >= 0) {
+        fc_lock_note_target(-1);
+    } else {
+        fan_stock_use(stock);
+        g_state.last_c256 = left.c256; /* a failed SET of the curve keeps it too */
+        fc_lock_note_left(left.c256, left.prev); /* the stock in use, too */
+    }
+    app_unlock(&g_state);
+    if (r > 0)
+        fc_log("a stopped copy left its fan target behind: stock target %d.%02dC put back",
+               stock / 256, (stock % 256) * 100 / 256);
+    else
+        fc_log("a stopped copy left its fan target behind, %s",
+               r == 0 ? "but the fan had already changed"
+                      : "and putting stock back failed: kept for a retry");
 }
 
 int main(void) {
@@ -183,6 +301,7 @@ int main(void) {
     /* A browser dropping the panel connection mid-response must not kill
      * the payload (FreeBSD's default SIGPIPE action terminates). */
     signal(SIGPIPE, SIG_IGN);
+    fc_crash_handler_install();
     if (sceKernelSetProcessName)
         sceKernelSetProcessName("breeze.elf");
 
@@ -206,37 +325,60 @@ int main(void) {
         fc_log_close();
         return 1;
     }
-    int replaced = 0;
+    int replaced_pid = 0;
     if (flock(lock_fd, LOCK_EX | LOCK_NB) != 0) {
-        int replaced_pid = take_over(lock_fd);
+        replaced_pid = take_over(lock_fd);
         if (replaced_pid < 0) {
             notify("%s is already running and would not stop", FC_PLUGIN_NAME);
             fc_log_close();
             return 1;
         }
-        if (replaced_pid > 0) {
-            fc_log("replaced running copy (pid %d)", replaced_pid);
-            replaced = 1;
-        }
     }
-    /* Overwrite, then trim: truncating first left a moment where the file
-     * was empty and a new launch could read no pid. */
-    char pid_txt[16];
-    int pid_len = snprintf(pid_txt, sizeof pid_txt, "%d\n", (int)getpid());
-    if (pwrite(lock_fd, pid_txt, (size_t)pid_len, 0) == pid_len)
-        (void)ftruncate(lock_fd, pid_len);
+    lock_record left = read_record(lock_fd);
+    /* Our pid in the line at once (take_over reads it). Any target the
+     * previous holder left stays in it until restore_left has dealt with
+     * it, so a kill before then loses nothing (guardctl.h). */
+    g_lock_fd = lock_fd;
+    fc_lock_note_left(left.c256, left.prev);
+
+    /* Holding the lock: only now may this copy rotate the log, and only
+     * now are its lines sure to land in the live file. */
+    fc_log_own();
+    int replaced = replaced_pid > 0;
+    if (replaced)
+        fc_log("replaced running copy (pid %d)", replaced_pid);
 
     app_state_init(&g_state);
     curve_config cfg;
     fc_config_load(&cfg);
+    fan_stock_load();
     preset_store ps;
     fc_presets_load(&ps);
     app_lock(&g_state);
     g_state.cfg = cfg;
     g_state.presets = ps;
     app_unlock(&g_state);
-    fc_log("%s %s starting (enabled=%d web=%d port=%d)", FC_PLUGIN_NAME,
-           FC_PLUGIN_VERSION, cfg.enabled, cfg.web_enabled, cfg.web_port);
+    fc_log("%s %s starting (enabled=%d web=%d port=%d smooth=%d)",
+           FC_PLUGIN_NAME, FC_PLUGIN_VERSION, cfg.enabled, cfg.web_enabled,
+           cfg.web_port, cfg.smooth);
+    restore_left(left);
+
+    /* SIGTERM or SIGINT while taking over: the old copy is gone, so no
+     * panel and no "running" notification. This copy wrote nothing; a
+     * target restore_left could not put back stays in breeze.lock for the
+     * copy that sent the SIGTERM, or the next one to start. */
+    if (!g_running) {
+        fc_log("stopped before starting");
+        fc_log_close();
+        g_lock_fd = -1;
+        close(lock_fd);
+        return 0;
+    }
+
+    /* After the lock (a replaced copy has saved on its way out), before the
+     * control thread records. */
+    fc_hist_load();
+    fc_hist_start_saver();
 
     pthread_t ctl_thread;
     if (pthread_create(&ctl_thread, NULL, fc_control_loop, &g_state) != 0) {
@@ -247,32 +389,39 @@ int main(void) {
 
     ensure_server_sync();
     notify_started(replaced);
-    /* Home screen tile; a no-op once it's installed and current. */
-    if (srv_port) {
-        pthread_t lt;
-        if (pthread_create(&lt, NULL, launcher_thread, (void *)(intptr_t)srv_port) == 0)
-            pthread_detach(lt);
-    }
+    /* Tile with the panel on (a no-op once it's installed and current). */
+    start_launcher(srv_port);
 
     for (int tick = 0; g_running; tick++) {
         usleep(100000);
+        if (!g_running) /* signalled: nothing else before the restore */
+            break;
         if (tick % 20 == 0)
             ensure_server_sync();
+        /* 10 s: restart a guard that was killed. The probe is one LOCK_NB;
+         * only the loader send goes to a thread. */
+        if (tick % 100 == 99 && fc_guard_probe() == 0)
+            start_launcher(0);
     }
 
-    /* Hand the fan back before anything slow. Payload Manager's kill sends
-     * SIGTERM and SIGKILL 1.5 s later, which used to land mid-teardown and
-     * leave the fan on Breeze's last target. Under the lock, so the control
-     * thread (which re-checks `stopping` there) can't write after this. */
+    /* Hand the fan back before anything slow. Payload Manager's kill is a
+     * bare SIGKILL that breeze-guard.elf handles; this order is for
+     * take-over's SIGTERM (SIGKILL follows after 6 s) and SIGINT. Under the
+     * lock, so the control thread (which re-checks `stopping` there) can't
+     * write after this. */
     app_lock(&g_state);
     g_state.stopping = 1;
-    g_state.current_setpoint = -1;
-    int was_on = g_state.cfg.enabled;
-    if (was_on)
-        fan_write_setpoint(FC_STOCK_TARGET_C);
+    int restored = fc_fan_restore_locked(&g_state);
     app_unlock(&g_state);
-    if (was_on)
-        fc_log("ctl: stock target restored on exit");
+    if (restored > 0)
+        fc_log("ctl: stock target restored on exit (%d.%02dC)", fan_stock_c256() / 256,
+               (fan_stock_c256() % 256) * 100 / 256);
+    else if (restored < 0)
+        fc_log("ctl: could not restore the stock target on exit, left to breeze-guard.elf");
+
+    /* Fan handed back; the file I/O comes after it, and before the slow
+     * part of the teardown that a SIGKILL after the SIGTERM may cut short. */
+    fc_hist_save();
 
     if (srv_port) {
         httpd_stop();
@@ -281,6 +430,7 @@ int main(void) {
     pthread_join(ctl_thread, NULL);
     fc_log("stopped");
     fc_log_close();
+    g_lock_fd = -1;
     close(lock_fd);
     return 0;
 }

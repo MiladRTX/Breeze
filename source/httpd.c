@@ -105,6 +105,15 @@ static void catf(char *buf, size_t cap, size_t *off, const char *fmt, ...) {
         *off = cap - 1;
 }
 
+/* 1/256 C as a JSON number with two decimals, or -1. */
+static const char *c256_str(int v, char *out, size_t n) {
+    if (v < 0)
+        snprintf(out, n, "-1");
+    else
+        snprintf(out, n, "%d.%02d", v / 256, (v % 256) * 100 / 256);
+    return out;
+}
+
 static void handle_state(int fd) {
     curve_config cfg;
     fan_sample s;
@@ -112,32 +121,44 @@ static void handle_state(int fd) {
     int desired = -1;
     int floor_state = 0;
     int cmin;
-    char buf[1024];
+    fan_channel ch[FAN_CHANNELS];
+    char buf[1536], a[16], b[16];
     size_t off = 0;
 
     app_lock(g_state);
     cfg = g_state->cfg;
     s = g_state->sample;
-    setp = g_state->current_setpoint;
+    setp = g_state->current_setpoint; /* 1/256 C */
     cmin = g_state->console_min;
+    memcpy(ch, g_state->ch, sizeof ch);
     app_unlock(g_state);
 
     if (cfg.enabled) {
         int t = s.cpu_c >= 0 ? s.cpu_c : s.soc_c;
         if (t > 0) {
             desired = fc_evaluate(&cfg, t);
-            if (setp >= 0 && setp >= t + 5)
+            if (setp >= 0 && setp >= (t + 5) * 256)
                 floor_state = 1;
         }
     }
 
     catf(buf, sizeof buf, &off,
          "{\"ver\":\"%s\",\"enabled\":%d,\"web_enabled\":%d,\"web_port\":%d,"
-         "\"cpu\":%d,\"soc\":%d,\"duty\":%d,\"desired\":%d,\"target\":%d,"
-         "\"floor\":%d,\"min\":%d,\"points\":[",
+         "\"cpu\":%d,\"soc\":%d,\"duty\":%d,\"desired\":%d,\"target\":%s,"
+         "\"stock\":%s,\"floor\":%d,\"min\":%d,\"smooth\":%d,\"ch\":[",
          FC_PLUGIN_VERSION, cfg.enabled ? 1 : 0, cfg.web_enabled ? 1 : 0,
-         cfg.web_port, s.cpu_c, s.soc_c, s.duty_pct, desired, setp,
-         floor_state, cmin);
+         cfg.web_port, s.cpu_c, s.soc_c, s.duty_pct, desired,
+         c256_str(setp, a, sizeof a), c256_str(fan_stock_c256(), b, sizeof b),
+         floor_state, cmin, cfg.smooth);
+    /* per servo channel: [target C, temperature C, duty %] */
+    for (int i = 0; i < FAN_CHANNELS; i++) {
+        char t[16], u[16];
+        catf(buf, sizeof buf, &off, "%s[%s,%s,%d]", i ? "," : "",
+             c256_str(ch[i].target_c256, t, sizeof t),
+             c256_str(ch[i].temp_c256, u, sizeof u),
+             ch[i].duty_q10 < 0 ? -1 : (ch[i].duty_q10 * 100 + 512) / 1024);
+    }
+    catf(buf, sizeof buf, &off, "],\"points\":[");
     for (int i = 0; i < cfg.points_count; i++)
         catf(buf, sizeof buf, &off, "%s[%d,%d]", i ? "," : "",
              cfg.points[i].temp_c, cfg.points[i].fan_pct);
@@ -232,6 +253,8 @@ static int apply_form(const char *body) {
             cfg.web_enabled = atoi(val) ? 1 : 0;
         } else if (!strcmp(key, "web_port")) {
             cfg.web_port = atoi(val);
+        } else if (!strcmp(key, "smooth")) {
+            cfg.smooth = atoi(val) ? 1 : 0;
         } else {
             form_point(&fp, key, val);
         }
@@ -251,11 +274,8 @@ static int apply_form(const char *body) {
     int was_enabled = g_state->cfg.enabled;
     g_state->cfg = cfg;
     g_state->ui_dirty = 1;
-    if (!cfg.enabled) {
-        g_state->current_setpoint = -1;
-        if (was_enabled)
-            fan_write_setpoint(FC_STOCK_TARGET_C);
-    }
+    if (!cfg.enabled && was_enabled)
+        fc_fan_restore_locked(g_state);
     app_unlock(g_state);
 
     return fc_config_save(&cfg);
@@ -268,9 +288,8 @@ static int do_restore(void) {
     cfg = g_state->cfg;
     cfg.enabled = 0;
     g_state->cfg = cfg;
-    g_state->current_setpoint = -1;
     g_state->ui_dirty = 1;
-    fan_write_setpoint(FC_STOCK_TARGET_C);
+    fc_fan_restore_locked(g_state);
     app_unlock(g_state);
 
     return fc_config_save(&cfg);
@@ -308,8 +327,9 @@ static void send_presets(int fd) {
 
     catf(buf, sizeof buf, &off, "[");
     for (int i = 0; i < ps.count; i++) {
-        catf(buf, sizeof buf, &off, "%s{\"name\":\"%s\",\"points\":[",
-             i ? "," : "", ps.list[i].name);
+        catf(buf, sizeof buf, &off,
+             "%s{\"name\":\"%s\",\"smooth\":%d,\"points\":[", i ? "," : "",
+             ps.list[i].name, ps.list[i].smooth);
         for (int j = 0; j < ps.list[i].points_count; j++)
             catf(buf, sizeof buf, &off, "%s[%d,%d]", j ? "," : "",
                  ps.list[i].points[j].temp_c, ps.list[i].points[j].fan_pct);
@@ -327,6 +347,7 @@ static void handle_presets_post(const char *body, int fd) {
     curve_point pts[FC_CURVE_MAX_POINTS];
     form_points fp;
     int overwrite = 0;
+    int smooth = 0;
 
     memset(&fp, 0, sizeof fp);
 
@@ -349,6 +370,8 @@ static void handle_presets_post(const char *body, int fd) {
             fc_preset_name_clean(to, val, sizeof to);
         else if (!strcmp(key, "overwrite"))
             overwrite = atoi(val) != 0;
+        else if (!strcmp(key, "smooth"))
+            smooth = atoi(val) != 0;
         else
             form_point(&fp, key, val);
     }
@@ -372,6 +395,7 @@ static void handle_presets_post(const char *body, int fd) {
         cfg = g_state->cfg;
         cfg.points_count = ps.list[idx].points_count;
         memcpy(cfg.points, ps.list[idx].points, sizeof cfg.points);
+        cfg.smooth = ps.list[idx].smooth;
         fc_sanitize(&cfg);
         g_state->cfg = cfg;
         g_state->ui_dirty = 1;
@@ -407,13 +431,17 @@ static void handle_presets_post(const char *body, int fd) {
             idx = ps.count++;
         }
         snprintf(ps.list[idx].name, sizeof ps.list[idx].name, "%s", name);
+        /* The flag goes with the points it came with, and is always set: a
+         * slot reused after a delete still holds the old preset. */
         if (pts_count > 0) {
             ps.list[idx].points_count = pts_count;
             memcpy(ps.list[idx].points, pts, sizeof ps.list[idx].points);
+            ps.list[idx].smooth = smooth;
         } else {
             ps.list[idx].points_count = cfg.points_count;
             memcpy(ps.list[idx].points, cfg.points,
                    sizeof ps.list[idx].points);
+            ps.list[idx].smooth = cfg.smooth;
         }
         fc_sanitize_points(&ps.list[idx].points_count, ps.list[idx].points);
         app_lock(g_state);

@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void fc_preset_name_clean(char *dst, const char *src, size_t dst_size) {
@@ -81,6 +82,8 @@ int fc_presets_load(preset_store *ps) {
             if (nl)
                 *nl = 0;
             fc_preset_name_clean(cur->name, raw, sizeof cur->name);
+        } else if (!strncmp(p, "smooth=", 7) && cur) {
+            cur->smooth = atoi(p + 7) ? 1 : 0;
         } else if (!strncmp(p, "point=", 6) && cur &&
                    cur->points_count < FC_CURVE_MAX_POINTS) {
             int t = 0, v = 0;
@@ -117,8 +120,11 @@ int fc_presets_save(const preset_store *ps) {
         return -1;
     fprintf(f, "# %s fan curve presets\n", FC_PLUGIN_ID);
     fprintf(f, "# preset=<name> followed by point=tempC,fan%% lines\n");
+    fprintf(f, "# (and smooth=1 for a smooth curve)\n");
     for (int i = 0; i < ps->count; i++) {
         fprintf(f, "preset=%s\n", ps->list[i].name);
+        if (ps->list[i].smooth)
+            fprintf(f, "smooth=1\n");
         for (int j = 0; j < ps->list[i].points_count; j++)
             fprintf(f, "point=%d,%d\n", ps->list[i].points[j].temp_c,
                     ps->list[i].points[j].fan_pct);

@@ -7,6 +7,7 @@
 #define FC_DATA_DIR "/data/breeze"
 #define FC_CONFIG_PATH FC_DATA_DIR "/breeze.conf"
 #define FC_LOG_PATH FC_DATA_DIR "/breeze.log"
+#define FC_HIST_PATH FC_DATA_DIR "/history.bin"
 
 /* Fills defaults, overlays the file when present, writes defaults when not,
  * sanitizes the result. Returns 0. */

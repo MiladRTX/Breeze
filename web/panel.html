@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- PS5 system browser (PlayStation WebKit): PS5 for the script, html.ps5 for CSS, set before first paint -->
+<script>var PS5=/PlayStation/.test(navigator.userAgent);if(PS5)document.documentElement.className+=' ps5';</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0b0d10">
 <title>Breeze</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjE1Mi42IDE3Ny4xIDk2NC45IDk2NC45Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIwIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjOGVhMmZmIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjNGZkMWE1Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3QgeD0iMTUyLjYiIHk9IjE3Ny4xIiB3aWR0aD0iOTY0LjkiIGhlaWdodD0iOTY0LjkiIHJ4PSIyMTIuMyIgZmlsbD0iIzBiMGQxMCIvPjxwYXRoIGZpbGw9InVybCgjZykiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlPSJ1cmwoI2cpIiBzdHJva2Utd2lkdGg9IjEzLjgiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGQ9Ik0gNzA0IDMxMi42MjMgQyA2NDguNTg2IDMxOS42ODksIDYwNy4zMzEgMzUxLjg5NywgNTkwLjY4NSA0MDEuMDg5IEMgNTgyLjQwOCA0MjUuNTUwLCA1ODUuODkyIDQ2MC40OTUsIDU5OC4wODIgNDc1LjI4MyBDIDYwMy40MzEgNDgxLjc3MywgNjEyLjY4MyA0ODIuNjYyLCA2MTkuMDU3IDQ3Ny4yOTkgQyA2MjMuNjI2IDQ3My40NTQsIDYyNC4yNzEgNDcwLjgzNCwgNjI0LjA3NyA0NTYuOTIyIEMgNjIzLjgxMCA0MzcuODA5LCA2MjcuNjMxIDQyNC4xNDksIDYzNy4xMDkgNDEwLjMyNSBDIDY2NC4zMTUgMzcwLjY0NCwgNzIyLjg4NCAzNjAuNzMxLCA3NTcuNDUwIDM4OS45NTggQyA4MDQuNDI2IDQyOS42NzgsIDc5Mi4zMjAgNTAzLjcwOSwgNzM0LjA2NCA1MzIuOTcyIEMgNzEwLjcyMyA1NDQuNjk2LCA2ODguMzk5IDU0NS45OTYsIDYwNCA1NDAuNTQ2IEMgNTI0LjAwMyA1MzUuMzgxLCA0OTQuNzE2IDUzNC4wMDgsIDQ2NC41MDAgNTM0LjAwNCBDIDM3OS42MzUgNTMzLjk5NSwgMzE2Ljg5MCA1NTEuNTI4LCAyNjkuNTAwIDU4OC40OTUgQyAyNDkuOTIwIDYwMy43NjgsIDI0Ni4zNjkgNjEzLjE4MSwgMjU2LjQ4NyA2MjIuOTg3IEMgMjYyLjczNyA2MjkuMDQ1LCAyNjcuODQzIDYyOC41OTYsIDI4My44MzEgNjIwLjU4NSBDIDMyOS43NTQgNTk3LjU3MiwgMzcwLjIyMSA1ODkuNTExLCA0MzkuNTAwIDU4OS41NzIgQyA0ODEuMzQ1IDU4OS42MDksIDQ5MC4xMjMgNTkwLjE1NiwgNTY2LjUwMCA1OTcuNDg2IEMgNjM4LjYyOSA2MDQuNDA5LCA2NTMuMjI2IDYwNS4zODQsIDY4NC41MDAgNjA1LjM2OCBDIDcwOC45ODQgNjA1LjM1NSwgNzE0IDYwNS4wNzgsIDcyNC40NDYgNjAzLjE2MCBDIDc5Ni41NDcgNTg5LjkyMywgODQ4Ljc4NiA1MzAuNTQwLCA4NTEuNzAzIDQ1OC41MDAgQyA4NTQuNTQwIDM4OC40NDEsIDgwOC4zODAgMzI4LjExNCwgNzQxLjUzMSAzMTQuNTEzIEMgNzMzLjY1NSAzMTIuOTExLCA3MTAuNzc5IDMxMS43NTksIDcwNCAzMTIuNjIzIE0gOTQxIDUxMC44OTYgQyA5MDcuNTEyIDUxOC4zMDUsIDg4MC4yNzkgNTQwLjE1OSwgODY4LjExMiA1NjkuMzg2IEMgODU2LjkyNyA1OTYuMjUzLCA4NjEuNzIwIDYyNC41NDMsIDg3Ny44MjMgNjI2LjcwMyBDIDg4Ni4yMDEgNjI3LjgyNywgODkxLjI3MiA2MjIuOTgwLCA4OTMuNDExIDYxMS44MDMgQyA4OTkuMjA5IDU4MS41MDAsIDkyMi40NzYgNTYyLCA5NTIuODM2IDU2MiBDIDk3MC40MzIgNTYyLCA5ODMuMzU0IDU2Ny4zNzcsIDk5NC44NTQgNTc5LjQ4MyBDIDEwMjcuOTM1IDYxNC4zMDksIDEwMDguNDUzIDY2OS45MTAsIDk1Ni43NjEgNjg4LjIwMiBDIDkzOS42MjUgNjk0LjI2NiwgOTI4LjgzNiA2OTUuNTEyLCA4OTQuNTAwIDY5NS4zOTAgQyA4NTQuMTI0IDY5NS4yNDcsIDgxOC43MDIgNjkxLjQ2NSwgNzYzLjgwMCA2ODEuNDM3IEMgNzUzLjE4NSA2NzkuNDk5LCA3NDEuODAwIDY3Ny40NjUsIDczOC41MDAgNjc2LjkxOSBDIDczMi45NzUgNjc2LjAwNCwgNjkxLjI2NSA2NjguMDU5LCA2NzIuNTAwIDY2NC4zNDcgQyA2NTcuNDE4IDY2MS4zNjMsIDU5OS41NTIgNjUxLjY1OSwgNTc1LjUwMCA2NDguMDgwIEMgNTY3LjgwMCA2NDYuOTM0LCA1NTIuNTAwIDY0NS4wOTksIDU0MS41MDAgNjQ0LjAwMSBDIDUzMC41MDAgNjQyLjkwNCwgNTE3LjY3NSA2NDEuNTYzLCA1MTMgNjQxLjAyMiBDIDQ3My4wMDcgNjM2LjM5NCwgNDE3LjQ1NSA2MzguMDEzLCAzNzUuNTAwIDY0NS4wMzAgQyAzMTEuODEwIDY1NS42ODMsIDI1My4zNDAgNjgzLjQ2NiwgMjEzLjYxNCA3MjEuOTUzIEMgMjAyLjMyNiA3MzIuODkwLCAxOTkuMDYxIDczNy44MjYsIDE5OS4wMjIgNzQ0LjAxNiBDIDE5OC45NDggNzU1Ljg2MCwgMjEzLjU3OSA3NjMuMTk2LCAyMjMuNjEwIDc1Ni4zNDMgQyAyNzkuNDgzIDcxOC4xNzcsIDMyMC4zMjIgNzAyLjc0MSwgMzg5IDY5My44MzMgQyA0MDIuMjM4IDY5Mi4xMTUsIDQ3MS4yMjIgNjkyLjEwMCwgNDg5LjUwMCA2OTMuODEwIEMgNTQ2LjIzOCA2OTkuMTE4LCA2MTcuOTY2IDcxMC40ODYsIDY5OSA3MjcuMDEyIEMgODI4LjgzNyA3NTMuNDkxLCA5MDcuMzgxIDc2MC4xMTMsIDk1OS41MzQgNzQ4Ljk3NyBDIDEwMjkuMTc3IDczNC4xMDcsIDEwNzMuNjY0IDY4Mi41NjcsIDEwNzEuNzIzIDYxOSBDIDEwNzAuMTU5IDU2Ny43NjAsIDEwMzkuMDI2IDUyNi45MjIsIDk5MC40OTUgNTEyLjQ1MSBDIDk3OC4xNTggNTA4Ljc3MiwgOTU0LjAyNCA1MDguMDE0LCA5NDEgNTEwLjg5NiBNIDQyNi41MDAgNzQ2LjU5NyBDIDQyNC4zMDAgNzQ2LjgxMiwgNDE3LjMyNSA3NDcuNDY1LCA0MTEgNzQ4LjA0OSBDIDM2OC4yNzYgNzUxLjk5MywgMzIxLjAwMiA3NjUuMzI4LCAyOTMuNzExIDc4MS4xMzQgQyAyODAuOTE3IDc4OC41NDMsIDI2OS4xMDEgNzk3LjEwMSwgMjY3LjAyNCA4MDAuNDYxIEMgMjYyLjQ4NSA4MDcuODA2LCAyNjUuMzAwIDgxOC4wNzIsIDI3Mi45MjEgODIxLjk2MCBDIDI3OC44NjYgODI0Ljk5MywgMjgyLjExNyA4MjQuNTQ0LCAyOTguNDU5IDgxOC40MzIgQyAzNDQuNjUzIDgwMS4xNTUsIDQwNS4xNTAgNzkyLjc4NCwgNDYxLjUwMCA3OTUuODcyIEMgNDkyLjc3MCA3OTcuNTg2LCA1MTcuMjU5IDgwMC45MjgsIDU3NiA4MTEuNDk2IEMgNjEwLjA2NSA4MTcuNjI1LCA2MTkuMzQwIDgxOS4xMjksIDY1NiA4MjQuNDcwIEMgNjcxLjY5MCA4MjYuNzU1LCA3MTkuMTEzIDgzMi4yOTIsIDczMyA4MzMuNDU5IEMgNzg4LjQwMSA4MzguMTE2LCA4MDYuMjA5IDg0MS4xMzcsIDgyMS44NjUgODQ4LjUzMiBDIDg2Mi42NDcgODY3Ljc5NSwgODY5LjM5MSA5MTguNjM5LCA4MzQuNDcwIDk0My41NTkgQyA4MDUuNzk2IDk2NC4wMjAsIDc2NS44NjMgOTUyLjQ0NCwgNzUzLjkwNyA5MjAuMjA2IEMgNzUwLjgzNiA5MTEuOTIzLCA3NDguMDAxIDkwOC42NDcsIDc0Mi42MjMgOTA3LjE2MSBDIDcyNC43NTggOTAyLjIyOSwgNzE3LjkyNyA5MjkuMzYzLCA3MzAuNDE0IDk1NS42NTYgQyA3NDguMjc1IDk5My4yNjcsIDc4OS43MDMgMTAxMy45MzUsIDgzMi4zMjggMTAwNi41MDIgQyA4ODkuODkwIDk5Ni40NjQsIDkyOC42NDEgOTM5LjM5MCwgOTE3LjA5MSA4ODEuNjYwIEMgOTA5LjgwNiA4NDUuMjQ1LCA4ODYuNTY4IDgxNi40MjYsIDg1MC45MDAgNzk5LjU3NCBDIDgyNi45MzggNzg4LjI1MywgODE2LjY1MCA3ODYuNTA4LCA3MzIuNTAwIDc3OS40OTcgQyA3MDguMzI3IDc3Ny40ODMsIDY1MS44OTggNzcwLjcxNiwgNjMzIDc2Ny41NjUgQyA2MjUuMDI1IDc2Ni4yMzUsIDYxNC45MDAgNzY0LjYzNCwgNjEwLjUwMCA3NjQuMDA3IEMgNjA2LjEwMCA3NjMuMzgxLCA1OTYuNDI1IDc2MS44MDIsIDU4OSA3NjAuNDk5IEMgNTY2LjUwNiA3NTYuNTUzLCA1MjUuMjY3IDc1MC4wOTQsIDUxMiA3NDguNDM5IEMgNTAwLjE0NyA3NDYuOTYxLCA0MzYuNzYyIDc0NS41OTUsIDQyNi41MDAgNzQ2LjU5NyIvPjwvc3ZnPgo=">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0b0d10;--surface:#12151a;--surface2:#171b21;--line:#20262e;--line2:#2b323c;
@@ -35,17 +34,19 @@ button,input{font:inherit;color:inherit}
 .ver{font:500 11.5px var(--mono);color:var(--faint);margin-left:8px;letter-spacing:0}
 .grow{flex:1}
 .master{display:flex;align-items:center;gap:11px;font-size:13.5px;font-weight:600;cursor:pointer}
+.smooth{display:flex;align-items:center;gap:8px;flex:none;color:var(--muted);font-size:12.5px;font-weight:500;cursor:pointer}
 
 /* switch */
 .sw{position:relative;width:42px;height:24px;flex:none}
-.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
-.sw i{position:absolute;inset:0;border-radius:99px;background:var(--line2);transition:.18s}
+/* no `inset` (missing on early PS5 firmware); the stretched checkbox makes the whole switch the hit area */
+.sw input{position:absolute;top:0;left:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:1;-webkit-appearance:none;appearance:none}
+.sw i{position:absolute;top:0;right:0;bottom:0;left:0;border-radius:99px;background:var(--line2);transition:.18s}
 .sw i:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#cfd5de;transition:.18s}
 .sw input:checked+i{background:var(--accent)}
 .sw input:checked+i:after{transform:translateX(18px);background:#fff}
 .sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
 /* until the console answers, the switches don't know their state yet */
-.master.wait{pointer-events:none}.wait .sw,.sw.wait{opacity:.35;pointer-events:none}
+.master.wait,.smooth.wait{pointer-events:none}.wait .sw,.sw.wait{opacity:.35;pointer-events:none}
 
 /* tiles */
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
@@ -97,7 +98,7 @@ button,input{font:inherit;color:inherit}
 /* editor */
 .tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .chart{position:relative;height:440px;touch-action:none;user-select:none;-webkit-user-select:none}
-.chart svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.chart svg{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
 .chart text{font-family:var(--mono)}
 .readout{position:absolute;pointer-events:none;padding:5px 9px;border-radius:8px;background:rgba(11,13,16,.94);border:1px solid var(--line2);
   font:500 12px var(--mono);white-space:nowrap;opacity:0;transition:opacity .1s}
@@ -122,7 +123,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 /* table */
 .ptbl{max-height:340px;overflow:auto;padding:0 16px 12px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
 .tbl{width:100%;border-collapse:collapse}
-.tbl thead th{position:sticky;top:0;z-index:1;background:var(--surface);text-align:left;padding:12px 6px 8px}
+.tbl thead th{position:-webkit-sticky;position:sticky;top:0;z-index:1;background:var(--surface);text-align:left;padding:12px 6px 8px}
 /* line the headings up with the text inside the inputs (td 6 + border 1 + padding 10) */
 .tbl thead th+th{padding-left:17px}
 .tbl td{padding:3px 6px}
@@ -163,7 +164,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 
 /* history */
 .hist{position:relative;flex:1;min-height:150px}
-.hist svg{position:absolute;inset:0;width:100%;height:100%}
+.hist svg{position:absolute;top:0;left:0;width:100%;height:100%}
 .hist text{font-family:var(--mono)}
 .hist{touch-action:pan-y;cursor:crosshair}
 .htip{line-height:1.6;min-width:118px}
@@ -239,6 +240,32 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   #bAdd .add-txt{display:none}   /* the + alone on very narrow phones */
   #bAdd{width:36px;padding:0}
 }
+/* No flex gap (early PS5 firmware): the script sets html.nogap and these
+ * margins stand in for it. Grid gaps work there and need nothing. */
+.nogap .col>*+*{margin-top:16px}
+.nogap .top>*+*{margin-left:14px}
+.nogap .master .sw{margin-left:11px}
+.nogap .smooth .sw{margin-left:8px}
+.nogap .tile .v small{margin-left:3px}
+.nogap .btn svg+span{margin-left:6px}
+.nogap .hd>*+*,.nogap .bar>*+*,.nogap .credit>*+*{margin-left:10px}
+.nogap .tools>*+*,.nogap .newp>*+*{margin-left:8px}
+.nogap .insp>*+*,.nogap .prow>*+*,.nogap .row>*+*{margin-left:12px}
+/* The legend wraps: a 16px trailing margin that eats the right padding breaks
+ * lines where gap does, 8px above and below each item is the row gap. */
+.nogap .legend{padding:3px 0 3px 16px}
+.nogap .legend>*{margin:8px 16px 8px 0}
+.nogap .legend b{margin-right:7px}
+.nogap .prow .acts>*+*{margin-left:2px}
+.nogap .prow .pn>*+*{margin-left:7px}
+.nogap .prow .meta>*+*{margin-left:6px}
+.nogap .htip div>*+*{margin-left:14px}
+.nogap .credit a svg{margin-right:6px}
+@media (max-width:640px){
+  .nogap .top>*+*{margin-left:10px}
+  .nogap .tools>*+*{margin-left:6px}
+  .nogap .insp>*+*{margin-left:0}   /* a grid here */
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -262,7 +289,8 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
     <div class="col">
       <section class="card">
         <div class="hd"><h2>Curve</h2><span class="sub" id="ptCount"></span><div class="grow"></div>
-          <span class="sub num hide-sm" id="hoverTxt"></span></div>
+          <span class="sub num hide-sm" id="hoverTxt"></span>
+          <label class="smooth wait" data-tip="Join the points with a smooth curve instead of straight lines">Smooth<span class="sw"><input type="checkbox" id="smooth"><i></i></span></label></div>
         <div class="tools">
           <div class="seg">
             <button class="btn icon" id="bUndo" data-tip="Undo the last change (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -353,6 +381,11 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 
 <script>
 "use strict";
+/* @supports can't tell whether flex gap works, so measure it: two empty
+ * items 1px apart in a column. */
+(function(){var d=document.createElement('div');d.style.cssText='display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden';
+  d.appendChild(document.createElement('div'));d.appendChild(document.createElement('div'));document.body.appendChild(d);
+  if(d.scrollHeight!==1)document.documentElement.className+=' nogap';document.body.removeChild(d)})();
 var TK='@@FC_TOKEN@@';
 
 /* Demo mode. Breeze swaps the token in when it serves this page; if it is
@@ -361,9 +394,9 @@ var TK='@@FC_TOKEN@@';
  * instead of showing empty readouts. Never active on the console. */
 if(TK.charAt(0)==='@')(function(){
   var pts=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]];
-  var presets=[{name:'2nd',points:pts}];
-  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,points:pts};
-  function want(t){return evalCurve(st.points,t)}
+  var presets=[{name:'2nd',smooth:0,points:pts}];
+  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,smooth:0,points:pts};
+  function want(t){return evalCurve(st.points,t,st.smooth)}
   function form(b){var o={};String(b||'').split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '))});return o}
   function points(f){var p=[];for(var i=0;i<30;i++)if(f['p'+i]){var v=f['p'+i].split(',');p.push([+v[0],+v[1]])}return p}
   function find(n){for(var i=0;i<presets.length;i++)if(presets[i].name===n)return i;return -1}
@@ -381,13 +414,14 @@ if(TK.charAt(0)==='@')(function(){
     if(u.indexOf('api/history')>=0)return reply(history(+(u.split('s=')[1])||300));
     if(u.indexOf('api/presets')>=0){
       if(post){var i=find(f.name);
-        if(f.action==='apply'&&i>=0)st.points=presets[i].points;
+        if(f.action==='apply'&&i>=0){st.points=presets[i].points;st.smooth=presets[i].smooth}
         else if(f.action==='delete'&&i>=0)presets.splice(i,1);
         else if(f.action==='rename'&&i>=0){if(find(f.to)>=0)return reply('name taken',409);presets[i].name=f.to}
-        else if(f.action==='save'){var p=points(f);if(i>=0){if(!+f.overwrite)return reply('name taken',409);presets[i].points=p}else if(presets.length<10)presets.push({name:f.name,points:p});else return reply('preset limit reached',409)}}
+        else if(f.action==='save'){var p=points(f),sm=p.length?(+f.smooth?1:0):st.smooth;if(!p.length)p=st.points;
+          if(i>=0){if(!+f.overwrite)return reply('name taken',409);presets[i].points=p;presets[i].smooth=sm}else if(presets.length<10)presets.push({name:f.name,smooth:sm,points:p});else return reply('preset limit reached',409)}}
       return reply(presets);
     }
-    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;var p=points(f);if(p.length)st.points=p}
+    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;if(f.web_enabled!==undefined)st.web_enabled=+f.web_enabled;if(f.smooth!==undefined)st.smooth=+f.smooth?1:0;var p=points(f);if(p.length)st.points=p}
     st.desired=st.enabled?want(st.cpu):-1;st.duty=st.enabled?Math.max(13,st.desired):13;
     return reply(st);
   };
@@ -404,6 +438,7 @@ var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
 
 var $=function(id){return document.getElementById(id)};
 var st=null,server=[],draft=[],sel=-1,undo=[],redo=[];
+var sSm=0,dSm=0; /* smooth flag: running curve, editor */
 var drag=null,hover=null,lastTap=null,presets=[],offline=false;
 var hist={step:2,d:[]},histRange=300,histTimer=null,hHover=null,hl=null;
 function ago2(s){return s>=3600?Math.floor(s/3600)+'h '+Math.round(s%3600/60)+'m':s>=60?Math.floor(s/60)+'m '+(s%60)+'s':s+'s'}
@@ -415,12 +450,46 @@ function clamp(v,a,b){return v<a?a:v>b?b:v}
 function copy(a){return a.map(function(p){return[p[0],p[1]]})}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-function dirty(){return !same(draft,server)}
-function evalCurve(p,t){
+function dirty(){return !same(draft,server)||dSm!==sSm}
+/* Same integer math as fc_eval_points in curve.c: only the step from the
+ * left point is truncated (toward zero), so falling segments match too.
+ * Smooth tangents are fixed point (1/65536 % per C); at whole temps every
+ * value stays far below 2^53, so doubles give exactly what C gives. */
+var SM=65536;
+/* tangent at point i minus the slope of segment k (i or i-1) */
+function tanDev(p,i,k){
+  var hk=p[k+1][0]-p[k][0],dk=p[k+1][1]-p[k][1];
+  if(i<=0||i>=p.length-1)return 0;
+  var h1=p[i][0]-p[i-1][0],d1=p[i][1]-p[i-1][1],h2=p[i+1][0]-p[i][0],d2=p[i+1][1]-p[i][1];
+  if(h1<=0||h2<=0||hk<=0)return 0;
+  if(d1*d2<=0)return Math.trunc(-dk*SM/hk);
+  var a=3*(h1+h2)*d1*d2,b=(2*h2+h1)*h1*d2+(h2+2*h1)*h2*d1;
+  if(b<0){a=-a;b=-b}
+  return Math.trunc((a*hk-dk*b)*SM/(b*hk));
+}
+function evalCurve(p,t,sm){
   if(!p.length)return 0;if(t<=p[0][0])return p[0][1];
-  for(var i=1;i<p.length;i++)if(t<=p[i][0]){var a=p[i-1],b=p[i],dt=b[0]-a[0];return dt<=0?b[1]:Math.trunc(a[1]+(t-a[0])*(b[1]-a[1])/dt)}
+  for(var i=1;i<p.length;i++)if(t<=p[i][0]){var a=p[i-1],b=p[i],h=b[0]-a[0],d=b[1]-a[1],x=t-a[0];
+    if(h<=0)return b[1];if(!sm)return a[1]+Math.trunc(x*d/h);
+    var u=h-x,e=tanDev(p,i-1,i-1),f=tanDev(p,i,i-1);
+    return a[1]+Math.trunc((d*x*h*SM+x*u*(e*u-f*x))/(h*h*SM))}
   return p[p.length-1][1];
 }
+/* SVG path of a curve, flat out to both chart edges. A smooth segment is a
+ * Bezier with control points a third of the way in, which is exactly the
+ * cubic evalCurve computes. x/y map data to pixels. */
+function curvePath(p,sm,x,y){
+  var n=p.length,d='M'+x(XMIN)+' '+y(p[0][1])+' L'+x(p[0][0])+' '+y(p[0][1]);
+  for(var k=0;k+1<n;k++){var a=p[k],b=p[k+1],h=b[0]-a[0],dy=b[1]-a[1];
+    if(!sm||h<=0){d+=' L'+x(b[0])+' '+y(b[1]);continue}
+    var e=tanDev(p,k,k),f=tanDev(p,k+1,k);
+    d+=' C'+x(a[0]+h/3)+' '+y(a[1]+(dy+e*h/SM)/3)+' '+x(b[0]-h/3)+' '+y(b[1]-(dy+f*h/SM)/3)+' '+x(b[0])+' '+y(b[1])}
+  return d+' L'+x(XMAX)+' '+y(p[n-1][1]);
+}
+/* Keys by name, falling back to keyCode when a key arrives without one
+ * (controller-generated events can carry 'Unidentified'). */
+var KEYS={8:'Backspace',9:'Tab',13:'Enter',27:'Escape',37:'ArrowLeft',38:'ArrowUp',39:'ArrowRight',40:'ArrowDown',46:'Delete'};
+function keyOf(e){var k=e.key,c=e.keyCode||e.which||0;if(k&&k!=='Unidentified')return k;return KEYS[c]||(c>=65&&c<=90?String.fromCharCode(c+32):'')}
 var tt;
 function toast(m,bad){var e=$('toast');e.textContent=m;e.className='toast on'+(bad?' err':'');clearTimeout(tt);tt=setTimeout(function(){e.className='toast'+(bad?' err':'')},2200)}
 
@@ -431,10 +500,13 @@ function tAt(x){return XMIN+(x-P.l)/(W-P.l-P.r)*(XMAX-XMIN)}
 function sAt(y){return FMIN+(1-(y-P.t)/(H-P.t-P.b))*(100-FMIN)}
 
 /* ---------- edits ---------- */
-function commit(){undo.push(copy(draft));if(undo.length>100)undo.shift();redo=[]}
+/* undo entries: the points and the smooth flag */
+function snap(){return {p:copy(draft),sm:dSm}}
+function unsnap(u){draft=u.p;dSm=u.sm;sel=Math.min(sel,draft.length-1);renderAll()}
+function commit(){undo.push(snap());if(undo.length>100)undo.shift();redo=[]}
 function setDraft(p){draft=p;sel=-1;renderAll()}
-function doUndo(){if(!undo.length)return;redo.push(copy(draft));draft=undo.pop();sel=Math.min(sel,draft.length-1);renderAll()}
-function doRedo(){if(!redo.length)return;undo.push(copy(draft));draft=redo.pop();sel=Math.min(sel,draft.length-1);renderAll()}
+function doUndo(){if(!undo.length)return;redo.push(snap());unsnap(undo.pop())}
+function doRedo(){if(!redo.length)return;undo.push(snap());unsnap(redo.pop())}
 function setPoint(i,t,s){
   var lo=i>0?draft[i-1][0]+1:XMIN,hi=i<draft.length-1?draft[i+1][0]-1:XMAX;
   draft[i]=[clamp(Math.round(t),lo,hi),clamp(Math.round(s),FMIN,100)];
@@ -452,7 +524,7 @@ function addInGap(){
   var best=0,bi=0;
   for(var i=1;i<draft.length;i++){var g=draft[i][0]-draft[i-1][0];if(g>best){best=g;bi=i}}
   if(best<2){toast('No room for another point',true);return}
-  var t=Math.round((draft[bi-1][0]+draft[bi][0])/2);addAt(t,evalCurve(draft,t));
+  var t=Math.round((draft[bi-1][0]+draft[bi][0])/2);addAt(t,evalCurve(draft,t,dSm));
 }
 function removeAt(i){
   if(draft.length<=MINP){toast('A curve needs at least '+MINP+' points',true);return}
@@ -472,6 +544,16 @@ function resize(){
   var h=$('hist').getBoundingClientRect();$('hsvg').setAttribute('viewBox','0 0 '+Math.round(h.width)+' '+Math.round(h.height));
   drawMinis();
   drawCurve();drawHist();
+}
+/* A fallback in case ResizeObserver is missing; no browser this panel
+ * targets is known to lack it. Without it only a window resize redraws the
+ * charts, but the history card also takes up the right column's slack,
+ * which changes with the presets, the points, the first-use hint and an
+ * open rename field. The renders that can move a box call this. */
+function fit(){
+  if(window.ResizeObserver)return;
+  var c=$('chart').getBoundingClientRect(),h=$('hist').getBoundingClientRect(),v=($('hsvg').getAttribute('viewBox')||'').split(' ');
+  if(Math.round(c.width)!==W||Math.round(c.height)!==H||Math.round(h.width)!==+v[2]||Math.round(h.height)!==+v[3])resize();
 }
 function label(x,y,txt,anchor,col){return '<text x="'+x+'" y="'+y+'" text-anchor="'+anchor+'" fill="'+(col||'#5c6573')+'" font-size="10.5" font-family="'+MONO+'">'+txt+'</text>'}
 function drawCurve(){
@@ -493,16 +575,11 @@ function drawCurve(){
       // left end, inside the band: curves sit on the floor there, so it stays clear of the dots
       label(X(XMIN)+8,y+14,small?'app minimum':'console minimum while an app is running','start')}
   if(draft.length){
-    var d='M'+X(XMIN)+' '+Y(draft[0][1]);
-    for(i=0;i<draft.length;i++)d+=' L'+X(draft[i][0])+' '+Y(draft[i][1]);
-    d+=' L'+X(XMAX)+' '+Y(draft[draft.length-1][1]);
+    var d=curvePath(draft,dSm,X,Y);
     o+='<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ea2ff" stop-opacity=".22"/><stop offset="1" stop-color="#8ea2ff" stop-opacity="0"/></linearGradient></defs>';
     o+='<path d="'+d+' L'+X(XMAX)+' '+Y(FMIN)+' L'+X(XMIN)+' '+Y(FMIN)+'Z" fill="url(#g)"/>';
     if(dirty()&&server.length){
-      var sd='M'+X(XMIN)+' '+Y(server[0][1]);
-      for(i=0;i<server.length;i++)sd+=' L'+X(server[i][0])+' '+Y(server[i][1]);
-      sd+=' L'+X(XMAX)+' '+Y(server[server.length-1][1]);
-      o+='<path d="'+sd+'" fill="none" stroke="#8d96a5" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="4 4"/>';
+      o+='<path d="'+curvePath(server,sSm,X,Y)+'" fill="none" stroke="#8d96a5" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="4 4"/>';
     }
     o+='<path d="'+d+'" fill="none" stroke="#8ea2ff" stroke-width="2.4" stroke-linejoin="round"/>';
   }
@@ -518,7 +595,7 @@ function drawCurve(){
     o+='<rect x="'+(x-21)+'" y="'+(H-P.b+5)+'" width="42" height="19" rx="6" fill="#f2b25c"/>'+label(x,H-P.b+18.5,st.cpu+'°','middle','#0b0d10').replace('font-size','font-weight="600" font-size');
   }
   if(hover&&!drag){
-    x=X(hover.t);y=Y(evalCurve(draft,hover.t));
+    x=X(hover.t);y=Y(evalCurve(draft,hover.t,dSm));
     o+='<line x1="'+x+'" x2="'+x+'" y1="'+P.t+'" y2="'+(H-P.b)+'" stroke="#8d96a5" stroke-opacity=".3"/><circle cx="'+x+'" cy="'+y+'" r="3.5" fill="#8ea2ff"/>';
   }
   var R=small?7:6;
@@ -546,7 +623,7 @@ var tapStart=null;
 var lastDotTap=null;
 function onDown(e){
   var p=local(e),i=nearest(p,e.pointerType!=='mouse');
-  if(i>=0){sel=i;drag={i:i,id:e.pointerId,moved:false,start:copy(draft),t0:Date.now(),x0:p.x,y0:p.y,
+  if(i>=0){sel=i;drag={i:i,id:e.pointerId,moved:false,start:snap(),t0:Date.now(),x0:p.x,y0:p.y,
       dx:p.x-X(draft[i][0]),dy:p.y-Y(draft[i][1]),slop:e.pointerType==='mouse'?4:8,pt:e.pointerType};
     $('svg').setPointerCapture(e.pointerId);renderAll();e.preventDefault();return}
   if(!inPlot(p)){tapStart=null;return}
@@ -574,13 +651,13 @@ function onMove(e){
       if(Math.abs(p.x-drag.x0)<=drag.slop&&Math.abs(p.y-drag.y0)<=drag.slop)return;
       drag.moved=true;undo.push(drag.start);if(undo.length>100)undo.shift();redo=[]}
     // keep the grab offset: the point moves with the pointer, it doesn't jump to it
-    setPoint(drag.i,tAt(p.x-drag.dx),sAt(p.y-drag.dy));renderAll();
+    setPoint(drag.i,tAt(p.x-drag.dx),sAt(p.y-drag.dy));drawSoon(true);
     var q=draft[drag.i];showReadout(X(q[0]),Y(q[1]),q[0]+'°C → '+q[1]+'%',drag.pt!=='mouse');return;
   }
   if(e.pointerType==='mouse'&&inPlot(p)){
     var t=clamp(Math.round(tAt(p.x)),XMIN,XMAX);hover={t:t};
-    $('hoverTxt').textContent=t+'°C → '+evalCurve(draft,t)+'%';
-    $('svg').style.cursor=nearest(p,false)>=0?'grab':'crosshair';drawCurve();
+    $('hoverTxt').textContent=t+'°C → '+evalCurve(draft,t,dSm)+'%';
+    $('svg').style.cursor=nearest(p,false)>=0?'grab':'crosshair';drawSoon();
   }else if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}
 }
 function onUp(e){
@@ -629,13 +706,22 @@ function nudge(axis,d){
   if(sel<0)return;var p=draft[sel];commit();
   if(axis==='t')setPoint(sel,p[0]+d,p[1]);else setPoint(sel,p[0],p[1]+d);renderAll();
 }
+/* Drag and hover redraw at most once per frame: the PS5 browser runs JS
+ * without a JIT, and a full redraw per pointermove lags there. */
+var raf=window.requestAnimationFrame?function(f){return requestAnimationFrame(f)}:function(f){return setTimeout(f,16)};
+var caf=window.cancelAnimationFrame?function(i){cancelAnimationFrame(i)}:function(i){clearTimeout(i)};
+var rq=0,rqAll=false,hq=0;
+function drawSoon(all){if(all)rqAll=true;if(!rq)rq=raf(function(){rq=0;var a=rqAll;rqAll=false;if(a)renderAll();else drawCurve()})}
+function drawHistSoon(){if(!hq)hq=raf(function(){hq=0;drawHist()})}
 function renderAll(){
+  if(rq){caf(rq);rq=0}rqAll=false;
   drawCurve();renderInsp();
   var a=document.activeElement;if(!(a&&a.dataset&&a.dataset.r))renderRows();
-  $('ptCount').textContent=draft.length+' / '+MAXP+' points';
+  $('ptCount').textContent=draft.length+' / '+MAXP+' points';$('smooth').checked=!!dSm;
   $('bUndo').disabled=!undo.length;$('bRedo').disabled=!redo.length;
   $('bar').classList.toggle('show',dirty()||armed);
   $('barMsg').textContent=dirty()?'Unsaved changes':'Custom curve is off';
+  fit();
 }
 
 /* ---------- history chart ---------- */
@@ -650,12 +736,17 @@ function drawHist(){
   for(var a=tick;a<=R;a+=tick){var x=hx(a);
     o+='<line x1="'+x+'" x2="'+x+'" y1="'+pt+'" y2="'+(h-pb)+'" stroke="#15191f"/>'+label(x,h-5,ago(a),a===R?'start':'middle')}
   o+=label(w-pr,h-5,'now','end');
-  // one path per series; a missing value (-1) breaks the line
+  // one path per series; a missing value (-1) breaks the line. A value with
+  // a gap on both sides is a dot: a lone moveto draws nothing.
   function line(k,col,wd,dash){
-    var p='',up=false;
-    for(var i=0;i<n;i++){var val=d[i][k];if(val<0){up=false;continue}
-      p+=(up?' L':'M')+hx((n-1-i)*hist.step).toFixed(1)+' '+hy(clamp(val,0,100)).toFixed(1);up=true}
+    var p='',dots='',run=0,x0,y0;
+    for(var i=0;i<=n;i++){var val=i<n?d[i][k]:-1;
+      if(val<0){if(run===1)dots+='<circle cx="'+x0+'" cy="'+y0+'" r="'+wd+'" fill="'+col+'"/>';run=0;continue}
+      var x=hx((n-1-i)*hist.step).toFixed(1),y=hy(clamp(val,0,100)).toFixed(1);
+      if(!run){x0=x;y0=y}else p+=(run===1?'M'+x0+' '+y0:'')+' L'+x+' '+y;
+      run++}
     if(p)o+='<path d="'+p+'" fill="none" stroke="'+col+'" stroke-width="'+wd+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+' stroke-linejoin="round"/>';
+    o+=dots;
   }
   line(2,'#8ea2ff',1.4,'3 3');line(0,'#f2b25c',1.8);line(1,'#4fd1a5',1.8);
   // hover: crosshair + dots on the nearest bucket, values in the tooltip
@@ -690,9 +781,7 @@ function drawMinis(){
     var w=svg.clientWidth,h=svg.clientHeight;if(!w||!h)return;
     var on=idx===act,col=on?'#4fd1a5':'#8ea2ff',pad=3;
     function mx(t){return pad+(t-XMIN)/(XMAX-XMIN)*(w-2*pad)}function my(s){return pad+(1-(s-FMIN)/(100-FMIN))*(h-2*pad)}
-    var d='M'+mx(XMIN).toFixed(1)+' '+my(p[0][1]).toFixed(1);
-    for(var i=0;i<p.length;i++)d+=' L'+mx(p[i][0]).toFixed(1)+' '+my(p[i][1]).toFixed(1);
-    d+=' L'+mx(XMAX).toFixed(1)+' '+my(p[p.length-1][1]).toFixed(1);
+    var d=curvePath(p,presets[idx].smooth,function(t){return mx(t).toFixed(1)},function(s){return my(s).toFixed(1)});
     svg.setAttribute('viewBox','0 0 '+w+' '+h);
     svg.innerHTML='<line x1="'+pad+'" x2="'+(w-pad)+'" y1="'+my(50)+'" y2="'+my(50)+'" stroke="#1c2129"/>'+
       '<path d="'+d+' L'+mx(XMAX).toFixed(1)+' '+my(FMIN)+' L'+mx(XMIN).toFixed(1)+' '+my(FMIN)+'Z" fill="'+col+'" fill-opacity=".12"/>'+
@@ -714,27 +803,44 @@ function pick(n){picked=n;try{localStorage.setItem('fcActive',n)}catch(e){}}
 function activeIndex(){
   var first=-1;
   if(st&&!st.enabled)return -1; /* curve off: nothing is running */
-  for(var i=0;i<presets.length;i++)if(same(presets[i].points,server)){if(presets[i].name===picked)return i;if(first<0)first=i}
+  for(var i=0;i<presets.length;i++)if(same(presets[i].points,server)&&!!presets[i].smooth===!!sSm){if(presets[i].name===picked)return i;if(first<0)first=i}
   return first;
 }
 function renderPresets(){
   var h='',act=activeIndex();
   for(var i=0;i<presets.length;i++){var p=presets[i],on=i===act;
     h+='<div class="prow">'+
-      '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points</div></div>'+
+      '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points'+(p.smooth?' · smooth':'')+'</div></div>'+
       miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" data-tip="This preset is the curve running now">Active</span>':'<button class="btn" data-pa="load,'+i+'" data-tip="Load this preset into the editor (Apply to use it)">Load</button>')+
       '<button class="btn icon ghost" data-pa="ren,'+i+'" data-tip="Rename this preset" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
       '<button class="btn icon ghost" data-pa="over,'+i+'" data-tip="Overwrite this preset with the curve in the editor" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg></button>'+
       '<button class="btn icon ghost danger" data-pa="del,'+i+'" data-tip="Delete this preset" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div></div>';
   }
   $('plist').innerHTML=h||'<div class="empty">No presets yet.</div>';drawMinis();
-  $('pCount').textContent=presets.length+' / 10';
+  $('pCount').textContent=presets.length+' / 10';fit();
 }
 function pointQuery(p){var s='';for(var i=0;i<p.length;i++)s+='&p'+i+'='+p[i][0]+','+p[i][1];return s}
 
 /* ---------- network ---------- */
-function post(path,body){return fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-FC-Token':TK},body:body||''})}
+/* Requests have a time limit, so one the console never answers can't hold
+ * up what waits on it: the polling behind a GET, a switch behind a POST.
+ * The timer settles the promise itself: without AbortController there is
+ * nothing to cancel the fetch with. read() takes the body, inside the limit. */
+function limited(url,opt,read){
+  var c=window.AbortController?new AbortController():null;opt.signal=c?c.signal:undefined;
+  return new Promise(function(res,rej){
+    var t=setTimeout(function(){if(c)c.abort();rej('timeout')},6000);
+    fetch(url,opt).then(read).then(function(v){clearTimeout(t);res(v)},function(e){clearTimeout(t);rej(e)});
+  });
+}
+function get(url){return limited(url,{cache:'no-store'},function(r){if(!r.ok)throw r.status;return r.json()})}
+/* resolves to {status, ok, body} */
+function post(path,body){return limited(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-FC-Token':TK},body:body||''},
+  function(r){return r.text().then(function(b){return{status:r.status,ok:r.ok,body:b}})})}
 function fail(e,what){toast(e===403?'Session expired, reload the page':what,true)}
+/* requests out per switch: a poll leaves a switch alone only while its own
+ * request is out (the time limit bounds that) */
+var busy={enabled:0,webEnabled:0};
 function applyState(s){
   var wasOn=st?!!st.enabled:null;
   st=s;
@@ -743,32 +849,37 @@ function applyState(s){
   $('vCpu').textContent=s.cpu<0?'–':s.cpu;
   $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
   // Fan above the curve only because the console won't go lower: say so.
+  // Why the fan can sit above the curve: the console's minimum, or one of its
+  // other sensors (s.ch: [target, temp, duty%] per servo channel) asking for more.
   var lo=s.min>0?s.min:-1,atMin=s.enabled&&lo>0&&s.desired>=0&&s.duty>=0&&s.desired<lo&&s.duty<=lo+2;
-  $('fanMin').hidden=!atMin;
-  $('vFan').closest('.tile').dataset.tip=atMin?'The PS5 won\'t run the fan slower than '+lo+'% right now (13% in the menus, 23% in a game), so it sits above your curve.':'How fast the fan is spinning right now.';
-  $('vTgt').textContent=s.target<0?'–':s.target;$('port').textContent=s.web_port;
-  var a=document.activeElement;
-  if(a!==$('enabled'))$('enabled').checked=!!s.enabled;
-  if(a!==$('webEnabled'))$('webEnabled').checked=!!s.web_enabled;
+  var ch=s.ch||[],other=-1;
+  if(s.enabled&&!atMin&&ch.length>1&&s.desired>=0&&s.duty>s.desired+2){
+    var c0=ch[0]?ch[0][2]:-1;
+    for(var i=1;i<ch.length;i++)if(ch[i][2]>c0+2&&ch[i][2]>lo+1&&ch[i][2]>=s.duty-2&&(other<0||ch[i][2]>ch[other][2]))other=i}
+  $('fanMin').hidden=!atMin&&other<0;$('fanMin').textContent=atMin?' · min':' · console';
+  $('vFan').closest('.tile').dataset.tip=atMin?'The PS5 won\'t run the fan slower than '+lo+'% right now (13% in the menus, 23% in a game), so it sits above your curve.':
+    other>=0?'The PS5 is adding fan for another part of the console (its sensor at '+Math.round(ch[other][1])+'°C), more than your curve asks for.':'How fast the fan is spinning right now.';
+  $('vTgt').textContent=s.target<0?'–':(+s.target).toFixed(1);$('port').textContent=s.web_port;
+  if(!busy.enabled)$('enabled').checked=!!s.enabled;
+  if(!busy.webEnabled)$('webEnabled').checked=!!s.web_enabled;
   document.querySelectorAll('.wait').forEach(function(e){e.classList.remove('wait')});
-  var sp=copy(s.points),clean=!dirty();
-  if(!same(sp,server)){server=sp;if(clean&&!drag){draft=copy(sp);sel=-1}renderAll();renderPresets()}
+  var sp=copy(s.points),sm=s.smooth?1:0,clean=!dirty();
+  /* a point held but not moved is no edit: the new curve replaces the
+   * editor's and the press is dropped (its point may be gone) */
+  if(!same(sp,server)||sm!==sSm){server=sp;sSm=sm;if(clean&&!(drag&&drag.moved)){draft=copy(sp);dSm=sm;sel=-1;drag=null}renderAll();renderPresets()}
   if(s.enabled){if(armed){armed=false;renderAll()}markUsed()}
-  $('firstHint').hidden=!!(s.enabled||used);
+  $('firstHint').hidden=!!(s.enabled||used);fit();
 }
-/* GET with a time limit, so a request the console never answers can't hold
- * up the polling behind it. */
-function get(url){
-  var c=window.AbortController?new AbortController():null,t=c&&setTimeout(function(){c.abort()},6000);
-  return fetch(url,{cache:'no-store',signal:c?c.signal:undefined}).then(function(r){clearTimeout(t);if(!r.ok)throw r.status;return r.json()},function(e){clearTimeout(t);throw e});
-}
-var polling=false;
-async function refresh(){
-  if(polling)return;polling=true;
-  try{applyState(await get('api/state'));
+/* now = after a failed request: don't wait for a poll already out. A poll
+ * answered after a newer state was shown (that one, or a POST's answer) is
+ * dropped, so it can't put old values back. */
+var polling=false,asked=0,shown=0;
+async function refresh(now){
+  if(polling&&!now)return;if(!now)polling=true;var q=++asked;
+  try{var s=await get('api/state');if(q>shown){shown=q;applyState(s)}
     if(offline){offline=false;toast('Console back online');if(!presetsLoaded)loadPresets()}}
   catch(e){if(!offline){offline=true;toast('Console unreachable',true)}}
-  polling=false;
+  if(!now)polling=false;
   if(!drag)drawCurve();
 }
 /* History lives in the plugin, so it survives a page reload. Longer ranges
@@ -780,10 +891,13 @@ async function loadHist(){
   try{var h=await get('api/history?s='+histRange);if(g!==histGen)return;hist=h;drawHist()}catch(e){if(g!==histGen)return}
   histTimer=setTimeout(loadHist,Math.max(2000,Math.min(30000,hist.step*1000)));
 }
-var presetsLoaded=false;
+/* One request out at a time, whoever asks (the start, a failed preset
+ * action, the console coming back); a call while a retry waits loads now. */
+var presetsLoaded=false,presetsOut=false,presetsRetry=0;
 function loadPresets(){
-  get('api/presets').then(function(p){presets=p;presetsLoaded=true;renderPresets()})
-    .catch(function(){setTimeout(function(){if(!presetsLoaded)loadPresets()},3000)});
+  if(presetsOut)return;presetsOut=true;clearTimeout(presetsRetry);
+  get('api/presets').then(function(p){presetsOut=false;presets=p;presetsLoaded=true;renderPresets()})
+    .catch(function(){presetsOut=false;if(!presetsLoaded)presetsRetry=setTimeout(function(){if(!presetsLoaded)loadPresets()},3000)});
 }
 function setRange(sec){
   histRange=sec;try{localStorage.setItem('fcRange',sec)}catch(e){}
@@ -793,11 +907,11 @@ function setRange(sec){
 /* pts null = leave the curve alone (the toggles). A curve is sent as a
  * snapshot: edits made while the request is out stay in the editor. */
 async function sendConfig(pts,en,web,okMsg){
-  var sent=pts?copy(pts):null;
-  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent):'');
-  try{var r=await post('api/config',body);if(r.status===500)throw 500;if(!r.ok)throw r.status;var s=await r.json();
-    applyState(s);if(sent&&same(draft,sent)){draft=copy(server);renderAll()}toast(okMsg);return true}
-  catch(e){fail(e,e===500?'Applied, but it could not be saved on the console':'Could not reach the console');refresh();return e===500}
+  var sent=pts?copy(pts):null,sentSm=dSm;
+  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent)+'&smooth='+sentSm:'');
+  try{var r=await post('api/config',body);if(r.status===500)throw 500;if(!r.ok)throw r.status;var s=JSON.parse(r.body);
+    shown=asked;applyState(s);if(sent&&same(draft,sent)&&dSm===sentSm){draft=copy(server);dSm=sSm;renderAll()}toast(okMsg);return true}
+  catch(e){fail(e,e===500?'Applied, but it could not be saved on the console':'Could not reach the console');await refresh(true);return e===500}
 }
 function apply(){
   if(!st){toast('Still connecting to the console',true);return}
@@ -809,11 +923,12 @@ function apply(){
 }
 async function presetAction(body,ok,conflict){
   try{var r=await post('api/presets',body);
-    if(!r.ok){var why=r.status===409?await r.text().catch(function(){return''}):'';throw{code:r.status,taken:why.indexOf('taken')>=0}}
-    presets=await r.json();presetsLoaded=true;renderPresets();toast(ok);return true}
+    if(!r.ok)throw{code:r.status,taken:r.status===409&&r.body.indexOf('taken')>=0};
+    presets=JSON.parse(r.body);presetsLoaded=true;renderPresets();toast(ok);return true}
   catch(e){var c=e&&e.code;
     fail(c,c===409?(e.taken?conflict||'That name is taken':'Preset limit reached (10)'):c===500?'Could not save presets on the console':'Preset action failed');
-    if(c===500)loadPresets();return false}
+    /* presets aren't polled: another tab may have changed them */
+    loadPresets();return false}
 }
 /* Same cleanup the console applies, so the name checked here is the name
  * it stores. */
@@ -824,7 +939,7 @@ function startRename(i){
   var p=presets[i],row=$('plist').querySelectorAll('.prow')[i];if(!p||!row)return;
   var pn=row.querySelector('.pn'),done=false;
   pn.innerHTML='<input class="field rn" maxlength="40" autocomplete="off">';
-  var inp=pn.firstChild;inp.value=p.name;inp.focus();inp.select();
+  var inp=pn.firstChild;inp.value=p.name;inp.focus();inp.select();fit();
   function finish(save){
     if(done)return;done=true;
     var n=cleanName(inp.value);
@@ -833,7 +948,7 @@ function startRename(i){
     presetAction('action=rename&name='+encodeURIComponent(p.name)+'&to='+encodeURIComponent(n),'Renamed to “'+n+'”','There is already a preset called “'+n+'”')
       .then(function(ok){if(ok&&wasPicked){pick(n);renderPresets()}else if(!ok)renderPresets()});
   }
-  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();finish(true)}else if(e.key==='Escape')finish(false)});
+  inp.addEventListener('keydown',function(e){var k=keyOf(e);if(k==='Enter'){e.preventDefault();finish(true)}else if(k==='Escape')finish(false)});
   inp.addEventListener('blur',function(){finish(true)});
 }
 
@@ -844,8 +959,13 @@ svg.addEventListener('pointerup',onUp);svg.addEventListener('pointercancel',onUp
 $('bUndo').onclick=doUndo;$('bRedo').onclick=doRedo;$('bAdd').onclick=addInGap;
 document.querySelectorAll('[data-shift]').forEach(function(b){b.onclick=function(){var v=b.dataset.shift.split(',');shiftAll(+v[0],+v[1])}});
 $('bApply').onclick=apply;
-$('bRevert').onclick=function(){armed=false;commit();setDraft(copy(server))};
-$('bReset').onclick=function(){commit();setDraft(copy(DEF));toast('Default curve loaded, Apply to keep it')};
+$('bRevert').onclick=function(){armed=false;commit();dSm=sSm;setDraft(copy(server))};
+$('bReset').onclick=function(){commit();dSm=0;setDraft(copy(DEF));toast('Default curve loaded, Apply to keep it')};
+/* The waiting state only stops the pointer; a key could flip it before the
+ * editor has the console's points. */
+$('smooth').addEventListener('change',function(){
+  if(!st){this.checked=!!dSm;toast('Still connecting to the console',true);return}
+  commit();dSm=this.checked?1:0;renderAll()});
 $('insp').addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;
   if(b.id==='bDel'){removeAt(sel);return}
@@ -866,44 +986,47 @@ $('plist').addEventListener('click',function(e){
   var b=e.target.closest('[data-pa]');if(!b)return;var a=b.dataset.pa.split(','),p=presets[+a[1]];if(!p)return;
   /* With the curve off, a loaded preset is ready to Apply even when it's
    * the curve already stored. */
-  if(a[0]==='load'){commit();pick(p.name);if(st&&!st.enabled)armed=true;setDraft(copy(p.points));renderPresets();toast('Loaded “'+p.name+'”, Apply to use it')}
+  if(a[0]==='load'){commit();pick(p.name);if(st&&!st.enabled)armed=true;dSm=p.smooth?1:0;setDraft(copy(p.points));renderPresets();toast('Loaded “'+p.name+'”, Apply to use it')}
   else if(a[0]==='ren')startRename(+a[1]);
-  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?')){pick(p.name);presetAction('action=save&overwrite=1&name='+encodeURIComponent(p.name)+pointQuery(draft),'Preset updated').then(function(ok){if(ok)renderPresets()})}}
+  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?')){pick(p.name);presetAction('action=save&overwrite=1&name='+encodeURIComponent(p.name)+pointQuery(draft)+'&smooth='+dSm,'Preset updated').then(function(ok){if(ok)renderPresets()})}}
   else if(confirm('Delete preset “'+p.name+'”?'))presetAction('action=delete&name='+encodeURIComponent(p.name),'Preset deleted');
 });
 function saveAs(){var n=cleanName($('pName').value);if(!n){toast('Type a name first',true);$('pName').focus();return}
   var taken=findPreset(n)>=0;
   if(taken&&!confirm('A preset called “'+n+'” already exists. Overwrite it with the curve in the editor?'))return;
-  presetAction('action=save'+(taken?'&overwrite=1':'')+'&name='+encodeURIComponent(n)+pointQuery(draft),(taken?'Updated “':'Saved “')+n+'”','There is already a preset called “'+n+'”').then(function(ok){if(ok){$('pName').value='';pick(n);renderPresets()}})}
+  presetAction('action=save'+(taken?'&overwrite=1':'')+'&name='+encodeURIComponent(n)+pointQuery(draft)+'&smooth='+dSm,(taken?'Updated “':'Saved “')+n+'”','There is already a preset called “'+n+'”').then(function(ok){if(ok){$('pName').value='';pick(n);renderPresets()}})}
 function findPreset(n){for(var i=0;i<presets.length;i++)if(presets[i].name===n)return i;return -1}
 $('bSaveAs').onclick=saveAs;
-$('pName').addEventListener('keydown',function(e){if(e.key==='Enter')saveAs()});
+$('pName').addEventListener('keydown',function(e){if(keyOf(e)==='Enter')saveAs()});
 /* The toggles only flip their own setting; until the first state arrives
- * there is nothing to pair them with, so they wait. A failed request puts
- * the switch back. */
+ * there is nothing to pair them with, so they wait. A failed request may
+ * still have been applied (a lost response), so the switch goes back to the
+ * fresh state sendConfig fetched, unless another click is still out. */
 $('enabled').addEventListener('change',async function(){
   var el=this,on=el.checked;
   if(!st){el.checked=!on;toast('Still connecting to the console',true);return}
-  if(!await sendConfig(null,on,st.web_enabled,on?'Custom curve on':'Stock fan control'))el.checked=!!st.enabled});
+  busy.enabled++;var ok=await sendConfig(null,on,st.web_enabled,on?'Custom curve on':'Stock fan control');busy.enabled--;
+  if(!ok&&!busy.enabled)el.checked=!!st.enabled});
 $('webEnabled').addEventListener('change',async function(){
   var el=this,on=el.checked;
   if(!st){el.checked=!on;toast('Still connecting to the console',true);return}
   if(!on&&!confirm('Turn off the web panel? This page goes offline until you set web_enabled=1 in /data/breeze/breeze.conf over FTP.')){el.checked=true;return}
-  if(!await sendConfig(null,st.enabled,on,on?'Web panel on':'Web panel off'))el.checked=!!st.web_enabled;
+  busy.webEnabled++;var ok=await sendConfig(null,st.enabled,on,on?'Web panel on':'Web panel off');busy.webEnabled--;
+  if(!ok&&!busy.webEnabled)el.checked=!!st.web_enabled;
 });
 document.addEventListener('keydown',function(e){
-  var a=document.activeElement,typing=a&&a.tagName==='INPUT'&&a.type!=='checkbox',mod=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();
+  var a=document.activeElement,typing=a&&a.tagName==='INPUT'&&a.type!=='checkbox',mod=e.ctrlKey||e.metaKey,key=keyOf(e),k=key.toLowerCase();
   /* Blur first: a value typed into a field only lands on change. */
   if(mod&&k==='s'){e.preventDefault();if(typing)a.blur();apply();return}
   if(typing)return;
   if(mod&&k==='z'){e.preventDefault();e.shiftKey?doRedo():doUndo();return}
   if(mod&&k==='y'){e.preventDefault();doRedo();return}
   if(sel<0)return;var n=e.shiftKey?5:1;
-  if(e.key==='ArrowLeft')nudge('t',-n);else if(e.key==='ArrowRight')nudge('t',n);
-  else if(e.key==='ArrowUp')nudge('s',n);else if(e.key==='ArrowDown')nudge('s',-n);
-  else if(e.key==='Delete'||e.key==='Backspace')removeAt(sel);
-  else if(e.key==='Escape'){sel=-1;renderAll()}
-  else if(e.key==='Tab'&&draft.length&&(a===document.body||a===svg||!a)){sel=(sel+(e.shiftKey?-1:1)+draft.length)%draft.length;renderAll()}
+  if(key==='ArrowLeft')nudge('t',-n);else if(key==='ArrowRight')nudge('t',n);
+  else if(key==='ArrowUp')nudge('s',n);else if(key==='ArrowDown')nudge('s',-n);
+  else if(key==='Delete'||key==='Backspace')removeAt(sel);
+  else if(key==='Escape'){sel=-1;renderAll()}
+  else if(key==='Tab'&&draft.length&&(a===document.body||a===svg||!a)){sel=(sel+(e.shiftKey?-1:1)+draft.length)%draft.length;renderAll()}
   else return;
   e.preventDefault();
 });
@@ -911,6 +1034,16 @@ window.addEventListener('beforeunload',function(e){if(dirty()){e.preventDefault(
 if(window.ResizeObserver){var ro=new ResizeObserver(resize);ro.observe($('chart'));ro.observe($('hist'))}
 window.addEventListener('resize',resize);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(resize);
+/* Web fonts only off the console, and only once the page is up: a stylesheet
+ * in <head> holds the first paint until it loads or fails, which on an
+ * offline console can take many seconds. The stacks in --sans/--mono are
+ * the fallback. */
+if(!PS5)addEventListener('load',function(){
+  var f=document.fonts,l=document.createElement('link');
+  if(f&&f.addEventListener)f.addEventListener('loadingdone',function(){resize()});
+  l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap';
+  document.head.appendChild(l);
+});
 
 resize();renderAll();
 loadPresets();
@@ -920,7 +1053,7 @@ function histPoint(e){
   var r=$('hsvg').getBoundingClientRect(),x=e.clientX-r.left;
   var age=(hl.w-hl.pr-x)/(hl.w-hl.pl-hl.pr)*histRange;
   var i=hist.d.length-1-Math.round(age/hist.step);
-  hHover=i<0?null:clamp(i,0,hist.d.length-1);drawHist();
+  hHover=i<0?null:clamp(i,0,hist.d.length-1);drawHistSoon();
 }
 $('hist').addEventListener('pointermove',histPoint);
 $('hist').addEventListener('pointerdown',histPoint);
@@ -945,12 +1078,65 @@ $('ranges').addEventListener('click',function(e){var b=e.target.closest('[data-r
     if(el===cur)return;hide();
     if(el)timer=setTimeout(function(){show(el)},350);
   });
-  document.addEventListener('focusin',function(e){var el=e.target.closest('[data-tip]:not(.tile)');if(el&&el.matches(':focus-visible'))show(el)});
+  /* :focus-visible is a syntax error on engines that predate it (PS5 below ~5.x) */
+  function focusVisible(el){try{return el.matches(':focus-visible')}catch(e){return false}}
+  /* the focused element can sit inside the one with the tip (the Smooth label) */
+  document.addEventListener('focusin',function(e){var el=e.target.closest('[data-tip]:not(.tile)');if(el&&focusVisible(e.target))show(el)});
   document.addEventListener('focusout',hide);
   document.addEventListener('pointerdown',hide,true);
   addEventListener('scroll',hide);
 })();
 setRange([300,900,1800,3600,10800].indexOf(histRange)>=0?histRange:300);
+
+/* Diagnostics for the PS5 browser: ?diag in the URL, or five quick clicks on
+ * the brand (five more hide it). Shows what the engine supports and logs the
+ * raw key and pointer events the controller produces. It only listens: no
+ * handler here prevents or changes anything, and the box ignores the pointer. */
+function startDiag(){
+  var box=$('diag');if(box){box.hidden=!box.hidden;return}
+  box=document.createElement('pre');box.id='diag';
+  box.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;max-width:640px;max-height:45vh;overflow:hidden;z-index:99;margin:0;padding:8px 10px;'+
+    'border-radius:8px;background:rgba(0,0,0,.85);color:#9fe;font:12px/1.4 monospace;white-space:pre-wrap;word-break:break-all;pointer-events:none';
+  function sup(p,v){try{return CSS.supports(p,v)}catch(e){return '?'}}
+  function selOk(s){try{document.body.matches(s);return true}catch(e){return false}}
+  function mq(q){return !!(window.matchMedia&&matchMedia(q).matches)}
+  var g=document.createElement('div');g.style.cssText='display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden';
+  g.appendChild(document.createElement('div'));g.appendChild(document.createElement('div'));document.body.appendChild(g);
+  var flexGap=g.scrollHeight===1;document.body.removeChild(g);
+  var feat='PointerEvent '+!!window.PointerEvent+' ResizeObserver '+!!window.ResizeObserver+' AbortController '+!!window.AbortController+
+    ' rAF '+!!window.requestAnimationFrame+' getGamepads '+!!navigator.getGamepads+'\n'+
+    'flex-gap '+flexGap+' inset '+sup('inset','0')+' focus-visible '+selOk(':focus-visible')+' sticky '+(sup('position','sticky')||sup('position','-webkit-sticky'))+
+    ' backdrop '+(sup('backdrop-filter','blur(1px)')||sup('-webkit-backdrop-filter','blur(1px)'))+' env '+sup('padding-top','env(safe-area-inset-top)')+'\n'+
+    'glyphs: → ← − – ° · … “ ” ×';
+  var log=[],last='',n=0;
+  function info(){return navigator.userAgent+'\n'+
+    'viewport '+innerWidth+'x'+innerHeight+' screen '+screen.width+'x'+screen.height+' dpr '+devicePixelRatio+
+    ' pointer:coarse '+mq('(pointer:coarse)')+' hover '+mq('(hover:hover)')+'\n'+
+    'PS5 '+PS5+' html class "'+document.documentElement.className.replace(/^\s+/,'')+'"\n'+feat}
+  /* a run of the same kind (moves, wheel, scroll) updates one line */
+  function add(s,kind){
+    if(kind&&kind===last){n++;log[0]=s+' (x'+n+')'}else{n=1;log.unshift(s);if(log.length>16)log.length=16}
+    last=kind||'';box.textContent=info()+'\n--\n'+log.join('\n')}
+  function at(e){return ' @'+Math.round(e.clientX)+','+Math.round(e.clientY)}
+  var opt={capture:true,passive:true};
+  ['keydown','keyup'].forEach(function(t){addEventListener(t,function(e){
+    add(t+' key='+e.key+' code='+e.code+' keyCode='+e.keyCode+' which='+e.which+(e.repeat?' repeat':''))},true)});
+  ['pointerdown','pointerup','pointercancel','click','dblclick','contextmenu'].concat(window.PointerEvent?[]:['mousedown','mouseup']).forEach(function(t){
+    addEventListener(t,function(e){add(t+' type='+(e.pointerType||'-')+' buttons='+e.buttons+' detail='+e.detail+at(e))},true)});
+  addEventListener('pointermove',function(e){add('pointermove type='+(e.pointerType||'-')+' buttons='+e.buttons+at(e),'move'+e.buttons)},true);
+  ['touchstart','touchend'].forEach(function(t){addEventListener(t,function(e){add(t+' touches='+e.touches.length)},opt)});
+  addEventListener('wheel',function(e){add('wheel dx='+Math.round(e.deltaX)+' dy='+Math.round(e.deltaY)+' mode='+e.deltaMode,'wheel')},opt);
+  addEventListener('scroll',function(){add('scroll y='+Math.round(pageYOffset),'scroll')},opt);
+  addEventListener('resize',function(){add('resize '+innerWidth+'x'+innerHeight,'resize')});
+  addEventListener('popstate',function(e){add('popstate state='+JSON.stringify(e.state))});
+  addEventListener('hashchange',function(){add('hashchange '+location.hash)});
+  document.addEventListener('visibilitychange',function(){add('visibility '+document.visibilityState)});
+  document.addEventListener('focusin',function(e){var el=e.target;add('focus '+el.tagName.toLowerCase()+(el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.split(' ')[0]:''))});
+  document.body.appendChild(box);add('ready');
+}
+if(/[?&]diag/.test(location.search))startDiag();
+(function(){var n=0,t0=0;
+  document.querySelector('.brand').addEventListener('click',function(){var t=Date.now();n=t-t0<800?n+1:1;t0=t;if(n>=5){n=0;startDiag()}})})();
 </script>
 </body>
 </html>
