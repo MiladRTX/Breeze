@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6
 
 - **Tidier panel:** four readouts (CPU, Fan, Curve wants, Target) in one row, or 2 x 2 on a phone; the duplicate Restore button is gone (the Custom curve switch does the same); the hint under the chart is one line.
 - **On a phone, the drag bubble sits above the point,** so the finger holding it doesn't cover the value.
