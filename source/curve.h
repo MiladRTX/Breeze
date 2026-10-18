@@ -22,8 +22,13 @@
  * 33 C meant no extra fan at all at a 33 C idle; 20 C leaves room. */
 #define FC_TARGET_MIN_C 20
 #define FC_TARGET_MAX_C 90
-#define FC_CTL_DEADBAND_PCT 4    /* fan over the curve by more -> less fan */
-#define FC_CTL_DEADBAND_UP_PCT 8 /* fan under the curve by more -> more fan */
+#define FC_CTL_DEADBAND_PCT 2    /* fan over the curve by more -> less fan */
+#define FC_CTL_DEADBAND_UP_PCT 2 /* fan under the curve by more -> more fan */
+/* Fine steps (1/256 C): err% * 256 / DIV, clamped, then a short settle. */
+#define FC_CTL_FINE_DIV 16
+#define FC_CTL_FINE_MIN 8   /* ~0.03 C */
+#define FC_CTL_FINE_MAX 512 /* 2 C */
+#define FC_CTL_FINE_COOLDOWN_TICKS 3
 /* Fan under the curve by this much with the target far above the temp: park
  * the target just above the temp. A no-op for the fan, but it undoes the
  * wind-up from an idle the console keeps louder than the curve (target up at

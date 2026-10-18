@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define C256(c) ((c) * 256) /* whole degrees -> 1/256 C */
+
 volatile sig_atomic_t g_running = 1;
 
 /* Median of the last n duty samples. Single-second duty transients (observed:
@@ -62,7 +64,7 @@ void *fc_control_loop(void *arg) {
     int desired = -1;
     int pending = -1;
     int pending_n = 0;
-    int target = -1;
+    int target = -1; /* 1/256 C, -1 = not set */
     int ema_x16 = -1; /* smoothed temp, 1/16 C */
     int prev_duty = -1;
     int cooldown = 0;
@@ -91,7 +93,9 @@ void *fc_control_loop(void *arg) {
         app_unlock(st);
         fc_hist_record(temp_raw, s.duty_pct, hist_want);
         /* With the curve off the ICC runs at the stock target. */
-        track_console_min(st, enabled ? target : FC_STOCK_TARGET_C, temp_raw,
+        track_console_min(st, enabled ? (target < 0 ? -1 : target / 256)
+                                  : FC_STOCK_TARGET_C,
+                          temp_raw,
                           s.duty_pct);
 
         if (!enabled) {
@@ -177,92 +181,86 @@ void *fc_control_loop(void *arg) {
         int trend = (prev_duty >= 0) ? duty_f - prev_duty : 0;
         prev_duty = duty_f;
 
+        /* Targets are in 1/256 C (the ICC takes 8.8 fixed point: byte 4 is
+         * the fraction), so steps can be a fraction of a degree. */
         int new_target;
         if (temp_raw >= FC_SAFETY_TEMP_C) {
-            new_target = FC_SAFETY_TARGET_C;
+            new_target = C256(FC_SAFETY_TARGET_C);
         } else if (s.duty_pct < 0) {
             /* no duty feedback: park at stock instead of guessing */
-            new_target = target < 0 ? FC_STOCK_TARGET_C : target;
+            new_target = target < 0 ? C256(FC_STOCK_TARGET_C) : target;
         } else {
             if (target < 0)
-                target = FC_STOCK_TARGET_C;
+                target = C256(FC_STOCK_TARGET_C);
             new_target = target;
             int err = desired - duty_f;
-            /* Wider band on the "more fan" side: one 1 C step near the
-             * console's floor jumps the duty ~20% (idle: 15% -> 35%), so a
-             * small shortfall was chased into a 15-35% breathing cycle. */
+            /* Small corrections are cheap now (a fraction of a degree), so the
+             * band is narrow on both sides. With whole degrees one step near
+             * the console's floor jumped the duty ~20% and the band had to be
+             * +4/-8% to stop a 15-35% breathing cycle. */
             int adje = err > FC_CTL_DEADBAND_UP_PCT
                            ? err
                            : (err < -FC_CTL_DEADBAND_PCT ? err : 0);
             /* Dead-zone skip: a target above the current temp is "no action",
-             * so walking 77 -> 76 -> ... toward the temp changes nothing and
-             * costs a full cooldown per degree. When more fan is needed, jump
-             * straight to just above the temp (still no-op, so no kick and no
-             * cooldown) and let the next real step start acting.
-             * Never during a dip (raw below the EMA): skipping there would
-             * drag the target down after the falling temp, and when the temp
-             * snaps back the target sits far below it - the 1.18 surge. */
+             * so walking it down toward the temp changes nothing. When more
+             * fan is needed, jump straight to just above the temp (still
+             * no-op, so no kick and no cooldown) and let the next real step
+             * start acting. Never during a dip (raw below the EMA): skipping
+             * there would drag the target down after the falling temp, and
+             * when the temp snaps back the target sits far below it. */
             /* Downward moves (more fan) wait out the post-dip hold; upward
              * steps and the escape below stay live so a surge is still cut.
              * Rise gate, same idea: while the temp is climbing fast and the
              * target is already below it, the ICC is about to spin up on its
-             * own and the duty just hasn't caught up yet. Stepping down then
-             * stacks on that response (game launch: 23% -> 69%). */
+             * own and the duty just hasn't caught up yet. */
             int rising = temp_raw >= temp_ema + FC_RISE_C;
-            int hold_down =
-                adje > 0 && (dip_hold > 0 || (rising && new_target < temp_raw));
-            /* Park: a shortfall inside the deadband still pulls a wound-up
-             * target back to just above the temp (FC_CTL_PARK_PCT), unless
-             * the temp is dipping or climbing fast. */
+            int hold_down = adje > 0 && (dip_hold > 0 ||
+                                         (rising && new_target < C256(temp_raw)));
+            /* Park: any shortfall pulls a wound-up target back to just above
+             * the temp, unless the temp is dipping or climbing fast. */
             int short_by = err >= FC_CTL_PARK_PCT ||
-                           (err >= 1 && new_target > temp + FC_CTL_WOUND_C);
+                           (err >= 1 && new_target > C256(temp + FC_CTL_WOUND_C));
             int park = adje == 0 && short_by && dip_hold == 0 && !rising;
             int skip = ((adje > 0 && !hold_down) || park) &&
-                       temp_raw >= temp_ema && new_target > temp + 1;
+                       temp_raw >= temp_ema && new_target > C256(temp + 1);
             if (skip)
-                new_target = temp + 1;
-            /* Fast escape, the mirror case: a target parked just above a quiet
-             * temp ends up far below it when the (spiky) CPU temp jumps, and
-             * the ICC cools hard - observed 23% -> 80% with the curve at 28%.
-             * Walking back up 1-2 C per cooldown took ~40 s, so when the fan
-             * is well over the curve and the target is at or below the temp,
-             * jump straight to just above it, ignoring the cooldown. This only
-             * ever raises the target (quieter), then holds a full cooldown so
-             * the lagging duty can settle before the next step.
-             * Triggered on the raw duty, not the median: the median lags ~3 s
-             * on a surge, and since the escape only makes the fan quieter a
-             * one-sample false trigger costs at most a brief dip in duty. */
+                new_target = C256(temp + 1);
+            /* Fast escape: a target left at or below a spiky CPU temp makes
+             * the ICC cool hard (observed 23% -> 80% with the curve at 28%).
+             * When the fan is well over the curve, jump straight to just
+             * above the temp, ignoring the cooldown, then let it settle.
+             * Raw duty, not the median, so it reacts on the first sample. */
             int escape = desired - s.duty_pct < -FC_CTL_ESCAPE_PCT &&
-                         new_target <= temp;
+                         new_target <= C256(temp);
             if (escape) {
-                new_target = temp + 1;
+                new_target = C256(temp + 1);
                 cooldown = FC_CTL_COOLDOWN_TICKS;
             }
-            /* Cooldown counts wall ticks, not just ticks spent off-target, so
-             * a step is always followed by a fixed settle window. The escape
-             * tick already moved and armed the cooldown. */
             if (escape) {
             } else if (cooldown > 0) {
                 cooldown--;
             } else if (adje != 0 && !skip && !hold_down) {
-                /* 2 C steps only when far off. Near the goal a 2 C step
-                 * overshoots: the duty response to target is steep (one
-                 * observed run went 23% -> 100% after a 1 C/2 s staircase). */
-                int mag = abs(adje) > 24 ? 2 : 1;
+                /* Proportional step, about half of what the error needs: the
+                 * duty moves ~8% per degree near the operating point. */
+                int step = abs(adje) * 256 / FC_CTL_FINE_DIV;
+                if (step < FC_CTL_FINE_MIN)
+                    step = FC_CTL_FINE_MIN;
+                if (step > FC_CTL_FINE_MAX)
+                    step = FC_CTL_FINE_MAX;
                 /* hold while the plant is already moving toward the target */
                 int moving_our_way = adje > 0 ? trend >= 2 : trend <= -2;
                 if (!moving_our_way || abs(adje) > 12) {
-                    new_target += adje > 0 ? -mag : mag;
-                    cooldown = FC_CTL_COOLDOWN_TICKS;
+                    new_target += adje > 0 ? -step : step;
+                    cooldown = FC_CTL_FINE_COOLDOWN_TICKS;
                 }
             }
             /* No temp-relative clamping: a target above the current temp is
              * already "no action" (quietest). Clamping it down to follow a
              * dipping temp would FORCE cooling during dips - exactly wrong. */
-            if (new_target > FC_TARGET_MAX_C)
-                new_target = FC_TARGET_MAX_C;
-            if (new_target < FC_TARGET_MIN_C)
-                new_target = FC_TARGET_MIN_C;
+            if (new_target > C256(FC_TARGET_MAX_C))
+                new_target = C256(FC_TARGET_MAX_C);
+            if (new_target < C256(FC_TARGET_MIN_C))
+                new_target = C256(FC_TARGET_MIN_C);
         }
 
         int changed = new_target != target;
@@ -276,16 +274,17 @@ void *fc_control_loop(void *arg) {
             app_lock(st);
             still_on = st->cfg.enabled && !st->stopping;
             if (still_on) {
-                rc = fan_write_setpoint(target);
-                st->current_setpoint = rc == 0 ? target : -1;
+                rc = fan_write_setpoint_fine(target);
+                st->current_setpoint = rc == 0 ? (target + 128) / 256 : -1;
             }
             app_unlock(st);
             if (!still_on) {
                 target = -1;
             } else if (rc == 0) {
                 if (changed)
-                    fc_log("ctl: target %dC (fan %d%% -> want %d%%, temp %dC)",
-                           target, duty_f, desired, temp_raw);
+                    fc_log("ctl: target %d.%02dC (fan %d%% -> want %d%%, temp %dC)",
+                           target / 256, (target % 256) * 100 / 256, duty_f,
+                           desired, temp_raw);
             } else {
                 target = -1;
                 fc_log("ctl: write failed");

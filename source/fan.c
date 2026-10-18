@@ -70,3 +70,22 @@ int fan_write_setpoint(int celsius_c) {
     errno = saved;
     return rc < 0 ? -1 : 0;
 }
+
+int fan_write_setpoint_fine(int c256) {
+    if (c256 < 0)
+        c256 = 0;
+    if (c256 > 100 * 256)
+        c256 = 100 * 256;
+
+    int fd = open(ICC_FAN_DEV, O_RDONLY, 0);
+    if (fd < 0)
+        return -1;
+    char data[ICC_FAN_BUF_SIZE] = {0};
+    data[4] = (char)(c256 & 0xff);
+    data[5] = (char)(c256 >> 8);
+    int rc = ioctl(fd, ICC_FAN_IOCTL, data);
+    int saved = errno;
+    close(fd);
+    errno = saved;
+    return rc < 0 ? -1 : 0;
+}

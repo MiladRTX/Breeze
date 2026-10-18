@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Much more accurate fan control.** Breeze now steers the PS5 in fractions of a degree instead of whole degrees. In game the fan stayed within 2% of the curve 98% of the time, against 46% before, with no jumps.
+
 ## 1.4
 
 **First start**

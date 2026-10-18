@@ -52,7 +52,7 @@
 
 - **The PS5 sets a minimum fan speed:** 13% in the menus, 23% while a game or app runs. Breeze can add fan on top of that but never go below it. The chart starts at 13% and shows the 23% line as a dashed band.
 - **So in a game, the fan only rises once your curve asks for more than 23%.** With the default curve that's from about 60 °C. Until then it sits at 23%, which is not a bug.
-- **Expect the fan within about ±3–4% of your curve.** Breeze can only give the PS5 whole-degree targets, worth about 4–6% of fan each, and the PS5 takes a few seconds to react. Small gaps are left alone on purpose, so the fan doesn't keep swinging.
+- **Expect the fan within about 1–2% of your curve** once it settles. After a big change it takes 10–20 s to get there, because the console's temperature moves along with the fan. Gaps of 2% or less are left alone on purpose, so the fan doesn't keep shifting.
 - **Dots are joined by straight lines,** and the fan follows the line between them. Steep sections make the fan jumpy during loading screens; add a dot where you want a gentler bend.
 - **Past 88 °C Breeze always asks for full cooling,** whatever your curve says.
 - **Stop Breeze by turning Custom curve off, or by rebooting.** Both put the fan back on stock right away. Killing it from Payload Manager's process list stops it too hard for that, and the fan keeps Breeze's last setting until you relaunch Breeze or reboot.
@@ -125,7 +125,7 @@ Breeze only changes the fan controller's target. Past 88 °C it always asks for 
 
 <br>
 
-Breeze steers the PS5's thermostat, not the fan itself, in whole-degree steps, so the fan lands a few percent above or below the curve. It also can't go under the console's minimum (13% in the menus, 23% in a game). See [Good to know](#good-to-know).
+Breeze steers the PS5's thermostat, not the fan itself, so it gets the fan to within about 1–2% of the curve rather than exactly on it, and takes a few seconds after each change. It also can't go under the console's minimum (13% in the menus, 23% in a game). See [Good to know](#good-to-know).
 
 </details>
 
