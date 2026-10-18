@@ -176,7 +176,7 @@ The panel is plain HTML in [`web/panel.html`](web/panel.html) and gets embedded 
 
 Made by **[Milad](https://github.com/MiladRTX)**.
 
-Thanks to [John Törnblom](https://github.com/john-tornblom) for the PS5 payload SDK, and to [onionHEN](https://github.com/aydencharles/onionHEN), where the fan controller interface was first worked out.
+Thanks to [John Törnblom](https://github.com/john-tornblom) for the [PS5 payload SDK](https://github.com/ps5-payload-dev/sdk), and to [aydencharles](https://github.com/aydencharles) for [onionHEN](https://github.com/aydencharles/onionHEN), where the fan controller interface was first worked out.
 
 ## License
 
