@@ -10,11 +10,11 @@ void fc_defaults(curve_config *c) {
     c->web_enabled = 1;
     c->web_port = FC_DEFAULT_WEB_PORT;
     /* Also the "Breeze" starting preset: the curve play-tested on hardware,
-     * so switching on is all a first start needs. Below 23% it only takes
-     * effect in the menus, where the console's minimum is 13%. */
+     * so switching on is all a first start needs. It sits on the console's
+     * in-game minimum (23%) up to 60 C and rises gently from there. */
     static const curve_point def[] = {
-        {50, 13}, {55, 15}, {60, 17}, {65, 20}, {70, 24},
-        {75, 28}, {79, 32}, {82, 38}, {85, 49}};
+        {50, 13}, {55, 23}, {60, 23}, {70, 26},
+        {75, 28}, {78, 31}, {81, 34}};
     c->points_count = (int)(sizeof def / sizeof def[0]);
     memcpy(c->points, def, sizeof def);
 }

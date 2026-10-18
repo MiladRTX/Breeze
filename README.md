@@ -43,7 +43,7 @@
   <tr>
     <td valign="top"><b>No sudden roars</b><br>Loading screens and sensor spikes are filtered, so the fan doesn't surge every scene change.</td>
     <td valign="top"><b>Presets</b><br>Save up to 10 curves, then switch, rename or overwrite them in a tap.</td>
-    <td valign="top"><b>Safe by default</b><br>Full cooling past 88 °C, and the fan goes back to stock whenever Breeze stops.</td>
+    <td valign="top"><b>Safe by default</b><br>Stock fan until you turn the curve on, full cooling past 88 °C, and back to stock when you turn it off.</td>
   </tr>
 </table>
 
@@ -53,10 +53,11 @@
 2. **Load it** with [Payload Manager](https://github.com/itsPLK/ps5-payload-manager): choose **Upload ELF Payload**, then launch it.
 3. **Open the panel.** The console pops up the address:
 
-   > Breeze running (custom curve on)<br>
-   > Panel: `http://<PS5-IP>:2878`
+   > Breeze running (stock fan)<br>
+   > Turn the curve on at `http://<PS5-IP>:2878`
 
    On the first start Breeze also adds a **Breeze tile to your home screen**: open it and the panel comes up in the PS5 browser.
+4. **Switch on Custom curve** (top right). Until you do, the fan stays fully stock. Breeze remembers the switch, so after that it runs your curve on every launch.
 
 > [!TIP]
 > Add Breeze to Payload Manager's **Autoload** list so your curve is back after every reboot. To update, just launch the new version: it replaces the running one by itself.
@@ -79,7 +80,7 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 | Part | What it does |
 | --- | --- |
 | **Readouts** | CPU and SoC temperature, fan speed, what your curve wants, and the controller target. Hover (or tap) any of them for a short explanation. |
-| **Curve** | Drag points, double-click to add one, arrow keys to nudge. The dashed lines show where the temperature and fan are right now. |
+| **Curve** | Drag points, double-click to add one, arrow keys to nudge. The dashed lines show where the temperature and fan are right now; the shaded band is the 23% in-game minimum. |
 | **History** | 5 minutes to 3 hours of temperature and fan speed. Hover to see any moment. |
 | **Presets** | Load, rename, overwrite or delete saved curves. The one running is marked **Active**. |
 | **Points** | The same curve as a table, for exact values. |
@@ -98,6 +99,15 @@ Breeze closes the loop around that thermostat. Every second it:
 
 The console reacts a few seconds late and in big jumps, so Breeze lets each step settle, ignores one-second spikes and dips, and backs off fast if the fan overshoots.
 
+## Good to know
+
+- **The PS5 sets a minimum fan speed:** 13% in the menus, 23% while a game or app runs. Breeze can add fan on top of that but never go below it. The chart starts at 13% and shows the 23% line as a dashed band.
+- **So in a game, the fan only rises once your curve asks for more than 23%.** With the default curve that's from about 60 °C. Until then it sits at 23%, which is not a bug.
+- **Expect the fan within about ±3–4% of your curve.** Breeze can only give the PS5 whole-degree targets, worth about 4–6% of fan each, and the PS5 takes a few seconds to react. Small gaps are left alone on purpose, so the fan doesn't keep swinging.
+- **Dots are joined by straight lines,** and the fan follows the line between them. Steep sections make the fan jumpy during loading screens; add a dot where you want a gentler bend.
+- **Past 88 °C Breeze always asks for full cooling,** whatever your curve says.
+- **Stop Breeze by turning Custom curve off, or by rebooting.** Both put the fan back on stock right away. Killing it from Payload Manager's process list stops it too hard for that, and the fan keeps Breeze's last setting until you relaunch Breeze or reboot.
+
 ## FAQ
 
 <details>
@@ -105,7 +115,7 @@ The console reacts a few seconds late and in big jumps, so Breeze lets each step
 
 <br>
 
-Breeze only changes the fan controller's target. Past 88 °C it always asks for full cooling, the console keeps its own minimum fan speed, and when Breeze stops it hands the fan straight back to stock. Still, keep an eye on your temperatures, especially with very quiet curves.
+Breeze only changes the fan controller's target. Past 88 °C it always asks for full cooling, the console keeps its own minimum fan speed, and turning the curve off or closing Breeze normally hands the fan straight back to stock (see [Good to know](#good-to-know) for the one exception). Still, keep an eye on your temperatures, especially with very quiet curves.
 
 </details>
 
@@ -114,7 +124,7 @@ Breeze only changes the fan controller's target. Past 88 °C it always asks for 
 
 <br>
 
-The console moves the fan in steps, so it can sit a few percent above or below the curve. It also won't go below its own minimum speed at a given temperature, so a curve under that line can't be followed.
+Breeze steers the PS5's thermostat, not the fan itself, in whole-degree steps, so the fan lands a few percent above or below the curve. It also can't go under the console's minimum (13% in the menus, 23% in a game). See [Good to know](#good-to-know).
 
 </details>
 
