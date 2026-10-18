@@ -2,6 +2,7 @@
 
 ## 1.6
 
+- **New default curve** (the Breeze preset on a fresh install): 23% up to 60 °C, then 26% at 70 °C, 32% at 75 °C, 37% at 78 °C and 40% at 80 °C. Existing setups keep their own curve.
 - **Tidier panel:** four readouts (CPU, Fan, Curve wants, Target) in one row, or 2 x 2 on a phone; the duplicate Restore button is gone (the Custom curve switch does the same); the hint under the chart is one line.
 - **On a phone, the drag bubble sits above the point,** so the finger holding it doesn't cover the value.
 - **The console-minimum label moved to the left of the chart,** out of the way of the points.
