@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MiladRx/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.3-8ea2ff?style=flat" alt="Release v1.3"/></a>
+  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.3-8ea2ff?style=flat" alt="Release v1.3"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License GPLv3"/></a>
   <img src="https://img.shields.io/badge/Platform-PlayStation%205-003791?style=flat&logo=playstation" alt="PlayStation 5"/>
   <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c&logoColor=white" alt="C"/>
@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MiladRx/Breeze/releases/latest"><b>Download</b></a> ·
+  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><b>Download</b></a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#the-panel">The panel</a> ·
   <a href="#how-it-works">How it works</a> ·
@@ -49,7 +49,7 @@
 
 ## Quick start
 
-1. **Download** `breeze.elf` from the [latest release](https://github.com/MiladRx/Breeze/releases/latest).
+1. **Download** `breeze.elf` from the [latest release](https://github.com/MiladRTX/Breeze/releases/latest).
 2. **Load it** with [Payload Manager](https://github.com/itsPLK/ps5-payload-manager): choose **Upload ELF Payload**, then launch it.
 3. **Open the panel.** The console pops up the address:
 
@@ -129,7 +129,7 @@ Breeze is new and has been tested on one console, so expect some rough edges:
 - **Short spikes can still happen** for a few seconds right as a game launches.
 - **The history graph resets** when Breeze restarts.
 
-Found something off? [Open an issue](https://github.com/MiladRx/Breeze/issues) and attach `/data/breeze/breeze.log` if you can.
+Found something off? [Open an issue](https://github.com/MiladRTX/Breeze/issues) and attach `/data/breeze/breeze.log` if you can.
 
 </details>
 
@@ -163,7 +163,7 @@ The panel is plain HTML in [`web/panel.html`](web/panel.html) and gets embedded 
 
 ## Credits
 
-Made by **[Milad](https://github.com/MiladRx)**.
+Made by **[Milad](https://github.com/MiladRTX)**.
 
 Thanks to [John Törnblom](https://github.com/john-tornblom) for the PS5 payload SDK, and to the OnionHEN project, where the fan controller interface was first worked out.
 
