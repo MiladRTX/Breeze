@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Double-click or double-tap a point to remove it,** just like double-clicking empty space adds one. Undo brings it back.
+- **Clicking a point no longer nudges it:** a drag starts only after a few pixels, and the point keeps its offset under the pointer instead of jumping to it.
+
 ## 1.5
 
 - **Much more accurate fan control.** Breeze now steers the PS5 in fractions of a degree instead of whole degrees. In game the fan stayed within 2% of the curve 98% of the time, against 46% before, with no jumps.

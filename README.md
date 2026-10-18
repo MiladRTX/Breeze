@@ -90,7 +90,7 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 | Part | What it does |
 | --- | --- |
 | **Readouts** | CPU and SoC temperature, fan speed, what your curve wants, and the controller target. Hover (or tap) any of them for a short explanation. |
-| **Curve** | Drag points, double-click to add one, arrow keys to nudge. The dashed lines show where the temperature and fan are right now; the shaded band is the 23% in-game minimum. |
+| **Curve** | Drag points, double-click empty space to add one or a point to remove it, arrow keys to nudge. The dashed lines show where the temperature and fan are right now; the shaded band is the 23% in-game minimum. |
 | **History** | 5 minutes to 3 hours of temperature and fan speed. Hover to see any moment. |
 | **Presets** | Load, rename, overwrite or delete saved curves. The one running is marked **Active**. |
 | **Points** | The same curve as a table, for exact values. |

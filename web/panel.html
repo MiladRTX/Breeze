@@ -544,16 +544,25 @@ function inPlot(p){return p.x>=P.l-8&&p.x<=W-P.r+8&&p.y>=P.t-8&&p.y<=H-P.b+8}
 /* Double-tap/click adds a point. Taps are counted on release and only if the
  * pointer barely moved, so two quick swipes over the chart don't add one. */
 var tapStart=null;
+/* Double-click/tap on a point removes it. A press that stays within a few
+ * pixels is a tap, not a drag, so hand jitter doesn't nudge the point. */
+var lastDotTap=null;
 function onDown(e){
   var p=local(e),i=nearest(p,e.pointerType!=='mouse');
-  if(i>=0){sel=i;drag={i:i,id:e.pointerId,moved:false,start:copy(draft)};
+  if(i>=0){sel=i;drag={i:i,id:e.pointerId,moved:false,start:copy(draft),t0:Date.now(),x0:p.x,y0:p.y,
+      dx:p.x-X(draft[i][0]),dy:p.y-Y(draft[i][1]),slop:e.pointerType==='mouse'?4:8};
     $('svg').setPointerCapture(e.pointerId);renderAll();e.preventDefault();return}
   if(!inPlot(p)){tapStart=null;return}
   tapStart={id:e.pointerId,t:Date.now(),x:p.x,y:p.y};
   if(sel>=0){sel=-1;renderAll()}
 }
+function dotTap(i){
+  var now=Date.now();lastTap=null;
+  if(lastDotTap&&lastDotTap.i===i&&now-lastDotTap.t<400){lastDotTap=null;removeAt(i);return}
+  lastDotTap={i:i,t:now};
+}
 function onTapUp(e){
-  var s=tapStart;tapStart=null;
+  var s=tapStart;tapStart=null;lastDotTap=null;
   if(!s||s.id!==e.pointerId||e.type!=='pointerup')return;
   var p=local(e),now=Date.now();
   if(now-s.t>350||Math.abs(p.x-s.x)>8||Math.abs(p.y-s.y)>8){lastTap=null;return}
@@ -564,8 +573,11 @@ function onMove(e){
   var p=local(e);
   if(tapStart&&tapStart.id===e.pointerId&&(Math.abs(p.x-tapStart.x)>8||Math.abs(p.y-tapStart.y)>8))tapStart=null;
   if(drag&&e.pointerId===drag.id){
-    if(!drag.moved){drag.moved=true;undo.push(drag.start);if(undo.length>100)undo.shift();redo=[]}
-    setPoint(drag.i,tAt(p.x),sAt(p.y));renderAll();
+    if(!drag.moved){
+      if(Math.abs(p.x-drag.x0)<=drag.slop&&Math.abs(p.y-drag.y0)<=drag.slop)return;
+      drag.moved=true;undo.push(drag.start);if(undo.length>100)undo.shift();redo=[]}
+    // keep the grab offset: the point moves with the pointer, it doesn't jump to it
+    setPoint(drag.i,tAt(p.x-drag.dx),sAt(p.y-drag.dy));renderAll();
     var q=draft[drag.i];showReadout(X(q[0]),Y(q[1]),q[0]+'°C → '+q[1]+'%');return;
   }
   if(e.pointerType==='mouse'&&inPlot(p)){
@@ -574,7 +586,12 @@ function onMove(e){
     $('svg').style.cursor=nearest(p,false)>=0?'grab':'crosshair';drawCurve();
   }else if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}
 }
-function onUp(e){if(drag&&e.pointerId===drag.id){drag=null;hideReadout();renderAll();return}onTapUp(e)}
+function onUp(e){
+  if(drag&&e.pointerId===drag.id){
+    var d=drag;drag=null;hideReadout();
+    if(!d.moved&&e.type==='pointerup'&&Date.now()-d.t0<350)dotTap(d.i);else lastDotTap=null;
+    renderAll();return}
+  onTapUp(e)}
 function onLeave(){if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}}
 function showReadout(x,y,txt){var r=$('readout');r.textContent=txt;r.style.opacity=1;
   r.style.left=clamp(x+14,4,W-150)+'px';r.style.top=clamp(y-36,4,H-30)+'px'}
@@ -584,7 +601,7 @@ function hideReadout(){$('readout').style.opacity=0}
 function renderInsp(){
   var el=$('insp');
   if(sel<0||sel>=draft.length){
-    el.innerHTML='<span class="hint">Drag a point to move it. Double-click or double-tap empty space to add one.'+
+    el.innerHTML='<span class="hint">Drag a point to move it. Double-click or double-tap empty space to add one, or a point to remove it.'+
       '<span class="hide-sm"> Select a point and use <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> to nudge, <kbd>Del</kbd> to remove.</span></span>';
     return;
   }
