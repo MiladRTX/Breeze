@@ -254,7 +254,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   <section class="tiles">
     <div class="tile t" tabindex="0" data-tip="CPU temperature. Breeze reads the fan speed off your curve at this temp."><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
     <div class="tile t" tabindex="0" data-tip="Second sensor on the main chip. Shown for reference only."><div class="eyebrow">SoC</div><div class="v"><span id="vSoc">–</span><small>°C</small></div></div>
-    <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan<span id="fanMin" hidden> · console min</span></div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
+    <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan<span id="fanMin" hidden> · min</span></div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
     <div class="tile w" tabindex="0" data-tip="What your curve asks for at the current CPU temp. Close to Fan means it is working."><div class="eyebrow">Curve wants</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
     <div class="tile" tabindex="0" data-tip="The thermostat setting Breeze steers. Lower means more fan; above the CPU temp means stay quiet."><div class="eyebrow">ICC target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
   </section>
@@ -397,6 +397,9 @@ if(TK.charAt(0)==='@')(function(){
   };
 })();
 var XMIN=30,XMAX=100,MAXP=30,MINP=2;
+/* The fan never runs below 13% (the console's own floor), so the chart and
+ * the points start there. */
+var FMIN=13;
 /* The slowest the PS5 itself runs the fan right now (13% in the menus, 23%
  * in a game), measured live by Breeze; -1 until known. Breeze can add fan on
  * top, never go below. */
@@ -428,9 +431,9 @@ function toast(m,bad){var e=$('toast');e.textContent=m;e.className='toast on'+(b
 
 /* ---------- geometry ---------- */
 function X(t){return P.l+(t-XMIN)/(XMAX-XMIN)*(W-P.l-P.r)}
-function Y(s){return P.t+(1-s/100)*(H-P.t-P.b)}
+function Y(s){return P.t+(1-(s-FMIN)/(100-FMIN))*(H-P.t-P.b)}
 function tAt(x){return XMIN+(x-P.l)/(W-P.l-P.r)*(XMAX-XMIN)}
-function sAt(y){return(1-(y-P.t)/(H-P.t-P.b))*100}
+function sAt(y){return FMIN+(1-(y-P.t)/(H-P.t-P.b))*(100-FMIN)}
 
 /* ---------- edits ---------- */
 function commit(){undo.push(copy(draft));if(undo.length>100)undo.shift();redo=[]}
@@ -439,11 +442,11 @@ function doUndo(){if(!undo.length)return;redo.push(copy(draft));draft=undo.pop()
 function doRedo(){if(!redo.length)return;undo.push(copy(draft));draft=redo.pop();sel=Math.min(sel,draft.length-1);renderAll()}
 function setPoint(i,t,s){
   var lo=i>0?draft[i-1][0]+1:XMIN,hi=i<draft.length-1?draft[i+1][0]-1:XMAX;
-  draft[i]=[clamp(Math.round(t),lo,hi),clamp(Math.round(s),0,100)];
+  draft[i]=[clamp(Math.round(t),lo,hi),clamp(Math.round(s),FMIN,100)];
 }
 function addAt(t,s){
   if(draft.length>=MAXP){toast('Up to '+MAXP+' points',true);return}
-  t=clamp(Math.round(t),XMIN,XMAX);s=clamp(Math.round(s),0,100);
+  t=clamp(Math.round(t),XMIN,XMAX);s=clamp(Math.round(s),FMIN,100);
   for(var i=0;i<draft.length;i++)if(draft[i][0]===t){toast('There is already a point at '+t+'°C',true);return}
   commit();draft.push([t,s]);draft.sort(function(a,b){return a[0]-b[0]});
   for(i=0;i<draft.length;i++)if(draft[i][0]===t)sel=i;
@@ -461,7 +464,7 @@ function removeAt(i){
   commit();draft.splice(i,1);sel=Math.min(i,draft.length-1);renderAll();
 }
 function shiftAll(dt,ds){
-  var n=draft.map(function(p){return[p[0]+dt,clamp(p[1]+ds,0,100)]});
+  var n=draft.map(function(p){return[p[0]+dt,clamp(p[1]+ds,FMIN,100)]});
   if(n[0][0]<XMIN||n[n.length-1][0]>XMAX){toast('The curve would leave the '+XMIN+'–'+XMAX+'°C range',true);return}
   commit();draft=n;renderAll();
 }
@@ -479,10 +482,10 @@ function label(x,y,txt,anchor,col){return '<text x="'+x+'" y="'+y+'" text-anchor
 function drawCurve(){
   if(!W)return;
   var o='',i,x,y,small=W<520;
-  for(var s=0;s<=100;s+=10){y=Y(s);o+='<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="'+(s%20?'#15191f':'#1c2129')+'"/>';
+  for(var s=FMIN;s<=100;s=s<20?20:s+10){y=Y(s);o+='<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="'+(s%20?'#15191f':'#1c2129')+'"/>';
     // y labels give way to the live fan badge on the same column
-    var nearFan=st&&st.duty>=0&&Math.abs(y-Y(clamp(st.duty,0,100)))<16;
-    if(s%20===0&&!nearFan)o+=label(P.l-9,y+3.5,s+'%','end')}
+    var nearFan=st&&st.duty>=0&&Math.abs(y-Y(clamp(st.duty,FMIN,100)))<16;
+    if((s%20===0||s===FMIN)&&!nearFan)o+=label(P.l-9,y+3.5,s+'%','end')}
   for(var t=XMIN;t<=XMAX;t+=5){x=X(t);
     if(t%10===0||!small)o+='<line y1="'+P.t+'" y2="'+(H-P.b)+'" x1="'+x+'" x2="'+x+'" stroke="'+(t%10===0?'#1c2129':'#15191f')+'"/>';
     // axis labels give way to the live temp badge drawn on the same row
@@ -490,8 +493,8 @@ function drawCurve(){
     if(t%10===0&&!nearBadge)o+=label(x,H-P.b+19,t+'°','middle')}
   // The console's own minimum fan speed right now: the curve can't go below this band.
   var cm=consoleMin();
-  if(cm>0){y=Y(cm);
-    o+='<rect x="'+P.l+'" y="'+y+'" width="'+(W-P.l-P.r)+'" height="'+(Y(0)-y)+'" fill="#ffffff" fill-opacity=".035"/>'+
+  if(cm>FMIN){y=Y(cm);
+    o+='<rect x="'+P.l+'" y="'+y+'" width="'+(W-P.l-P.r)+'" height="'+(Y(FMIN)-y)+'" fill="#ffffff" fill-opacity=".035"/>'+
       '<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="#5c6573" stroke-opacity=".7" stroke-dasharray="3 4"/>'+
       label(X(XMAX)-8,y+14,'console minimum','end')}
   if(draft.length){
@@ -499,7 +502,7 @@ function drawCurve(){
     for(i=0;i<draft.length;i++)d+=' L'+X(draft[i][0])+' '+Y(draft[i][1]);
     d+=' L'+X(XMAX)+' '+Y(draft[draft.length-1][1]);
     o+='<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ea2ff" stop-opacity=".22"/><stop offset="1" stop-color="#8ea2ff" stop-opacity="0"/></linearGradient></defs>';
-    o+='<path d="'+d+' L'+X(XMAX)+' '+Y(0)+' L'+X(XMIN)+' '+Y(0)+'Z" fill="url(#g)"/>';
+    o+='<path d="'+d+' L'+X(XMAX)+' '+Y(FMIN)+' L'+X(XMIN)+' '+Y(FMIN)+'Z" fill="url(#g)"/>';
     if(dirty()&&server.length){
       var sd='M'+X(XMIN)+' '+Y(server[0][1]);
       for(i=0;i<server.length;i++)sd+=' L'+X(server[i][0])+' '+Y(server[i][1]);
@@ -513,7 +516,7 @@ function drawCurve(){
     // one for the real fan speed (badge on the y axis).
     x=X(clamp(st.cpu,XMIN,XMAX));
     o+='<line x1="'+x+'" x2="'+x+'" y1="'+P.t+'" y2="'+(H-P.b)+'" stroke="#f2b25c" stroke-opacity=".35" stroke-dasharray="2 4"/>';
-    if(st.duty>=0){var yf=Y(clamp(st.duty,0,100)),bw=P.l-4;
+    if(st.duty>=0){var yf=Y(clamp(st.duty,FMIN,100)),bw=P.l-4;
       o+='<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+yf+'" y2="'+yf+'" stroke="#4fd1a5" stroke-opacity=".35" stroke-dasharray="2 4"/>'+
         '<rect x="1" y="'+(yf-9.5)+'" width="'+bw+'" height="19" rx="6" fill="#4fd1a5"/>'+
         label(1+bw/2,yf+3.5,st.duty+'%','middle','#0b0d10').replace('font-size','font-weight="600" font-size')}
@@ -667,13 +670,13 @@ function drawMinis(){
     var idx=+svg.dataset.mini,p=presets[idx]&&presets[idx].points;if(!p||!p.length)return;
     var w=svg.clientWidth,h=svg.clientHeight;if(!w||!h)return;
     var on=idx===act,col=on?'#4fd1a5':'#8ea2ff',pad=3;
-    function mx(t){return pad+(t-XMIN)/(XMAX-XMIN)*(w-2*pad)}function my(s){return pad+(1-s/100)*(h-2*pad)}
+    function mx(t){return pad+(t-XMIN)/(XMAX-XMIN)*(w-2*pad)}function my(s){return pad+(1-(s-FMIN)/(100-FMIN))*(h-2*pad)}
     var d='M'+mx(XMIN).toFixed(1)+' '+my(p[0][1]).toFixed(1);
     for(var i=0;i<p.length;i++)d+=' L'+mx(p[i][0]).toFixed(1)+' '+my(p[i][1]).toFixed(1);
     d+=' L'+mx(XMAX).toFixed(1)+' '+my(p[p.length-1][1]).toFixed(1);
     svg.setAttribute('viewBox','0 0 '+w+' '+h);
     svg.innerHTML='<line x1="'+pad+'" x2="'+(w-pad)+'" y1="'+my(50)+'" y2="'+my(50)+'" stroke="#1c2129"/>'+
-      '<path d="'+d+' L'+mx(XMAX).toFixed(1)+' '+my(0)+' L'+mx(XMIN).toFixed(1)+' '+my(0)+'Z" fill="'+col+'" fill-opacity=".12"/>'+
+      '<path d="'+d+' L'+mx(XMAX).toFixed(1)+' '+my(FMIN)+' L'+mx(XMIN).toFixed(1)+' '+my(FMIN)+'Z" fill="'+col+'" fill-opacity=".12"/>'+
       '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.6" stroke-linejoin="round"/>';
   });
 }

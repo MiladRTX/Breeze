@@ -3,6 +3,9 @@
 #define FC_CURVE_MAX_POINTS 30
 #define FC_TEMP_MIN_C 30
 #define FC_TEMP_MAX_C 100
+/* The console never runs the fan slower (its floor in the menus), so curve
+ * points start here. */
+#define FC_FAN_MIN_PCT 13
 #define FC_DEFAULT_WEB_PORT 2878
 
 /* ICC target used by the firmware's own curve (OnionHEN calls this the

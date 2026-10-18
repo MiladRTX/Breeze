@@ -31,8 +31,8 @@ void fc_sanitize_points(int *count, curve_point *points) {
             points[i].temp_c = FC_TEMP_MIN_C;
         if (points[i].temp_c > FC_TEMP_MAX_C)
             points[i].temp_c = FC_TEMP_MAX_C;
-        if (points[i].fan_pct < 0)
-            points[i].fan_pct = 0;
+        if (points[i].fan_pct < FC_FAN_MIN_PCT)
+            points[i].fan_pct = FC_FAN_MIN_PCT;
         if (points[i].fan_pct > 100)
             points[i].fan_pct = 100;
     }

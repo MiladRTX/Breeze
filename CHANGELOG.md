@@ -5,7 +5,8 @@
 - **First start:**
   - Breeze starts on stock fan control until you switch **Custom curve** on once; it remembers that on every launch after. The popup and a one-line hint in the panel say where.
   - One starting preset, **Breeze**: the play-tested quiet curve, which is also the default curve. Existing presets are kept.
-- **Console minimum shown in the panel.** The PS5 won't run the fan below its own minimum: 13% in the menus, 23% while a game runs. Breeze measures that live, the curve chart shades it, and the Fan readout says "console min" when that's why the fan sits above your curve.
+- **Console minimum shown in the panel.** The PS5 won't run the fan below its own minimum: 13% in the menus, 23% while a game runs. Breeze measures that live, the curve chart shades it, and the Fan readout says "min" when that's why the fan sits above your curve.
+- **The curve chart starts at 13%,** the slowest the fan ever runs, and points can't go below it.
 - **Fixed: fan stuck at the console's minimum** (e.g. 23%) after starting at idle, until the curve was touched. Breeze now pulls its target back next to the temperature as soon as the fan falls behind the curve.
 - **Apply turns the custom curve on** if it was off, and a loaded preset can be applied straight away.
 - **No preset is marked Active while the curve is off.**
