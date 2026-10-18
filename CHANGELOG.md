@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Tidier panel:** four readouts (CPU, Fan, Curve wants, Target) in one row, or 2 x 2 on a phone; the duplicate Restore button is gone (the Custom curve switch does the same); the hint under the chart is one line.
+- **On a phone, the drag bubble sits above the point,** so the finger holding it doesn't cover the value.
+- **The console-minimum label moved to the left of the chart,** out of the way of the points.
+- **The switches stay greyed out until the console answers,** instead of briefly showing "off".
+
 ## 1.5
 
 - **Much more accurate fan control.** Breeze now steers the PS5 in fractions of a degree instead of whole degrees. In game the fan stayed within 2% of the curve 98% of the time, against 46% before, with no jumps.

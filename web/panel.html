@@ -44,9 +44,11 @@ button,input{font:inherit;color:inherit}
 .sw input:checked+i{background:var(--accent)}
 .sw input:checked+i:after{transform:translateX(18px);background:#fff}
 .sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
+/* until the console answers, the switches don't know their state yet */
+.master.wait{pointer-events:none}.wait .sw,.sw.wait{opacity:.35;pointer-events:none}
 
 /* tiles */
-.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
 .tile{position:relative;outline:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px 12px}
 /* hover (or tap) explanation under each tile */
 .tile[data-tip]:after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);z-index:10;width:max-content;max-width:230px;
@@ -114,6 +116,7 @@ button,input{font:inherit;color:inherit}
 .step input::-webkit-inner-spin-button,.step input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .step .u{padding:0 8px 0 2px;color:var(--faint);font-size:12px}
 .hint{color:var(--faint);font-size:12.5px}
+.show-sm{display:none}
 kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;color:var(--muted)}
 
 /* table */
@@ -204,14 +207,11 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   .ptbl{max-height:none}   /* one column: no need to balance heights */
 }
 @media (max-width:760px){
-  .tiles{grid-template-columns:repeat(6,1fr);gap:8px}
-  .tiles .tile{grid-column:span 2}
-  .tiles .tile:nth-child(n+4){grid-column:span 3}
-  /* 3 + 2 rows: Fan ends row one, Curve wants starts row two */
-  .tiles .tile:nth-child(3):after{left:auto;right:0;transform:translate(0,-4px)}
-  .tiles .tile:nth-child(4):after{left:0;transform:translate(0,-4px)}
-  .tiles .tile:nth-child(3):hover:after,.tiles .tile:nth-child(3):focus:after,
-  .tiles .tile:nth-child(4):hover:after,.tiles .tile:nth-child(4):focus:after{transform:none}
+  .tiles{grid-template-columns:repeat(2,1fr);gap:8px}
+  /* 2 x 2: tips open inward from the left and right column */
+  .tiles .tile:nth-child(odd):after{left:0;right:auto;transform:translate(0,-4px)}
+  .tiles .tile:nth-child(even):after{left:auto;right:0;transform:translate(0,-4px)}
+  .tiles .tile:hover:after,.tiles .tile:focus:after{transform:none}
 }
 @media (max-width:640px){
   .wrap{padding:16px 12px calc(16px + env(safe-area-inset-bottom))}
@@ -224,7 +224,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   .tools>*{flex:none}
   .tools .seg.fanseg{flex:1 1 0;min-width:0}
   .tools .fanseg .btn{flex:1 1 0;min-width:0;padding:0 4px}
-  .hide-sm{display:none}
+  .hide-sm{display:none}.show-sm{display:inline}
   /* point editor: label + Remove on one row, the two steppers side by side below */
   .insp{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:center;padding:12px}
   .insp .hint{grid-column:1/-1}
@@ -248,15 +248,14 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   <header class="top">
     <div class="brand">Breeze<span class="ver" id="ver"></span></div>
     <div class="grow"></div>
-    <label class="master">Custom curve<span class="sw"><input type="checkbox" id="enabled"><i></i></span></label>
+    <label class="master wait">Custom curve<span class="sw"><input type="checkbox" id="enabled"><i></i></span></label>
   </header>
 
   <section class="tiles">
     <div class="tile t" tabindex="0" data-tip="CPU temperature. Breeze reads the fan speed off your curve at this temp."><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
-    <div class="tile t" tabindex="0" data-tip="Second sensor on the main chip. Shown for reference only."><div class="eyebrow">SoC</div><div class="v"><span id="vSoc">–</span><small>°C</small></div></div>
     <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan<span id="fanMin" hidden> · min</span></div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
     <div class="tile w" tabindex="0" data-tip="What your curve asks for at the current CPU temp. Close to Fan means it is working."><div class="eyebrow">Curve wants</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
-    <div class="tile" tabindex="0" data-tip="The thermostat setting Breeze steers. Lower means more fan; above the CPU temp means stay quiet."><div class="eyebrow">ICC target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
+    <div class="tile" tabindex="0" data-tip="The thermostat setting Breeze steers. Lower means more fan; above the CPU temp means stay quiet."><div class="eyebrow">Target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
   </section>
 
   <div class="grid">
@@ -329,9 +328,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
         <div class="hd"><h2>Settings</h2></div>
         <div class="bd" style="padding-top:2px;padding-bottom:4px">
           <div class="row"><div class="t"><div>Web panel</div><div>Serve this page on port <span class="num" id="port">–</span></div></div>
-            <span class="sw"><input type="checkbox" id="webEnabled" aria-label="Web panel"><i></i></span></div>
-          <div class="row"><div class="t"><div>Stock fan control</div><div>Turn the curve off and hand the fan back to the console</div></div>
-            <button class="btn danger" id="bStock" data-tip="Turn the custom curve off and give the fan back to the console">Restore</button></div>
+            <span class="sw wait"><input type="checkbox" id="webEnabled" aria-label="Web panel"><i></i></span></div>
         </div>
       </section>
     </div>
@@ -391,7 +388,6 @@ if(TK.charAt(0)==='@')(function(){
       return reply(presets);
     }
     if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;var p=points(f);if(p.length)st.points=p}
-    if(post&&u.indexOf('api/restore')>=0)st.enabled=0;
     st.desired=st.enabled?want(st.cpu):-1;st.duty=st.enabled?Math.max(13,st.desired):13;
     return reply(st);
   };
@@ -494,7 +490,8 @@ function drawCurve(){
   {y=Y(APP_MIN);
     o+='<rect x="'+P.l+'" y="'+y+'" width="'+(W-P.l-P.r)+'" height="'+(Y(FMIN)-y)+'" fill="#ffffff" fill-opacity=".035"/>'+
       '<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="#5c6573" stroke-opacity=".7" stroke-dasharray="3 4"/>'+
-      label(X(XMAX)-8,y+14,small?'console min · app running':'console minimum while an app is running','end')}
+      // left end, inside the band: curves sit on the floor there, so it stays clear of the dots
+      label(X(XMIN)+8,y+14,small?'app minimum':'console minimum while an app is running','start')}
   if(draft.length){
     var d='M'+X(XMIN)+' '+Y(draft[0][1]);
     for(i=0;i<draft.length;i++)d+=' L'+X(draft[i][0])+' '+Y(draft[i][1]);
@@ -550,7 +547,7 @@ var lastDotTap=null;
 function onDown(e){
   var p=local(e),i=nearest(p,e.pointerType!=='mouse');
   if(i>=0){sel=i;drag={i:i,id:e.pointerId,moved:false,start:copy(draft),t0:Date.now(),x0:p.x,y0:p.y,
-      dx:p.x-X(draft[i][0]),dy:p.y-Y(draft[i][1]),slop:e.pointerType==='mouse'?4:8};
+      dx:p.x-X(draft[i][0]),dy:p.y-Y(draft[i][1]),slop:e.pointerType==='mouse'?4:8,pt:e.pointerType};
     $('svg').setPointerCapture(e.pointerId);renderAll();e.preventDefault();return}
   if(!inPlot(p)){tapStart=null;return}
   tapStart={id:e.pointerId,t:Date.now(),x:p.x,y:p.y};
@@ -578,7 +575,7 @@ function onMove(e){
       drag.moved=true;undo.push(drag.start);if(undo.length>100)undo.shift();redo=[]}
     // keep the grab offset: the point moves with the pointer, it doesn't jump to it
     setPoint(drag.i,tAt(p.x-drag.dx),sAt(p.y-drag.dy));renderAll();
-    var q=draft[drag.i];showReadout(X(q[0]),Y(q[1]),q[0]+'°C → '+q[1]+'%');return;
+    var q=draft[drag.i];showReadout(X(q[0]),Y(q[1]),q[0]+'°C → '+q[1]+'%',drag.pt!=='mouse');return;
   }
   if(e.pointerType==='mouse'&&inPlot(p)){
     var t=clamp(Math.round(tAt(p.x)),XMIN,XMAX);hover={t:t};
@@ -593,16 +590,23 @@ function onUp(e){
     renderAll();return}
   onTapUp(e)}
 function onLeave(){if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}}
-function showReadout(x,y,txt){var r=$('readout');r.textContent=txt;r.style.opacity=1;
-  r.style.left=clamp(x+14,4,W-150)+'px';r.style.top=clamp(y-36,4,H-30)+'px'}
+/* While dragging. With a finger the bubble goes well above the point and
+ * centred on it, so the finger holding the point doesn't cover it; with no
+ * room above, it moves to the side. */
+function showReadout(x,y,txt,touch){var r=$('readout');r.textContent=txt;r.style.opacity=1;
+  var w=r.offsetWidth||110,h=r.offsetHeight||26,left,top;
+  if(!touch){left=clamp(x+14,4,W-w-4);top=clamp(y-36,4,H-h-4)}
+  else if(y-72>=4){left=clamp(x-w/2,4,W-w-4);top=y-72}
+  else{top=clamp(y-h/2,4,H-h-4);left=x-w-36>=4?x-w-36:clamp(x+36,4,W-w-4)}
+  r.style.left=left+'px';r.style.top=top+'px'}
 function hideReadout(){$('readout').style.opacity=0}
 
 /* ---------- inspector / table ---------- */
 function renderInsp(){
   var el=$('insp');
   if(sel<0||sel>=draft.length){
-    el.innerHTML='<span class="hint">Drag a point to move it. Double-click or double-tap empty space to add one, or a point to remove it.'+
-      '<span class="hide-sm"> Select a point and use <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> to nudge, <kbd>Del</kbd> to remove.</span></span>';
+    el.innerHTML='<span class="hint"><span class="hide-sm">Drag to move · double-click to add or remove · arrow keys to nudge</span>'+
+      '<span class="show-sm">Drag to move · double-tap to add or remove</span></span>';
     return;
   }
   var p=draft[sel];
@@ -736,7 +740,7 @@ function applyState(s){
   st=s;
   if(wasOn!==!!s.enabled)renderPresets();
   $('ver').textContent=s.ver?'v'+s.ver:'';
-  $('vCpu').textContent=s.cpu<0?'–':s.cpu;$('vSoc').textContent=s.soc<0?'–':s.soc;
+  $('vCpu').textContent=s.cpu<0?'–':s.cpu;
   $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
   // Fan above the curve only because the console won't go lower: say so.
   var lo=s.min>0?s.min:-1,atMin=s.enabled&&lo>0&&s.desired>=0&&s.duty>=0&&s.desired<lo&&s.duty<=lo+2;
@@ -746,6 +750,7 @@ function applyState(s){
   var a=document.activeElement;
   if(a!==$('enabled'))$('enabled').checked=!!s.enabled;
   if(a!==$('webEnabled'))$('webEnabled').checked=!!s.web_enabled;
+  document.querySelectorAll('.wait').forEach(function(e){e.classList.remove('wait')});
   var sp=copy(s.points),clean=!dirty();
   if(!same(sp,server)){server=sp;if(clean&&!drag){draft=copy(sp);sel=-1}renderAll();renderPresets()}
   if(s.enabled){if(armed){armed=false;renderAll()}markUsed()}
@@ -886,10 +891,6 @@ $('webEnabled').addEventListener('change',async function(){
   if(!on&&!confirm('Turn off the web panel? This page goes offline until you set web_enabled=1 in /data/breeze/breeze.conf over FTP.')){el.checked=true;return}
   if(!await sendConfig(null,st.enabled,on,on?'Web panel on':'Web panel off'))el.checked=!!st.web_enabled;
 });
-$('bStock').onclick=async function(){
-  if(!confirm('Turn the custom curve off and restore stock fan control?'))return;
-  try{var r=await post('api/restore');if(!r.ok)throw r.status;applyState(await r.json());toast('Stock fan control restored')}catch(e){fail(e,'Restore failed')}
-};
 document.addEventListener('keydown',function(e){
   var a=document.activeElement,typing=a&&a.tagName==='INPUT'&&a.type!=='checkbox',mod=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();
   /* Blur first: a value typed into a field only lands on change. */
