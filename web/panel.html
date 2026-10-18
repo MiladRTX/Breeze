@@ -400,10 +400,9 @@ var XMIN=30,XMAX=100,MAXP=30,MINP=2;
 /* The fan never runs below 13% (the console's own floor), so the chart and
  * the points start there. */
 var FMIN=13;
-/* The slowest the PS5 itself runs the fan right now (13% in the menus, 23%
- * in a game), measured live by Breeze; -1 until known. Breeze can add fan on
- * top, never go below. */
-function consoleMin(){return st&&st.min>0?st.min:-1}
+/* The slowest the PS5 runs the fan while an app or game is open; the chart
+ * always shows it as a band. Breeze can add fan on top, never go below. */
+var APP_MIN=23;
 var DEF=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]]; /* the "Breeze" preset */
 var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
 
@@ -491,12 +490,10 @@ function drawCurve(){
     // axis labels give way to the live temp badge drawn on the same row
     var nearBadge=st&&st.cpu>=0&&Math.abs(x-X(clamp(st.cpu,XMIN,XMAX)))<34;
     if(t%10===0&&!nearBadge)o+=label(x,H-P.b+19,t+'°','middle')}
-  // The console's own minimum fan speed right now: the curve can't go below this band.
-  var cm=consoleMin();
-  if(cm>FMIN){y=Y(cm);
+  // The console's minimum while an app runs: in a game the curve can't go below this band.
+  {y=Y(APP_MIN);
     o+='<rect x="'+P.l+'" y="'+y+'" width="'+(W-P.l-P.r)+'" height="'+(Y(FMIN)-y)+'" fill="#ffffff" fill-opacity=".035"/>'+
       '<line x1="'+P.l+'" x2="'+(W-P.r)+'" y1="'+y+'" y2="'+y+'" stroke="#5c6573" stroke-opacity=".7" stroke-dasharray="3 4"/>'+
-      // The band only shows above 13%, which happens while an app or game runs.
       label(X(XMAX)-8,y+14,small?'console min · app running':'console minimum while an app is running','end')}
   if(draft.length){
     var d='M'+X(XMIN)+' '+Y(draft[0][1]);
