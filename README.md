@@ -39,7 +39,7 @@
   <tr>
     <td width="33%" valign="top"><b>Your curve, your noise</b><br>Up to 30 points of temperature → fan %. Quiet when you're browsing, cool when you're gaming.</td>
     <td width="33%" valign="top"><b>Edit from anywhere</b><br>A web panel on your LAN. Drag the curve on your phone or PC and hit Apply.</td>
-    <td width="33%" valign="top"><b>Actually follows it</b><br>Reads the real fan speed every second and steers until it matches your curve.</td>
+    <td width="33%" valign="top"><b>Actually follows it</b><br>Reads the real fan speed every second and steers it to within 1–2% of your curve.</td>
   </tr>
   <tr>
     <td valign="top"><b>No sudden roars</b><br>Loading screens and sensor spikes are filtered, so the fan doesn't surge every scene change.</td>
@@ -105,9 +105,9 @@ Breeze closes the loop around that thermostat. Every second it:
 
 1. reads the CPU temperature and the **real** fan speed,
 2. looks up what your curve wants at that temperature,
-3. nudges the target up or down until the fan matches.
+3. nudges the target up or down, in fractions of a degree, until the fan matches.
 
-The console reacts a few seconds late and in big jumps, so Breeze lets each step settle, ignores one-second spikes and dips, and backs off fast if the fan overshoots.
+Breeze makes small corrections and lets each one settle, ignores one-second spikes and dips, and backs off fast if the fan overshoots, so the fan stays within about 1–2% of your curve without jumping.
 
 ## FAQ
 
@@ -176,7 +176,7 @@ The panel is plain HTML in [`web/panel.html`](web/panel.html) and gets embedded 
 
 Made by **[Milad](https://github.com/MiladRTX)**.
 
-Thanks to [John Törnblom](https://github.com/john-tornblom) for the PS5 payload SDK, and to the OnionHEN project, where the fan controller interface was first worked out.
+Thanks to [John Törnblom](https://github.com/john-tornblom) for the PS5 payload SDK, and to [onionHEN](https://github.com/aydencharles/onionHEN), where the fan controller interface was first worked out.
 
 ## License
 
