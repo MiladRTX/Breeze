@@ -27,6 +27,7 @@ enum class Phase
     looking,   // before the first answer
     running,
     starting,  // breeze.elf sent to the loader, waiting for its panel
+    updating,  // an older Breeze answered: the app's copy is taking over from it
     stopped,   // was running, then went away
     no_loader, // nothing listens on the ELF loader's port
     no_copy,   // the app's own breeze.elf is missing

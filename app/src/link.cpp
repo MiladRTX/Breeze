@@ -446,6 +446,24 @@ bool local_ip(char *out, int cap) noexcept
     return true;
 }
 
+int compare_versions(const char *a, const char *b) noexcept
+{
+    // A part that ends in anything but '.' ends that version: its rest counts as 0.
+    while (*a || *b)
+    {
+        int x = 0, y = 0;
+        while (*a >= '0' && *a <= '9')
+            x = x * 10 + (*a++ - '0');
+        while (*b >= '0' && *b <= '9')
+            y = y * 10 + (*b++ - '0');
+        if (x != y)
+            return x < y ? -1 : 1;
+        a = *a == '.' ? a + 1 : "";
+        b = *b == '.' ? b + 1 : "";
+    }
+    return 0;
+}
+
 int start_breeze() noexcept
 {
     static unsigned char elf[1 << 20];

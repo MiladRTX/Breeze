@@ -83,6 +83,10 @@ int post_preset(int port, const char *action, const char *name, const Curve *cur
 // The console's address on the network, for the web panel's link; false when unknown.
 bool local_ip(char *out, int cap) noexcept;
 
+// -1, 0 or 1 as version a is lower than, equal to or higher than b, part by
+// part: "1.8" < "1.8.1" < "1.9" < "1.10". Anything after the numbers is ignored.
+[[nodiscard]] int compare_versions(const char *a, const char *b) noexcept;
+
 // Sends the breeze.elf packaged with the app to the ELF loader on 127.0.0.1:9021,
 // which starts it as its own process: it keeps running after the app closes.
 // 0 sent, -1 the packaged copy is missing, -2 no loader answered.

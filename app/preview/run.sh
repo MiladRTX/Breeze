@@ -10,7 +10,8 @@ mkdir -p "$out"
 obj=$(mktemp -d)
 trap 'rm -rf "$obj"' EXIT
 
-flags=(-DBREEZE_PREVIEW -O2 -Wall -Wextra -I"$app/src" -I"$repo/source")
+bash "$here/version.sh" "$repo" > "$obj/breeze_version.hpp"
+flags=(-DBREEZE_PREVIEW -O2 -Wall -Wextra -I"$app/src" -I"$repo/source" -I"$obj")
 clang -std=c11 "${flags[@]}" -c "$app/src/stb_impl.c" -o "$obj/stb.o"
 clang -std=c11 "${flags[@]}" -c "$repo/source/curve.c" -o "$obj/curve.o"
 for f in font screen ui views main link; do

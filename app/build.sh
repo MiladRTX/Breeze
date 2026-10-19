@@ -39,6 +39,8 @@ cp -r "$here/src" "$here/sce_sys" "$kit/breeze/"
 # breeze.elf's own curve maths, so the app shows exactly what it steers to.
 cp "$repo/source/curve.c" "$repo/source/curve.h" "$kit/breeze/src/"
 cp "$repo/build/breeze.elf" "$kit/breeze/assets/breeze.elf"
+# The version of that breeze.elf, so the app can replace an older one it finds running.
+bash "$here/preview/version.sh" "$repo" > "$kit/breeze/src/breeze_version.hpp"
 # The web panel's fonts (SIL Open Font License, the licences go with them).
 mkdir -p "$kit/breeze/assets/fonts"
 cp "$here/fonts/"* "$kit/breeze/assets/fonts/"

@@ -156,5 +156,9 @@ int main(int argc, char **argv)
     a.toast_until = 0;
     a.phase = app::Phase::starting;
     shot(out, "6_starting");
+    // An older Breeze answered: the app's own copy is replacing it.
+    strcpy(s.version, "1.8");
+    a.phase = app::Phase::updating;
+    shot(out, "7_updating");
     return 0;
 }
