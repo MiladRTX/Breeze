@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.1
+
+**Fixes**
+- **The web panel comes back after rest mode.** Rest mode closes the console's network ports: Breeze kept steering the fan, but the panel stayed unreachable until Breeze was restarted. Breeze now notices the console's network address going and coming back and reopens the panel, about two seconds after the console wakes up. A new address from the router is handled the same way.
+
 ## 1.8
 
 **The Breeze app**
