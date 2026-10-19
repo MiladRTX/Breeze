@@ -24,9 +24,9 @@
 
 <p align="center">
   <a href="https://github.com/MiladRTX/Breeze/releases/latest"><b>Download</b></a> ·
-  <a href="#good-to-know">Good to know</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#the-app">The app</a> ·
+  <a href="#good-to-know">Good to know</a> ·
   <a href="#the-panel">The panel</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#faq">FAQ</a>
@@ -48,17 +48,6 @@
     <td valign="top"><b>Safe by default</b><br>Stock fan until you turn the curve on, full cooling past 88 °C, and back to stock when you turn it off or Breeze stops, even if it's killed.</td>
   </tr>
 </table>
-
-## Good to know
-
-- **The PS5 sets a minimum fan speed:** 13% in the menus, 23% while a game or app runs. Breeze can add fan on top of that but never go below it. The chart starts at 13% and shows the 23% line as a dashed band.
-- **So in a game, the fan only rises once your curve asks for more than 23%.** With the default curve that's from about 60 °C. Until then it sits at 23%, which is not a bug.
-- **Expect the fan within about 1–2% of your curve** once it settles. After a big change it takes 10–20 s to get there, because the console's temperature moves along with the fan. Gaps of 2% or less are left alone on purpose, so the fan doesn't keep shifting.
-- **Dots are joined by straight lines,** and the fan follows the line between them: halfway between 60 °C at 30% and 70 °C at 40% is 35% at 65 °C. Steep sections make the fan jumpy during loading screens, so add a dot where you want a gentler bend.
-- **Other parts of the console can ask for more fan.** The PS5 cools some parts on its own, and when one of them needs more than your curve, the Fan readout says **console**. That's the PS5 protecting itself.
-- **Past 88 °C Breeze always asks for full cooling,** whatever your curve says.
-- **Stopping Breeze hands the fan back to stock,** whether you turn Custom curve off, reboot, or kill breeze.elf from Payload Manager's process list: within about a second the fan is back on the console's own setting. After a kill that's the job of **breeze-guard.elf**, the small helper next to breeze.elf in the process list. Leave it running (Breeze restarts it within 10 seconds if it's stopped); it exits by itself once the fan is back.
-- **If the fan ever seems stuck after Breeze stopped,** launch Breeze again (it puts back what a stopped copy left behind), start or close a game, or reboot.
 
 ## Quick start
 
@@ -132,6 +121,14 @@ Breeze also comes as an app for the PS5 home screen: the same curve, history, pr
 
 L1 and R1 switch tabs. While the app is open the PS5 treats it like a game, so the fan minimum is the in-game 23%.
 
+## Good to know
+
+- **The PS5 has a minimum fan speed:** 13% in the menus, 23% while a game or app runs. Breeze can add fan on top of that but never go below it, so in a game the fan only rises once your curve asks for more than 23% (from about 60 °C with the default curve).
+- **The fan settles within about 1–2% of your curve,** 10–20 s after a big change.
+- **Dots are joined by straight lines:** halfway between 60 °C at 30% and 70 °C at 40% is 35% at 65 °C.
+- **Past 88 °C Breeze always asks for full cooling,** whatever your curve says.
+- **Stopping Breeze hands the fan back to stock,** whether you turn Custom curve off, reboot, or kill it.
+
 ## The panel
 
 | Part | What it does |
@@ -174,7 +171,36 @@ Breeze only changes the fan controller's target. Past 88 °C it always asks for 
 
 <br>
 
-Breeze steers the PS5's thermostat, not the fan itself, so it gets the fan to within about 1–2% of the curve rather than exactly on it, and takes a few seconds after each change. It also can't go under the console's minimum (13% in the menus, 23% in a game). See [Good to know](#good-to-know).
+Breeze steers the PS5's thermostat, not the fan itself, so it gets the fan to within about 1–2% of the curve rather than exactly on it, and takes a few seconds after each change. Gaps of 2% or less are left alone on purpose, so the fan doesn't keep shifting. It also can't go under the console's minimum (13% in the menus, 23% in a game).
+
+Steep sections of the curve make the fan jumpy during loading screens, so add a dot where you want a gentler bend.
+
+</details>
+
+<details>
+<summary><b>Why does the Fan readout say "console"?</b></summary>
+
+<br>
+
+Other parts of the console can ask for more fan. The PS5 cools some parts on its own, and when one of them needs more than your curve, the Fan readout says **console**. That's the PS5 protecting itself.
+
+</details>
+
+<details>
+<summary><b>What is breeze-guard.elf?</b></summary>
+
+<br>
+
+The small helper next to breeze.elf in the process list. If breeze.elf is killed (from Payload Manager's process list, for example), the guard puts the console's own fan setting back within about a second. Leave it running: Breeze restarts it within 10 seconds if it's stopped, and it exits by itself once the fan is back.
+
+</details>
+
+<details>
+<summary><b>The fan seems stuck after Breeze stopped</b></summary>
+
+<br>
+
+Launch Breeze again (it puts back what a stopped copy left behind), start or close a game, or reboot.
 
 </details>
 
