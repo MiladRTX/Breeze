@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.8
+
+**The Breeze app**
+- **Breeze on the PS5 home screen:** a native app (PPSA92878) with the same curve, history, presets and settings as the web panel, on the TV with the DualSense. It starts breeze.elf when Breeze isn't running, and takes the place of the old browser tile, which it removes. Install `PPSA92878.zip` with ShadowMountPlus; it needs an ELF loader on port 9021.
+- **Curve editing on the controller:** the D-pad and L2/R2 nudge the selected point, sliding on the touchpad moves it, and L3/R3 undo and redo (up to 100 steps).
+- **Presets on the controller:** use, save, overwrite and delete. Only one preset is marked Active when several have the same curve, as in the web panel.
+
+**Curve**
+- **The smooth curve is gone:** dots are always joined by straight lines, so the fan between two dots is easy to read off. Curves and presets saved with Smooth on load as straight lines through the same dots.
+
+**History**
+- **24 hours of history,** with new 12h and 24h ranges in the web panel and the app. The history already saved carries over.
+- Past an hour, looking back reads "1h 10m ago"; the web panel no longer shows "1h 60m".
+
 ## 1.7
 
 **Curve**

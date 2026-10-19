@@ -6,11 +6,11 @@
 
 <p align="center">
   <b>A fan curve for your PS5.</b><br>
-  Decide how loud the fan gets at every temperature, right from your phone or PC.
+  Decide how loud the fan gets at every temperature, right from your PS5, phone or PC.
 </p>
 
 <p align="center">
-  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.7-8ea2ff?style=flat" alt="Release v1.7"/></a>
+  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.8-8ea2ff?style=flat" alt="Release v1.8"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License GPLv3"/></a>
   <img src="https://img.shields.io/badge/Platform-PlayStation%205-003791?style=flat&logo=playstation" alt="PlayStation 5"/>
   <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c&logoColor=white" alt="C"/>
@@ -26,6 +26,7 @@
   <a href="https://github.com/MiladRTX/Breeze/releases/latest"><b>Download</b></a> ·
   <a href="#good-to-know">Good to know</a> ·
   <a href="#quick-start">Quick start</a> ·
+  <a href="#the-app">The app</a> ·
   <a href="#the-panel">The panel</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#faq">FAQ</a>
@@ -38,7 +39,7 @@
 <table>
   <tr>
     <td width="33%" valign="top"><b>Your curve, your noise</b><br>Up to 30 points of temperature → fan %. Quiet when you're browsing, cool when you're gaming.</td>
-    <td width="33%" valign="top"><b>Edit from anywhere</b><br>A web panel on your LAN. Drag the curve on your phone or PC and hit Apply.</td>
+    <td width="33%" valign="top"><b>Edit from anywhere</b><br>The Breeze app on the PS5 itself, or a web panel on your LAN: drag the curve on your phone or PC and hit Apply.</td>
     <td width="33%" valign="top"><b>Actually follows it</b><br>Reads the real fan speed every second and steers it to within 1–2% of your curve.</td>
   </tr>
   <tr>
@@ -68,7 +69,7 @@
    > Breeze running (stock fan)<br>
    > Turn the curve on at `http://<PS5-IP>:2878`
 
-   On the first start Breeze also adds a **Breeze tile to your home screen**: open it and the panel comes up in the PS5 browser.
+   On the first start Breeze also adds a **Breeze tile to your home screen** (unless the [Breeze app](#the-app) is installed): open it and the panel comes up in the PS5 browser.
 4. **Switch on Custom curve** (top right). Until you do, the fan stays fully stock. Breeze remembers the switch, so after that it runs your curve on every launch.
 
 > [!TIP]
@@ -86,6 +87,23 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 ```
 
 </details>
+
+## The app
+
+Breeze also comes as an app for the PS5 home screen: the same curve, history, presets and settings as the web panel, on the TV with the DualSense.
+
+**Install it:** download `PPSA92878.zip` from the [latest release](https://github.com/MiladRTX/Breeze/releases/latest), unzip it and copy the `PPSA92878` folder to `/data/homebrew/` on the console (over FTP, for example). [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus) picks it up and adds **Breeze** to the home screen.
+
+**It needs** ShadowMountPlus and an ELF loader on port 9021 (elfldr): the app carries its own `breeze.elf` and starts it when Breeze isn't running. Breeze keeps running after you close the app, and the app takes the place of the browser tile.
+
+| Tab | Controls |
+| --- | --- |
+| **Curve** | ←→ choose a point, ↑↓ fan, L2/R2 temperature, slide on the touchpad to move the point, △ add, □ remove, L3/R3 undo and redo, ✕ apply, ○ revert |
+| **History** | ←→ range (5 minutes to 24 hours), slide on the touchpad to look back |
+| **Presets** | ↑↓ choose, ✕ use, △ save the curve as a new preset, OPTIONS overwrite, □ delete (overwrite and delete ask for a second press) |
+| **Settings** | Custom curve on or off, reset the curve to the default |
+
+L1 and R1 switch tabs. While the app is open the PS5 treats it like a game, so the fan minimum is the in-game 23%.
 
 ## The panel
 
@@ -175,13 +193,21 @@ PS5_PAYLOAD_SDK=/path/to/ps5-payload-sdk ./build.sh   # -> build/breeze.elf
 
 The panel is plain HTML in [`web/panel.html`](web/panel.html) and gets embedded into the ELF. Opened on its own, it runs with sample data, which is handy for working on the design.
 
+The app builds in Linux or WSL with clang and lld 18, make and Python 3, after `build.sh`:
+
+```sh
+app/build.sh   # -> build/app/PPSA92878 and PPSA92878.zip
+```
+
+It fetches [ps5-native-app-boilerplate](https://github.com/blackbearreloaded/ps5-native-app-boilerplate) at a pinned commit. `app/preview/run.sh` draws every screen as a PNG on a PC, without a console.
+
 </details>
 
 ## Credits
 
 Made by **[Milad](https://github.com/MiladRTX)**.
 
-Thanks to [John Törnblom](https://github.com/john-tornblom) for the [PS5 payload SDK](https://github.com/ps5-payload-dev/sdk), and to [aydencharles](https://github.com/aydencharles) for [onionHEN](https://github.com/aydencharles/onionHEN), where the fan controller interface was first worked out.
+Thanks to [John Törnblom](https://github.com/john-tornblom) for the [PS5 payload SDK](https://github.com/ps5-payload-dev/sdk), to [aydencharles](https://github.com/aydencharles) for [onionHEN](https://github.com/aydencharles/onionHEN), where the fan controller interface was first worked out, and to [BlackBearReloaded](https://github.com/blackbearreloaded) for [ps5-native-app-boilerplate](https://github.com/blackbearreloaded/ps5-native-app-boilerplate), which the app is built on. The app uses the [Inter](https://rsms.me/inter/) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) fonts (SIL Open Font License).
 
 ## License
 
