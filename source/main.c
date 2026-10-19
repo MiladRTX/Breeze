@@ -54,6 +54,18 @@ static void on_signal(int sig) {
     g_running = 0;
 }
 
+/* Rest mode closes every listening socket: the panel's port then refuses
+ * connections although Breeze, and the fan control, kept running. The
+ * address check in the main loop catches it (the address goes on the way
+ * into rest mode and comes back on waking); SIGCONT, on which Payload
+ * Manager restarts its server, is kept as a second trigger. */
+static volatile sig_atomic_t g_resumed;
+
+static void on_resume(int sig) {
+    (void)sig;
+    g_resumed = 1;
+}
+
 static void notify(const char *fmt, ...) {
     notify_request_t req;
     va_list ap;
@@ -110,6 +122,33 @@ static void ensure_server_sync(void) {
     srv_port = 0;
     if (want && httpd_start(&g_state) == 0)
         srv_port = want;
+}
+
+/* Closes the panel so the main loop opens it again on a fresh socket a
+ * second later, as Payload Manager does after rest mode: the old socket is
+ * dead, and the network needs a moment. */
+static void close_server_for_reopen(const char *why) {
+    if (!srv_port)
+        return;
+    fc_log("web: %s, reopening the panel", why);
+    httpd_stop();
+    srv_port = 0;
+}
+
+/* The console's address as last seen, "" for none. */
+static char g_addr[INET_ADDRSTRLEN];
+
+/* 1 when the address is not the one last seen: Wi-Fi back after rest mode,
+ * a new DHCP lease, a cable plugged in or pulled. */
+static int address_changed(void) {
+    char now[INET_ADDRSTRLEN] = "";
+    if (local_ipv4(now, sizeof now) != 0)
+        now[0] = 0;
+    if (!strcmp(now, g_addr))
+        return 0;
+    fc_log("net: address %s -> %s", g_addr[0] ? g_addr : "none", now[0] ? now : "none");
+    snprintf(g_addr, sizeof g_addr, "%s", now);
+    return 1;
 }
 
 /* Tries the lock every 100 ms for up to `ms`. */
@@ -301,6 +340,7 @@ int main(void) {
     /* A browser dropping the panel connection mid-response must not kill
      * the payload (FreeBSD's default SIGPIPE action terminates). */
     signal(SIGPIPE, SIG_IGN);
+    signal(SIGCONT, on_resume);
     fc_crash_handler_install();
     if (sceKernelSetProcessName)
         sceKernelSetProcessName("breeze.elf");
@@ -391,11 +431,23 @@ int main(void) {
     /* Tile with the panel on (a no-op once it's installed and current). */
     start_launcher(srv_port);
 
+    if (local_ipv4(g_addr, sizeof g_addr) != 0)
+        g_addr[0] = 0;
+    int reopen_tick = -1; /* when a closed panel opens again */
     for (int tick = 0; g_running; tick++) {
         usleep(100000);
         if (!g_running) /* signalled: nothing else before the restore */
             break;
-        if (tick % 20 == 0)
+        if (g_resumed) {
+            g_resumed = 0;
+            close_server_for_reopen("the console woke from rest mode");
+            reopen_tick = tick + 10;
+        }
+        if (tick % 50 == 25 && address_changed()) {
+            close_server_for_reopen("the network changed");
+            reopen_tick = tick + 10;
+        }
+        if (tick == reopen_tick || (tick % 20 == 0 && tick > reopen_tick))
             ensure_server_sync();
         /* 10 s: restart a guard that was killed. The probe is one LOCK_NB;
          * only the loader send goes to a thread. */
