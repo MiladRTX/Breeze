@@ -75,9 +75,6 @@ struct App
     link::Presets presets{};
     bool presets_valid = false;
     int preset_selected = 0;
-    // The preset last used, saved or overwritten: the one marked Active when
-    // several match the running curve (the web panel's rule).
-    char picked[40] = "";
 
     // Touchpad: the finger's place on the History chart (0..1), and the Curve
     // point it is moving (-1 when no finger is down).

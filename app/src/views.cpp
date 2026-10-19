@@ -165,8 +165,15 @@ void readout_box(Canvas &c, float x, float y, const char *s) noexcept
            Color::text);
 }
 
-const link::Curve default_curve = {
-    7, {50, 55, 60, 70, 75, 78, 80}, {13, 23, 23, 26, 32, 37, 40}};
+// "Gaming", "Breeze (built-in)" or "Not in a preset": the active preset.
+const char *preset_label(const link::State &s) noexcept
+{
+    static char out[64];
+    if (!s.preset[0])
+        return "Not in a preset";
+    (void)snprintf(out, sizeof out, "%s%s", s.preset, strcmp(s.preset, link::builtin_preset) ? "" : " (built-in)");
+    return out;
+}
 
 void select_clamp(App &a) noexcept
 {
@@ -279,16 +286,22 @@ void undo_redo(App &a, bool undo) noexcept
     select_clamp(a);
 }
 
-// Sends a curve (or only the switch) and says how it went.
-bool send_config(App &a, int enabled, const link::Curve *curve, const char *done) noexcept
+// Sends a curve (or only the switch) and says how it went: done on success,
+// nothing when done is null (the caller words it from out). A curve goes as an
+// edit of preset (the active one), which Breeze saves it into.
+bool send_config(App &a, int enabled, const link::Curve *curve, const char *done, const char *preset = nullptr,
+                 link::State *out = nullptr) noexcept
 {
     if (!a.have_token)
         a.have_token = link::load_token(a.port);
-    const int status = link::post_config(a.port, enabled, curve);
+    const int status = link::post_config(a.port, enabled, curve, preset, out);
     app::refresh_now();
+    if (curve)
+        a.presets_valid = false; // the edit went into a preset
     if (status == 200)
     {
-        app::toast(done);
+        if (done)
+            app::toast(done);
         return true;
     }
     if (status == 500)
@@ -331,10 +344,13 @@ void apply_bar(Canvas &c, bool curve_on) noexcept
     const int cy = y + h / 2;
     const float base = ui::baseline_for(cy, Face::semibold, px(13));
     const float tw = c.text(x + px(16), base, "Unsaved changes", Face::semibold, px(13), Color::text);
-    c.text(x + px(16) + tw + px(8), base,
-           curve_on ? "the grey line is the curve Breeze runs now"
-                    : "applying them also turns the custom curve on",
-           Face::regular, px(13), Color::muted);
+    // Where Apply puts them: the active preset, or a new one for the built-in one.
+    const link::State &s = app::state().state;
+    const bool to_preset = s.preset[0] && strcmp(s.preset, link::builtin_preset) != 0;
+    char note[96];
+    (void)snprintf(note, sizeof note, "Apply saves %s%s%s", to_preset ? "them to " : "them as a new preset",
+                   to_preset ? s.preset : "", curve_on ? "" : " and turns the curve on");
+    c.text(x + px(16) + tw + px(8), base, note, Face::regular, px(13), Color::muted);
     // [L3] Undo  [R3] Redo  [○] Revert  [✕] Apply, the last one primary.
     const int bh = px(34);
     const int apply_w = ui::chip(c, -10000, 0, bh, "Apply", true);
@@ -391,11 +407,34 @@ bool curve_input(unsigned pressed) noexcept
         remove_point(a);
     a.dirty = !app::same_curve(d, a.state.curve);
 
-    if (pressed & pad::cross)
+    if ((pressed & pad::cross) && !a.dirty)
     {
+        // Nothing to save: with the curve off, Apply turns it on.
+        if (a.state.enabled != 1)
+            (void)send_config(a, 1, nullptr, "Custom curve on");
+    }
+    else if (pressed & pad::cross)
+    {
+        // An edit of the active preset: Breeze saves it there, or as a new one.
         const bool was_on = a.state.enabled == 1;
-        if (send_config(a, 1, &d, was_on ? "Applied" : "Applied: custom curve on"))
+        char from[sizeof a.state.preset];
+        (void)snprintf(from, sizeof from, "%s", a.state.preset);
+        link::State after{};
+        if (send_config(a, 1, &d, nullptr, from, &after))
+        {
             a.dirty = false;
+            if (after.version[0]) // 200; send_config said what went wrong otherwise
+            {
+                char msg[96];
+                const char *on = was_on ? "" : "Custom curve on · ";
+                if (!after.preset[0])
+                    (void)snprintf(msg, sizeof msg, "%sApplied, but the preset list is full (10)", on);
+                else
+                    (void)snprintf(msg, sizeof msg, "%sSaved %s %s", on, strcmp(after.preset, from) ? "as" : "to",
+                                   after.preset);
+                app::toast(msg, !after.preset[0]);
+            }
+        }
     }
     if ((pressed & pad::circle) && a.dirty)
     {
@@ -425,9 +464,9 @@ void curve_draw(Canvas &c) noexcept
 
     // ---- the chart card
     ui::card(c, L::left, top, main_w, h);
-    char sub[96];
-    (void)snprintf(sub, sizeof sub, "%d / %d points%s", d.count, link::max_points,
-                   s.enabled != 1 && !a.dirty ? " · the custom curve is off: Apply turns it on with this curve" : "");
+    char sub[128];
+    (void)snprintf(sub, sizeof sub, "%s · %d / %d points%s", preset_label(s), d.count, link::max_points,
+                   s.enabled != 1 && !a.dirty ? " · the custom curve is off: Apply turns it on" : "");
     ui::card_header(c, L::left, top, main_w, "Curve", sub);
     const Plot p = curve_plot();
 
@@ -855,15 +894,14 @@ void mini_curve(Canvas &c, int x, int y, int w, int h, const link::Curve &curve,
 
 namespace
 {
-constexpr int delete_confirm = 100;    // + preset index
-constexpr int overwrite_confirm = 300; // + preset index
+constexpr int delete_confirm = 100; // + preset index
 
 int post_preset_checked(App &a, const char *action, const char *name, const link::Curve *curve = nullptr,
-                        bool overwrite = false) noexcept
+                        bool use = false) noexcept
 {
     if (!a.have_token)
         a.have_token = link::load_token(a.port);
-    const int status = link::post_preset(a.port, action, name, curve, overwrite);
+    const int status = link::post_preset(a.port, action, name, curve, use);
     if (status == 403)
         a.have_token = false;
     a.presets_valid = false;
@@ -871,27 +909,16 @@ int post_preset_checked(App &a, const char *action, const char *name, const link
     return status;
 }
 
-void pick(App &a, const char *name) noexcept
-{
-    (void)snprintf(a.picked, sizeof a.picked, "%s", name);
-}
-
-// The preset marked Active: the one last picked if it matches the running
-// curve, else the first that does; none while the curve is off (the panel's rule).
+// The preset marked Active: Breeze's active preset, the one Apply saves into;
+// none while the curve is off (the panel's rule).
 int active_index(const App &a) noexcept
 {
     if (a.state.enabled != 1)
         return -1;
-    int first = -1;
     for (int i = 0; i < a.presets.count; ++i)
-        if (app::same_curve(a.presets.list[i].curve, a.state.curve))
-        {
-            if (strcmp(a.presets.list[i].name, a.picked) == 0)
-                return i;
-            if (first < 0)
-                first = i;
-        }
-    return first;
+        if (strcmp(a.presets.list[i].name, a.state.preset) == 0)
+            return i;
+    return -1;
 }
 } // namespace
 
@@ -909,8 +936,6 @@ bool presets_input(unsigned pressed) noexcept
     {
         const char *name = a.presets.list[a.preset_selected].name;
         const int status = post_preset_checked(a, "apply", name);
-        if (status == 200 || status == 500)
-            pick(a, name);
         if (status == 200)
         {
             a.dirty = false; // the editor follows the curve just chosen
@@ -922,56 +947,39 @@ bool presets_input(unsigned pressed) noexcept
     }
     if (pressed & pad::triangle)
     {
+        // Breeze's names for new presets: "My curve", "My curve 2", ...
         char name[24] = "";
         for (int k = 1; k <= link::max_presets + 1 && !name[0]; ++k)
         {
             char candidate[24];
-            (void)snprintf(candidate, sizeof candidate, "Preset %d", k);
+            if (k == 1)
+                (void)snprintf(candidate, sizeof candidate, "My curve");
+            else
+                (void)snprintf(candidate, sizeof candidate, "My curve %d", k);
             bool taken = false;
             for (int i = 0; i < n; ++i)
                 taken = taken || strcmp(a.presets.list[i].name, candidate) == 0;
             if (!taken)
                 (void)snprintf(name, sizeof name, "%s", candidate);
         }
-        // The curve in the editor, as the panel saves it.
-        const int status = post_preset_checked(a, "save", name, &a.draft);
+        // The curve in the editor becomes a preset of its own, and runs.
+        const int status = post_preset_checked(a, "save", name, &a.draft, true);
         if (status == 200)
         {
-            pick(a, name);
-            (void)snprintf(msg, sizeof msg, "Saved as %s", name);
+            (void)snprintf(msg, sizeof msg, "Saved as %s and using it", name);
             app::toast(msg);
+            a.dirty = false;
             a.preset_selected = n; // the new one, at the end
         }
         else
             app::toast(status == 409 ? "The preset list is full (10)" : "Could not save the preset", true);
     }
-    if ((pressed & pad::options) && n > 0)
-    {
-        const char *name = a.presets.list[a.preset_selected].name;
-        if (app::confirmed(overwrite_confirm + a.preset_selected))
-        {
-            char saved[40];
-            (void)snprintf(saved, sizeof saved, "%s", name);
-            const int status = post_preset_checked(a, "save", saved, &a.draft, true);
-            if (status == 200)
-            {
-                pick(a, saved);
-                (void)snprintf(msg, sizeof msg, "Updated %s", saved);
-                app::toast(msg);
-            }
-            else
-                app::toast("Could not overwrite the preset", true);
-        }
-        else
-        {
-            (void)snprintf(msg, sizeof msg, "Press OPTIONS again to overwrite %s", name);
-            app::toast(msg, true);
-        }
-    }
     if ((pressed & pad::square) && n > 0)
     {
         const char *name = a.presets.list[a.preset_selected].name;
-        if (app::confirmed(delete_confirm + a.preset_selected))
+        if (strcmp(name, link::builtin_preset) == 0)
+            app::toast("The built-in preset can't be deleted", true);
+        else if (app::confirmed(delete_confirm + a.preset_selected))
         {
             (void)snprintf(msg, sizeof msg, "Deleted %s", name);
             const int status = post_preset_checked(a, "delete", name);
@@ -1014,8 +1022,9 @@ void presets_draw(Canvas &c) noexcept
             c.rect(bx, y + row_h - 1, bw, ui::border, Color::line);
         c.text(bx + px(6), ui::baseline_for(cy - px(9), Face::semibold, px(13.5f)), pr.name, Face::semibold,
                px(13.5f), Color::text);
-        char meta[32];
-        (void)snprintf(meta, sizeof meta, "%d points", pr.curve.count);
+        char meta[40];
+        (void)snprintf(meta, sizeof meta, "%s%d points", strcmp(pr.name, link::builtin_preset) ? "" : "Built-in · ",
+                       pr.curve.count);
         c.text(bx + px(6), ui::baseline_for(cy + px(10), Face::medium, px(11.5f)), meta, Face::medium, px(11.5f),
                Color::faint);
         const bool active = i == active_at;
@@ -1033,20 +1042,19 @@ void presets_draw(Canvas &c) noexcept
     int y = top + shd + px(28);
     ui::key_hint(c, x, y, ui::Key::cross, "Use this curve");
     y += px(40);
-    ui::key_hint(c, x, y, ui::Key::triangle, "Save the curve as a new preset");
-    y += px(40);
-    ui::key_hint(c, x, y, ui::Key::options, "Overwrite it with the curve");
+    ui::key_hint(c, x, y, ui::Key::triangle, "New preset from the curve");
     y += px(40);
     ui::key_hint(c, x, y, ui::Key::square, "Delete it");
     ui::paragraph(c, x, y + px(56), L::side_w - 2 * px(16), px(19),
-                  "The curve is the one on the Curve tab, unsaved changes included. Overwrite and Delete "
-                  "ask for a second press. Rename presets in the web panel.",
+                  "Apply on the Curve tab saves your changes into the preset in use. The built-in Breeze preset "
+                  "never changes: changes to it are saved as a new preset. Delete asks for a second press. "
+                  "Rename presets in the web panel.",
                   Face::regular, px(12.5f), Color::faint);
 
     static const ui::Hint hints[] = {
-        {ui::Key::up_down, "Choose"}, {ui::Key::cross, "Use"}, {ui::Key::triangle, "Save new"},
-        {ui::Key::options, "Overwrite"}, {ui::Key::square, "Delete"}};
-    ui::hint_bar(c, hints, 5);
+        {ui::Key::up_down, "Choose"}, {ui::Key::cross, "Use"}, {ui::Key::triangle, "New"},
+        {ui::Key::square, "Delete"}};
+    ui::hint_bar(c, hints, 4);
 }
 
 // ---- Settings --------------------------------------------------------------
@@ -1077,8 +1085,11 @@ bool settings_input(unsigned pressed) noexcept
     default:
         if (app::confirmed(reset_confirm))
         {
-            if (send_config(a, s.enabled == 1, &default_curve, "Curve reset to the default"))
+            // The built-in preset, which keeps the default curve.
+            const int status = post_preset_checked(a, "apply", link::builtin_preset);
+            if (status == 200)
                 a.dirty = false;
+            app::toast(status == 200 ? "Using the built-in Breeze curve" : "Could not reset the curve", status != 200);
         }
         else
             app::toast("Press Cross again to reset the curve", true);
@@ -1103,7 +1114,8 @@ void settings_draw(Canvas &c) noexcept
     } rows[setting_count] = {
         {"Custom curve", "Breeze steers the fan to your curve. Off: the console runs the fan itself.", 0,
          s.enabled == 1},
-        {"Reset the curve", "Back to Breeze's default: 23% up to 60 °C, rising to 40% at 80 °C.", 1, false},
+        {"Reset the curve", "Switches to the built-in Breeze preset: 23% up to 60 °C, rising to 40% at 80 °C.", 1,
+         false},
     };
     const int bx = L::left + px(16), bw = main_w - 2 * px(16), row_h = px(66);
     for (int i = 0; i < setting_count; ++i)

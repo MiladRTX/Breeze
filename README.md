@@ -44,7 +44,7 @@
   </tr>
   <tr>
     <td valign="top"><b>No sudden roars</b><br>Loading screens and sensor spikes are filtered, so the fan doesn't surge every scene change.</td>
-    <td valign="top"><b>Presets</b><br>Save up to 10 curves, then switch, rename or overwrite them in a tap.</td>
+    <td valign="top"><b>Presets</b><br>Up to 10 curves. Apply saves your edits into the one in use, and the built-in one is always there to go back to.</td>
     <td valign="top"><b>Safe by default</b><br>Stock fan until you turn the curve on, full cooling past 88 °C, and back to stock when you turn it off or Breeze stops, even if it's killed.</td>
   </tr>
 </table>
@@ -116,8 +116,8 @@ Breeze also comes as an app for the PS5 home screen: the same curve, history, pr
 | --- | --- |
 | **Curve** | ←→ choose a point, ↑↓ fan, L2/R2 temperature, slide on the touchpad to move the point, △ add, □ remove, L3/R3 undo and redo, ✕ apply, ○ revert |
 | **History** | ←→ range (5 minutes to 24 hours), slide on the touchpad to look back |
-| **Presets** | ↑↓ choose, ✕ use, △ save the curve as a new preset, OPTIONS overwrite, □ delete (overwrite and delete ask for a second press) |
-| **Settings** | Custom curve on or off, reset the curve to the default |
+| **Presets** | ↑↓ choose, ✕ use, △ new preset from the curve, □ delete (asks for a second press) |
+| **Settings** | Custom curve on or off, reset to the built-in Breeze preset |
 
 L1 and R1 switch tabs. While the app is open the PS5 treats it like a game, so the fan minimum is the in-game 23%.
 
@@ -136,7 +136,7 @@ L1 and R1 switch tabs. While the app is open the PS5 treats it like a game, so t
 | **Readouts** | CPU temperature, fan speed, what your curve wants, and the target Breeze gives the PS5. Hover (or tap) any of them for a short explanation. |
 | **Curve** | Drag points, double-click empty space to add one or a point to remove it, arrow keys to nudge. The dashed lines show where the temperature and fan are right now; the shaded band is the 23% in-game minimum. |
 | **History** | 5 minutes to 24 hours of temperature and fan speed. Hover to see any moment. |
-| **Presets** | Load, rename, overwrite or delete saved curves. The one running is marked **Active**. |
+| **Presets** | Use, rename or delete saved curves, or start a new one from the curve in the editor. The one in use is marked **Active**: Apply saves your edits into it. The built-in **Breeze** preset never changes: edits of it are saved as a new preset, "My curve". |
 | **Points** | The same curve as a table, for exact values. |
 
 Nothing changes until you press **Apply** (or <kbd>Ctrl</kbd> + <kbd>S</kbd>).

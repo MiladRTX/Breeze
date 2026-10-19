@@ -32,7 +32,11 @@ struct State
     int console_min; // %
     int at_floor;    // the fan sits at the console's minimum
     Curve curve;     // the running curve
+    char preset[41]; // the active preset (an applied edit is saved into it), "" for none
 };
+
+// The preset Breeze never changes, renames or deletes (FC_PRESET_BUILTIN).
+constexpr const char *builtin_preset = "Breeze";
 
 struct History
 {
@@ -71,14 +75,19 @@ bool load_token(int port) noexcept;
 [[nodiscard]] Reply fetch_history(int port, int seconds, History &out) noexcept;
 [[nodiscard]] Reply fetch_presets(int port, Presets &out) noexcept;
 
-// POST /api/config: the curve on or off, and when curve is given its points.
-// Returns the HTTP status (0 when nothing answered).
-int post_config(int port, int enabled, const Curve *curve) noexcept;
+// POST /api/config: the curve on or off, and when curve is given its points, as
+// an edit of the preset named (the active one): Breeze saves it there, or as a
+// new preset for the built-in one or none. out, when given, gets the new state
+// (its preset is where the curve went, "" when the list was full). Returns the
+// HTTP status (0 when nothing answered).
+int post_config(int port, int enabled, const Curve *curve, const char *preset = nullptr,
+                State *out = nullptr) noexcept;
 // POST /api/presets action=apply|save|delete for the named preset. save stores
-// curve (the running one when null) and replaces a preset of that name only
-// with overwrite. Returns the HTTP status (409: name taken or list full).
+// curve (the running one when null) as a new preset, and with use also runs it
+// as the active preset. Returns the HTTP status (409: name taken, list full, or
+// the built-in preset).
 int post_preset(int port, const char *action, const char *name, const Curve *curve = nullptr,
-                bool overwrite = false) noexcept;
+                bool use = false) noexcept;
 
 // The console's address on the network, for the web panel's link; false when unknown.
 bool local_ip(char *out, int cap) noexcept;

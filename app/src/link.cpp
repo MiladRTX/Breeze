@@ -280,27 +280,29 @@ bool load_token(int port) noexcept
     return i > 0;
 }
 
-Reply fetch_state(int port, State &out) noexcept
+namespace
 {
-    const int status = request(port, "GET", "/api/state", nullptr);
-    if (status == 0)
-        return Reply::no_server;
-    if (status != 200 || !strstr(g_reply, "\"ver\":"))
-        return Reply::bad;
+// A string value ("key":"value") into out; "" when absent.
+void json_str(const char *json, const char *key, char *out, size_t cap) noexcept
+{
+    char pat[32];
+    (void)snprintf(pat, sizeof pat, "\"%s\":\"", key);
+    const char *v = strstr(json, pat);
+    size_t i = 0;
+    if (v)
+        for (v += strlen(pat); v[i] && v[i] != '"' && i < cap - 1; ++i)
+            out[i] = v[i];
+    out[i] = '\0';
+}
 
+// The state document left in g_reply (GET /api/state, or a config POST's answer).
+bool parse_state(State &out) noexcept
+{
+    if (!strstr(g_reply, "\"ver\":"))
+        return false;
     State s{};
-    const char *ver = strstr(g_reply, "\"ver\":\"");
-    if (ver)
-    {
-        ver += 7;
-        size_t i = 0;
-        while (ver[i] && ver[i] != '"' && i < sizeof s.version - 1)
-        {
-            s.version[i] = ver[i];
-            ++i;
-        }
-        s.version[i] = '\0';
-    }
+    json_str(g_reply, "ver", s.version, sizeof s.version);
+    json_str(g_reply, "preset", s.preset, sizeof s.preset);
     s.enabled = json_int(g_reply, "enabled");
     s.cpu = json_int(g_reply, "cpu");
     s.duty = json_int(g_reply, "duty");
@@ -318,7 +320,16 @@ Reply fetch_state(int port, State &out) noexcept
         (void)read_points(pts, s.curve);
     }
     out = s;
-    return Reply::ok;
+    return true;
+}
+} // namespace
+
+Reply fetch_state(int port, State &out) noexcept
+{
+    const int status = request(port, "GET", "/api/state", nullptr);
+    if (status == 0)
+        return Reply::no_server;
+    return status == 200 && parse_state(out) ? Reply::ok : Reply::bad;
 }
 
 Reply fetch_history(int port, int seconds, History &out) noexcept
@@ -382,7 +393,7 @@ Reply fetch_presets(int port, Presets &out) noexcept
     return Reply::ok;
 }
 
-int post_config(int port, int enabled, const Curve *curve) noexcept
+int post_config(int port, int enabled, const Curve *curve, const char *preset, State *out) noexcept
 {
     char body[1024];
     (void)snprintf(body, sizeof body, "enabled=%d", enabled ? 1 : 0);
@@ -394,19 +405,24 @@ int post_config(int port, int enabled, const Curve *curve) noexcept
             (void)snprintf(item, sizeof item, "&p%d=%d%%2C%d", i, curve->temp[i], curve->fan[i]);
             append(body, sizeof body, item);
         }
+        append(body, sizeof body, "&preset=");
+        append_encoded(body, sizeof body, preset ? preset : "");
     }
-    return request(port, "POST", "/api/config", body);
+    const int status = request(port, "POST", "/api/config", body);
+    if (out && status == 200 && !parse_state(*out))
+        out->version[0] = '\0';
+    return status;
 }
 
 int post_preset(int port, const char *action, const char *name, const Curve *curve,
-                bool overwrite) noexcept
+                bool use) noexcept
 {
     char body[1024] = "action=";
     append(body, sizeof body, action);
     append(body, sizeof body, "&name=");
     append_encoded(body, sizeof body, name);
-    if (overwrite)
-        append(body, sizeof body, "&overwrite=1");
+    if (use)
+        append(body, sizeof body, "&use=1");
     if (curve)
     {
         char item[32];

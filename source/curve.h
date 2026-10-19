@@ -62,6 +62,8 @@ typedef struct curve_point {
     int fan_pct; /* desired fan duty at/above this boundary */
 } curve_point;
 
+#define FC_PRESET_NAME_MAX 40
+
 typedef struct curve_config {
     int enabled;     /* custom curve active */
     int web_enabled; /* embedded web panel */
@@ -69,6 +71,8 @@ typedef struct curve_config {
     int points_count;
     curve_point points[FC_CURVE_MAX_POINTS]; /* ascending by temp after sanitize */
     char token[FC_TOKEN_LEN + 1]; /* required on web panel POSTs */
+    /* The active preset, the one an applied edit is saved into; "" for none. */
+    char preset[FC_PRESET_NAME_MAX + 1];
 } curve_config;
 
 void fc_defaults(curve_config *c);

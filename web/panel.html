@@ -337,14 +337,14 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
         <div class="bd" style="padding-top:4px">
           <div class="first hint" id="firstHint" hidden>Breeze is on stock fan control. Switch on <b>Custom curve</b> at the top to start. Breeze remembers it from then on.</div>
           <div id="plist"></div>
-          <div class="newp"><input class="field" id="pName" maxlength="40" placeholder="Save current curve as…" autocomplete="off">
-            <button class="btn" id="bSaveAs" data-tip="Save the curve in the editor as a new preset">Save</button></div>
+          <div class="newp"><input class="field" id="pName" maxlength="40" placeholder="New preset from this curve…" autocomplete="off">
+            <button class="btn" id="bSaveAs" data-tip="Save the curve in the editor as a new preset and use it">New</button></div>
         </div>
       </section>
 
       <section class="card">
         <div class="hd"><h2>Points</h2><span class="sub">°C → fan %</span><div class="grow"></div>
-          <button class="btn ghost" id="bReset" data-tip="Load the default curve into the editor">Reset</button></div>
+          <button class="btn ghost" id="bReset" data-tip="Switch to the built-in Breeze curve">Reset</button></div>
         <div class="ptbl"><table class="tbl"><thead><tr><th></th><th class="eyebrow">Temp °C</th><th class="eyebrow">Fan %</th><th></th></tr></thead>
           <tbody id="rows"></tbody></table></div>
       </section>
@@ -368,7 +368,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   </footer>
 
   <div class="bar" id="bar">
-    <div class="msg"><b id="barMsg">Unsaved changes</b><span class="hide-sm"> · <kbd>Ctrl</kbd> <kbd>S</kbd> to apply</span></div>
+    <div class="msg"><b id="barMsg">Unsaved changes</b><span id="barTo"></span><span class="hide-sm"> · <kbd>Ctrl</kbd> <kbd>S</kbd> to apply</span></div>
     <button class="btn ghost" id="bRevert" data-tip="Throw away your edits and go back to the running curve">Revert</button>
     <button class="btn pri" id="bApply" data-tip="Start using this curve (Ctrl+S)">Apply</button>
   </div>
@@ -391,8 +391,9 @@ var TK='@@FC_TOKEN@@';
  * instead of showing empty readouts. Never active on the console. */
 if(TK.charAt(0)==='@')(function(){
   var pts=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]];
-  var presets=[{name:'2nd',points:pts}];
-  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,points:pts};
+  var presets=[{name:'Breeze',points:[[50,13],[55,23],[60,23],[70,26],[75,32],[78,37],[80,40]]},{name:'2nd',points:pts}];
+  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,preset:'2nd',points:pts};
+  function newName(){for(var k=1;;k++){var n=k>1?'My curve '+k:'My curve';if(find(n)<0)return n}}
   function want(t){return evalCurve(st.points,t)}
   function form(b){var o={};String(b||'').split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '))});return o}
   function points(f){var p=[];for(var i=0;i<30;i++)if(f['p'+i]){var v=f['p'+i].split(',');p.push([+v[0],+v[1]])}return p}
@@ -411,14 +412,19 @@ if(TK.charAt(0)==='@')(function(){
     if(u.indexOf('api/history')>=0)return reply(history(+(u.split('s=')[1])||300));
     if(u.indexOf('api/presets')>=0){
       if(post){var i=find(f.name);
-        if(f.action==='apply'&&i>=0)st.points=presets[i].points;
-        else if(f.action==='delete'&&i>=0)presets.splice(i,1);
-        else if(f.action==='rename'&&i>=0){if(find(f.to)>=0)return reply('name taken',409);presets[i].name=f.to}
+        if(f.name==='Breeze'&&(f.action==='delete'||f.action==='rename'||f.action==='save'&&i>=0))return reply('the built-in preset can\'t be changed',409);
+        if(f.action==='apply'&&i>=0){st.points=presets[i].points;st.preset=f.name}
+        else if(f.action==='delete'&&i>=0){presets.splice(i,1);if(st.preset===f.name)st.preset=''}
+        else if(f.action==='rename'&&i>=0){if(find(f.to)>=0)return reply('name taken',409);presets[i].name=f.to;if(st.preset===f.name)st.preset=f.to}
         else if(f.action==='save'){var p=points(f);if(!p.length)p=st.points;
-          if(i>=0){if(!+f.overwrite)return reply('name taken',409);presets[i].points=p}else if(presets.length<10)presets.push({name:f.name,points:p});else return reply('preset limit reached',409)}}
+          if(i>=0){if(!+f.overwrite)return reply('name taken',409);presets[i].points=p}else if(presets.length<10)presets.push({name:f.name,points:p});else return reply('preset limit reached',409);
+          if(+f.use){st.points=p;st.preset=f.name}}}
       return reply(presets);
     }
-    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;if(f.web_enabled!==undefined)st.web_enabled=+f.web_enabled;var p=points(f);if(p.length)st.points=p}
+    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;if(f.web_enabled!==undefined)st.web_enabled=+f.web_enabled;var p=points(f);
+      if(p.length){st.points=p;var t=f.preset===undefined?-1:f.preset&&f.preset!=='Breeze'?find(f.preset):-1;
+        if(t>=0){presets[t].points=p;st.preset=f.preset}else if(f.preset===undefined)st.preset='';
+        else if(presets.length<10){st.preset=newName();presets.push({name:st.preset,points:p})}else st.preset=''}}
     st.desired=st.enabled?want(st.cpu):-1;st.duty=st.enabled?Math.max(13,st.desired):13;
     return reply(st);
   };
@@ -430,7 +436,6 @@ var FMIN=13;
 /* The slowest the PS5 runs the fan while an app or game is open; the chart
  * always shows it as a band. Breeze can add fan on top, never go below. */
 var APP_MIN=23;
-var DEF=[[50,13],[55,23],[60,23],[70,26],[75,32],[78,37],[80,40]]; /* the "Breeze" preset */
 var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
 
 var $=function(id){return document.getElementById(id)};
@@ -693,10 +698,10 @@ function renderAll(){
   if(rq){caf(rq);rq=0}rqAll=false;
   drawCurve();renderInsp();
   var a=document.activeElement;if(!(a&&a.dataset&&a.dataset.r))renderRows();
-  $('ptCount').textContent=draft.length+' / '+MAXP+' points';
+  $('ptCount').textContent=presetLabel()+' · '+draft.length+' / '+MAXP+' points';
   $('bUndo').disabled=!undo.length;$('bRedo').disabled=!redo.length;
   $('bar').classList.toggle('show',dirty()||armed);
-  $('barMsg').textContent=dirty()?'Unsaved changes':'Custom curve is off';
+  $('barMsg').textContent=dirty()?'Unsaved changes':'Custom curve is off';$('barTo').textContent=dirty()?savesTo():'';
   fit();
 }
 
@@ -764,33 +769,30 @@ function drawMinis(){
       '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.6" stroke-linejoin="round"/>';
   });
 }
-/* Which preset is "Active": several can hold the same points (save the
- * running curve twice), so only one is marked: the one you last loaded,
- * saved, overwrote or renamed, if it still matches the running curve,
- * otherwise the first that matches. */
+/* The active preset is the console's (st.preset): the one Apply saves an
+ * edit into. The built-in one is never changed: an edit of it becomes a new
+ * preset. "Active" is marked while the custom curve is on. */
 /* First use: until a curve has been on once in this browser, a hint says
  * how to start. armed = a preset was loaded with the curve off. */
 var armed=false,used=false;
 try{used=!!localStorage.getItem('fcUsed')}catch(e){}
 function markUsed(){if(used)return;used=true;try{localStorage.setItem('fcUsed','1')}catch(e){}$('firstHint').hidden=true}
-var picked='';
-try{picked=localStorage.getItem('fcActive')||''}catch(e){}
-function pick(n){picked=n;try{localStorage.setItem('fcActive',n)}catch(e){}}
+var BUILTIN='Breeze';
 function activeIndex(){
-  var first=-1;
-  if(st&&!st.enabled)return -1; /* curve off: nothing is running */
-  for(var i=0;i<presets.length;i++)if(same(presets[i].points,server)){if(presets[i].name===picked)return i;if(first<0)first=i}
-  return first;
+  if(!st||!st.enabled)return -1; /* curve off: nothing is running */
+  return findPreset(st.preset||'');
 }
+/* "Gaming · 7 / 30 points" over the curve, and where Apply saves. */
+function presetLabel(){var n=st&&st.preset;return !n?'Not in a preset':n===BUILTIN?n+' (built-in)':n}
+function savesTo(){var n=st&&st.preset;return n&&n!==BUILTIN?' · Apply saves to “'+n+'”':' · Apply saves it as a new preset'}
 function renderPresets(){
   var h='',act=activeIndex();
-  for(var i=0;i<presets.length;i++){var p=presets[i],on=i===act;
+  for(var i=0;i<presets.length;i++){var p=presets[i],on=i===act,bi=p.name===BUILTIN;
     h+='<div class="prow">'+
-      '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points</div></div>'+
-      miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" data-tip="This preset is the curve running now">Active</span>':'<button class="btn" data-pa="load,'+i+'" data-tip="Load this preset into the editor (Apply to use it)">Load</button>')+
-      '<button class="btn icon ghost" data-pa="ren,'+i+'" data-tip="Rename this preset" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
-      '<button class="btn icon ghost" data-pa="over,'+i+'" data-tip="Overwrite this preset with the curve in the editor" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg></button>'+
-      '<button class="btn icon ghost danger" data-pa="del,'+i+'" data-tip="Delete this preset" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button></div></div>';
+      '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+(bi?'Built-in · ':'')+p.points.length+' points</div></div>'+
+      miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" data-tip="The curve running now: Apply saves your edits into it">Active</span>':'<button class="btn" data-pa="use,'+i+'" data-tip="Start using this preset">Use</button>')+
+      (bi?'':'<button class="btn icon ghost" data-pa="ren,'+i+'" data-tip="Rename this preset" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
+      '<button class="btn icon ghost danger" data-pa="del,'+i+'" data-tip="Delete this preset" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>')+'</div></div>';
   }
   $('plist').innerHTML=h||'<div class="empty">No presets yet.</div>';drawMinis();
   $('pCount').textContent=presets.length+' / 10';fit();
@@ -818,9 +820,10 @@ function fail(e,what){toast(e===403?'Session expired, reload the page':what,true
  * request is out (the time limit bounds that) */
 var busy={enabled:0,webEnabled:0};
 function applyState(s){
-  var wasOn=st?!!st.enabled:null;
+  var wasOn=st?!!st.enabled:null,wasPreset=st?st.preset:null;
   st=s;
-  if(wasOn!==!!s.enabled)renderPresets();
+  if(wasOn!==!!s.enabled||wasPreset!==s.preset)renderPresets();
+  if(wasPreset!==s.preset)renderAll();
   $('ver').textContent=s.ver?'v'+s.ver:'';
   $('vCpu').textContent=s.cpu<0?'–':s.cpu;
   $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
@@ -881,12 +884,14 @@ function setRange(sec){
   hist={step:2,d:[]};drawHist();loadHist();
 }
 /* pts null = leave the curve alone (the toggles). A curve is sent as a
- * snapshot: edits made while the request is out stay in the editor. */
+ * snapshot: edits made while the request is out stay in the editor. It is
+ * an edit of the active preset, which the console saves it into. okMsg can
+ * be a function of the new state. */
 async function sendConfig(pts,en,web,okMsg){
   var sent=pts?copy(pts):null;
-  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent):'');
+  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent)+'&preset='+encodeURIComponent((st&&st.preset)||''):'');
   try{var r=await post('api/config',body);if(r.status===500)throw 500;if(!r.ok)throw r.status;var s=JSON.parse(r.body);
-    shown=asked;applyState(s);if(sent&&same(draft,sent)){draft=copy(server);renderAll()}toast(okMsg);return true}
+    shown=asked;applyState(s);if(sent&&same(draft,sent)){draft=copy(server);renderAll()}toast(typeof okMsg==='function'?okMsg(s):okMsg);return true}
   catch(e){fail(e,e===500?'Applied, but it could not be saved on the console':'Could not reach the console');await refresh(true);return e===500}
 }
 function apply(){
@@ -894,15 +899,20 @@ function apply(){
   /* Applying a curve means using it: with the curve off, Apply turns it on. */
   var turnOn=!st.enabled;
   if(!dirty()&&!turnOn)return;
-  sendConfig(dirty()?draft:null,1,st.web_enabled,turnOn?'Curve applied and turned on':'Curve applied')
-    .then(function(ok){if(ok){armed=false;markUsed();renderAll()}});
+  var edit=dirty(),from=st.preset||'';
+  sendConfig(edit?draft:null,1,st.web_enabled,function(s){
+      if(!edit)return 'Custom curve on';
+      var saved=!s.preset?'applied, but there is no room for another preset (10 at most)':
+        s.preset===from?'saved to “'+s.preset+'”':'saved as “'+s.preset+'”';
+      return (turnOn?'Custom curve on, ':'Curve ')+saved})
+    .then(function(ok){if(ok){armed=false;markUsed();renderAll();if(edit)loadPresets()}});
 }
 async function presetAction(body,ok,conflict){
   try{var r=await post('api/presets',body);
-    if(!r.ok)throw{code:r.status,taken:r.status===409&&r.body.indexOf('taken')>=0};
+    if(!r.ok)throw{code:r.status,taken:r.status===409&&r.body.indexOf('taken')>=0,builtin:r.body.indexOf('built-in')>=0};
     presets=JSON.parse(r.body);presetsLoaded=true;renderPresets();toast(ok);return true}
   catch(e){var c=e&&e.code;
-    fail(c,c===409?(e.taken?conflict||'That name is taken':'Preset limit reached (10)'):c===500?'Could not save presets on the console':'Preset action failed');
+    fail(c,c===409?(e.taken?conflict||'That name is taken':e.builtin?'The built-in preset can\'t be changed':'Preset limit reached (10)'):c===500?'Could not save presets on the console':'Preset action failed');
     /* presets aren't polled: another tab may have changed them */
     loadPresets();return false}
 }
@@ -920,9 +930,8 @@ function startRename(i){
     if(done)return;done=true;
     var n=cleanName(inp.value);
     if(!save||!n||n===p.name){renderPresets();return}
-    var wasPicked=picked===p.name;
     presetAction('action=rename&name='+encodeURIComponent(p.name)+'&to='+encodeURIComponent(n),'Renamed to “'+n+'”','There is already a preset called “'+n+'”')
-      .then(function(ok){if(ok&&wasPicked){pick(n);renderPresets()}else if(!ok)renderPresets()});
+      .then(function(ok){if(ok)refresh(true);else renderPresets()});
   }
   inp.addEventListener('keydown',function(e){var k=keyOf(e);if(k==='Enter'){e.preventDefault();finish(true)}else if(k==='Escape')finish(false)});
   inp.addEventListener('blur',function(){finish(true)});
@@ -936,7 +945,16 @@ $('bUndo').onclick=doUndo;$('bRedo').onclick=doRedo;$('bAdd').onclick=addInGap;
 document.querySelectorAll('[data-shift]').forEach(function(b){b.onclick=function(){var v=b.dataset.shift.split(',');shiftAll(+v[0],+v[1])}});
 $('bApply').onclick=apply;
 $('bRevert').onclick=function(){armed=false;commit();setDraft(copy(server))};
-$('bReset').onclick=function(){commit();setDraft(copy(DEF));toast('Default curve loaded, Apply to keep it')};
+$('bReset').onclick=function(){usePreset(BUILTIN,'Using the built-in “'+BUILTIN+'” curve')};
+/* Using a preset runs it at once (the on/off switch stays as it is). Edits
+ * not applied are dropped; Undo brings them back. */
+function usePreset(name,msg){
+  commit();
+  presetAction('action=apply&name='+encodeURIComponent(name),msg).then(afterUse)}
+async function afterUse(ok){
+  if(!ok)return;await refresh(true);
+  if(st&&!st.enabled)armed=true; /* the bar offers to turn it on */
+  setDraft(copy(server));renderPresets()}
 $('insp').addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;
   if(b.id==='bDel'){removeAt(sel);return}
@@ -955,17 +973,17 @@ $('rows').addEventListener('focusin',function(e){var tr=e.target.closest('tr');i
 $('rows').addEventListener('click',function(e){var b=e.target.closest('[data-del]');if(b)removeAt(+b.dataset.del)});
 $('plist').addEventListener('click',function(e){
   var b=e.target.closest('[data-pa]');if(!b)return;var a=b.dataset.pa.split(','),p=presets[+a[1]];if(!p)return;
-  /* With the curve off, a loaded preset is ready to Apply even when it's
-   * the curve already stored. */
-  if(a[0]==='load'){commit();pick(p.name);if(st&&!st.enabled)armed=true;setDraft(copy(p.points));renderPresets();toast('Loaded “'+p.name+'”, Apply to use it')}
+  if(a[0]==='use')usePreset(p.name,'Using “'+p.name+'”');
   else if(a[0]==='ren')startRename(+a[1]);
-  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?')){pick(p.name);presetAction('action=save&overwrite=1&name='+encodeURIComponent(p.name)+pointQuery(draft),'Preset updated').then(function(ok){if(ok)renderPresets()})}}
-  else if(confirm('Delete preset “'+p.name+'”?'))presetAction('action=delete&name='+encodeURIComponent(p.name),'Preset deleted');
+  else if(a[0]==='del'&&confirm('Delete preset “'+p.name+'”?'))
+    presetAction('action=delete&name='+encodeURIComponent(p.name),'Preset deleted').then(function(ok){if(ok)refresh(true)});
 });
+/* New: the curve in the editor becomes a preset of its own, and runs. */
 function saveAs(){var n=cleanName($('pName').value);if(!n){toast('Type a name first',true);$('pName').focus();return}
-  var taken=findPreset(n)>=0;
-  if(taken&&!confirm('A preset called “'+n+'” already exists. Overwrite it with the curve in the editor?'))return;
-  presetAction('action=save'+(taken?'&overwrite=1':'')+'&name='+encodeURIComponent(n)+pointQuery(draft),(taken?'Updated “':'Saved “')+n+'”','There is already a preset called “'+n+'”').then(function(ok){if(ok){$('pName').value='';pick(n);renderPresets()}})}
+  if(findPreset(n)>=0){toast('There is already a preset called “'+n+'”',true);return}
+  commit();
+  presetAction('action=save&use=1&name='+encodeURIComponent(n)+pointQuery(draft),'Saved “'+n+'” and using it','There is already a preset called “'+n+'”')
+    .then(function(ok){if(ok)$('pName').value='';return afterUse(ok)})}
 function findPreset(n){for(var i=0;i<presets.length;i++)if(presets[i].name===n)return i;return -1}
 $('bSaveAs').onclick=saveAs;
 $('pName').addEventListener('keydown',function(e){if(keyOf(e)==='Enter')saveAs()});

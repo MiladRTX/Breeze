@@ -106,7 +106,86 @@ int fc_presets_load(preset_store *ps) {
         w++;
     }
     ps->count = w;
+
+    /* Deleted in an older version: the built-in preset is always there. */
+    if (fc_presets_find(ps, FC_PRESET_BUILTIN) < 0 && ps->count < FC_PRESET_MAX) {
+        preset_store defaults;
+        fc_presets_defaults(&defaults);
+        memmove(&ps->list[1], &ps->list[0], sizeof ps->list[0] * (size_t)ps->count);
+        ps->list[0] = defaults.list[0];
+        ps->count++;
+        return fc_presets_save(ps);
+    }
     return 0;
+}
+
+int fc_preset_is_builtin(const char *name) {
+    return !strcmp(name, FC_PRESET_BUILTIN);
+}
+
+void fc_presets_new_name(const preset_store *ps, char *out, size_t n) {
+    for (int k = 1;; k++) {
+        if (k == 1)
+            snprintf(out, n, "My curve");
+        else
+            snprintf(out, n, "My curve %d", k);
+        if (fc_presets_find(ps, out) < 0)
+            return;
+    }
+}
+
+int fc_presets_store_edit(preset_store *ps, const char *target, const curve_point *pts, int n,
+                          char *saved_as, size_t saved_n) {
+    int idx = target[0] && !fc_preset_is_builtin(target) ? fc_presets_find(ps, target) : -1;
+    if (idx < 0) {
+        if (ps->count >= FC_PRESET_MAX) {
+            saved_as[0] = 0;
+            return 0;
+        }
+        /* The name first: fc_presets_new_name looks it up in the store, which
+         * must not hold it yet. */
+        char name[FC_PRESET_NAME_MAX + 1];
+        fc_presets_new_name(ps, name, sizeof name);
+        idx = ps->count++;
+        memset(&ps->list[idx], 0, sizeof ps->list[idx]);
+        snprintf(ps->list[idx].name, sizeof ps->list[idx].name, "%s", name);
+    }
+    preset *p = &ps->list[idx];
+    p->points_count = n;
+    memcpy(p->points, pts, sizeof p->points[0] * (size_t)n);
+    fc_sanitize_points(&p->points_count, p->points);
+    snprintf(saved_as, saved_n, "%s", p->name);
+    return 1;
+}
+
+static int same_points(const preset *p, const curve_config *c) {
+    if (p->points_count != c->points_count)
+        return 0;
+    for (int i = 0; i < p->points_count; i++)
+        if (p->points[i].temp_c != c->points[i].temp_c ||
+            p->points[i].fan_pct != c->points[i].fan_pct)
+            return 0;
+    return 1;
+}
+
+void fc_presets_fix_active(const preset_store *ps, curve_config *c) {
+    if (c->preset[0]) {
+        if (fc_presets_find(ps, c->preset) < 0)
+            c->preset[0] = 0;
+        return;
+    }
+    int builtin = -1;
+    for (int i = 0; i < ps->count; i++) {
+        if (!same_points(&ps->list[i], c))
+            continue;
+        if (!fc_preset_is_builtin(ps->list[i].name)) {
+            snprintf(c->preset, sizeof c->preset, "%s", ps->list[i].name);
+            return;
+        }
+        builtin = i;
+    }
+    if (builtin >= 0)
+        snprintf(c->preset, sizeof c->preset, "%s", ps->list[builtin].name);
 }
 
 int fc_presets_save(const preset_store *ps) {

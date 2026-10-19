@@ -65,6 +65,7 @@ int main(int argc, char **argv)
     strcpy(a.ip, "192.168.0.191");
     link::State &s = a.state;
     strcpy(s.version, "1.7");
+    strcpy(s.preset, "Mine");
     s.enabled = 1;
     s.cpu = 72;
     s.duty = 33;
@@ -143,12 +144,13 @@ int main(int argc, char **argv)
     a.range = 0;
     h.step_s = 2;
     a.tab = app::Tab::presets;
-    // Two identical presets: only the picked one is Active.
+    // Two identical presets: only Breeze's active one is marked.
     a.presets.count = 4;
     strcpy(a.presets.list[3].name, "Mine again");
     set_curve(a.presets.list[3].curve, mine, 7);
-    strcpy(a.picked, "Mine again");
+    strcpy(s.preset, "Mine again");
     shot(out, "4_presets");
+    strcpy(s.preset, "Mine");
     a.tab = app::Tab::settings;
     a.setting_selected = 1;
     app::toast("Custom curve on");

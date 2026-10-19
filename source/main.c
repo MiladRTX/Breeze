@@ -394,6 +394,7 @@ int main(void) {
     fan_stock_load();
     preset_store ps;
     fc_presets_load(&ps);
+    fc_presets_fix_active(&ps, &cfg);
     app_lock(&g_state);
     g_state.cfg = cfg;
     g_state.presets = ps;

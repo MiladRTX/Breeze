@@ -1,5 +1,6 @@
 #include "config.h"
 #include "app.h"
+#include "preset.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,6 +60,7 @@ int fc_config_save(const curve_config *c) {
     fprintf(f, "enabled=%d\n", c->enabled);
     fprintf(f, "web_enabled=%d\n", c->web_enabled);
     fprintf(f, "web_port=%d\n", c->web_port);
+    fprintf(f, "preset=%s\n", c->preset);
     fprintf(f, "token=%s\n", c->token);
     for (int i = 0; i < c->points_count; i++)
         fprintf(f, "point%d=%d,%d\n", i, c->points[i].temp_c,
@@ -96,6 +98,11 @@ int fc_config_load(curve_config *c) {
             c->web_enabled = atoi(p + 12);
         } else if (!strncmp(p, "web_port=", 9)) {
             c->web_port = atoi(p + 9);
+        } else if (!strncmp(p, "preset=", 7)) {
+            char raw[FC_PRESET_NAME_MAX * 2 + 1];
+            snprintf(raw, sizeof raw, "%s", p + 7);
+            raw[strcspn(raw, "\r\n")] = 0;
+            fc_preset_name_clean(c->preset, raw, sizeof c->preset);
         } else if (!strncmp(p, "token=", 6)) {
             snprintf(c->token, sizeof c->token, "%.*s", FC_TOKEN_LEN,
                      p + 6);

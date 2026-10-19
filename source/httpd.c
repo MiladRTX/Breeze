@@ -145,11 +145,11 @@ static void handle_state(int fd) {
     catf(buf, sizeof buf, &off,
          "{\"ver\":\"%s\",\"enabled\":%d,\"web_enabled\":%d,\"web_port\":%d,"
          "\"cpu\":%d,\"soc\":%d,\"duty\":%d,\"desired\":%d,\"target\":%s,"
-         "\"stock\":%s,\"floor\":%d,\"min\":%d,\"ch\":[",
+         "\"stock\":%s,\"floor\":%d,\"min\":%d,\"preset\":\"%s\",\"ch\":[",
          FC_PLUGIN_VERSION, cfg.enabled ? 1 : 0, cfg.web_enabled ? 1 : 0,
          cfg.web_port, s.cpu_c, s.soc_c, s.duty_pct, desired,
          c256_str(setp, a, sizeof a), c256_str(fan_stock_c256(), b, sizeof b),
-         floor_state, cmin);
+         floor_state, cmin, cfg.preset);
     /* per servo channel: [target C, temperature C, duty %] */
     for (int i = 0; i < FAN_CHANNELS; i++) {
         char t[16], u[16];
@@ -225,14 +225,22 @@ static int form_points_take(const form_points *fp, curve_point *out) {
     return n;
 }
 
-/* Returns -1 when the change is live but could not be written to /data. */
+/* Returns -1 when the change is live but could not be written to /data.
+ * Points sent with preset=<name> are an edit of that preset and are saved
+ * into it (or into a new one, see fc_presets_store_edit), which becomes the
+ * active preset; points without it (an older panel or app) leave no preset
+ * active. */
 static int apply_form(const char *body) {
     curve_config cfg;
+    preset_store ps;
     form_points fp;
+    char target[FC_PRESET_NAME_MAX + 1] = "";
+    int has_target = 0;
 
     memset(&fp, 0, sizeof fp);
     app_lock(g_state);
     cfg = g_state->cfg;
+    ps = g_state->presets;
     app_unlock(g_state);
 
     char tmp[HTTP_BODY_MAX + 1];
@@ -253,6 +261,9 @@ static int apply_form(const char *body) {
             cfg.web_enabled = atoi(val) ? 1 : 0;
         } else if (!strcmp(key, "web_port")) {
             cfg.web_port = atoi(val);
+        } else if (!strcmp(key, "preset")) {
+            fc_preset_name_clean(target, val, sizeof target);
+            has_target = 1;
         } else {
             form_point(&fp, key, val);
         }
@@ -265,17 +276,39 @@ static int apply_form(const char *body) {
         cfg.points_count = n;
     fc_sanitize(&cfg);
 
+    int presets_changed = 0;
+    if (n > 0 && has_target)
+        presets_changed = fc_presets_store_edit(&ps, target, cfg.points, cfg.points_count,
+                                                cfg.preset, sizeof cfg.preset);
+    else if (n > 0)
+        cfg.preset[0] = 0;
+
     /* Swap and hand the fan back under the lock: the control thread writes
      * its target under the same lock after re-checking enabled, so it can't
      * slip a custom target in after the stock one. */
     app_lock(g_state);
     int was_enabled = g_state->cfg.enabled;
     g_state->cfg = cfg;
+    if (presets_changed)
+        g_state->presets = ps;
     g_state->ui_dirty = 1;
     if (!cfg.enabled && was_enabled)
         fc_fan_restore_locked(g_state);
     app_unlock(g_state);
 
+    int rc = presets_changed ? fc_presets_save(&ps) : 0;
+    return fc_config_save(&cfg) != 0 ? -1 : rc;
+}
+
+/* The active preset (cfg.preset), after a preset was used, renamed or
+ * deleted. Returns fc_config_save's result. */
+static int set_active_preset(const char *name) {
+    curve_config cfg;
+    app_lock(g_state);
+    snprintf(g_state->cfg.preset, sizeof g_state->cfg.preset, "%s", name);
+    cfg = g_state->cfg;
+    g_state->ui_dirty = 1;
+    app_unlock(g_state);
     return fc_config_save(&cfg);
 }
 
@@ -344,6 +377,7 @@ static void handle_presets_post(const char *body, int fd) {
     curve_point pts[FC_CURVE_MAX_POINTS];
     form_points fp;
     int overwrite = 0;
+    int use = 0; /* action=save: also run the saved curve, as the active preset */
 
     memset(&fp, 0, sizeof fp);
 
@@ -366,6 +400,8 @@ static void handle_presets_post(const char *body, int fd) {
             fc_preset_name_clean(to, val, sizeof to);
         else if (!strcmp(key, "overwrite"))
             overwrite = atoi(val) != 0;
+        else if (!strcmp(key, "use"))
+            use = atoi(val) != 0;
         else
             form_point(&fp, key, val);
     }
@@ -389,6 +425,7 @@ static void handle_presets_post(const char *body, int fd) {
         cfg = g_state->cfg;
         cfg.points_count = ps.list[idx].points_count;
         memcpy(cfg.points, ps.list[idx].points, sizeof cfg.points);
+        snprintf(cfg.preset, sizeof cfg.preset, "%s", ps.list[idx].name);
         fc_sanitize(&cfg);
         g_state->cfg = cfg;
         g_state->ui_dirty = 1;
@@ -415,6 +452,11 @@ static void handle_presets_post(const char *body, int fd) {
             send_resp(fd, "409 Conflict", "text/plain", "name taken\n", 11);
             return;
         }
+        if (idx >= 0 && fc_preset_is_builtin(name)) {
+            const char msg[] = "the built-in preset can't be changed\n";
+            send_resp(fd, "409 Conflict", "text/plain", msg, sizeof msg - 1);
+            return;
+        }
         if (idx < 0) {
             if (ps.count >= FC_PRESET_MAX) {
                 send_resp(fd, "409 Conflict", "text/plain",
@@ -436,12 +478,29 @@ static void handle_presets_post(const char *body, int fd) {
         fc_sanitize_points(&ps.list[idx].points_count, ps.list[idx].points);
         app_lock(g_state);
         g_state->presets = ps;
+        if (use) {
+            cfg = g_state->cfg;
+            cfg.points_count = ps.list[idx].points_count;
+            memcpy(cfg.points, ps.list[idx].points, sizeof cfg.points);
+            snprintf(cfg.preset, sizeof cfg.preset, "%s", ps.list[idx].name);
+            fc_sanitize(&cfg);
+            g_state->cfg = cfg;
+            g_state->ui_dirty = 1;
+        }
         app_unlock(g_state);
-        if (fc_presets_save(&ps) != 0)
+        int failed = fc_presets_save(&ps) != 0;
+        if (use && fc_config_save(&cfg) != 0)
+            failed = 1;
+        if (failed)
             send_save_failed(fd);
         else
             send_presets(fd);
     } else if (!strcmp(action, "delete")) {
+        if (fc_preset_is_builtin(name)) {
+            const char msg[] = "the built-in preset can't be deleted\n";
+            send_resp(fd, "409 Conflict", "text/plain", msg, sizeof msg - 1);
+            return;
+        }
         preset_store ps;
         app_lock(g_state);
         ps = g_state->presets;
@@ -457,8 +516,13 @@ static void handle_presets_post(const char *body, int fd) {
         ps.count--;
         app_lock(g_state);
         g_state->presets = ps;
+        int was_active = !strcmp(g_state->cfg.preset, name);
         app_unlock(g_state);
-        if (fc_presets_save(&ps) != 0)
+        /* Deleting the active preset leaves the curve running, in no preset. */
+        int failed = fc_presets_save(&ps) != 0;
+        if (was_active && set_active_preset("") != 0)
+            failed = 1;
+        if (failed)
             send_save_failed(fd);
         else
             send_presets(fd);
@@ -466,6 +530,11 @@ static void handle_presets_post(const char *body, int fd) {
         if (!to[0]) {
             send_resp(fd, "400 Bad Request", "text/plain", "name required\n",
                       14);
+            return;
+        }
+        if (fc_preset_is_builtin(name)) {
+            const char msg[] = "the built-in preset can't be renamed\n";
+            send_resp(fd, "409 Conflict", "text/plain", msg, sizeof msg - 1);
             return;
         }
         preset_store ps;
@@ -486,8 +555,12 @@ static void handle_presets_post(const char *body, int fd) {
         snprintf(ps.list[idx].name, sizeof ps.list[idx].name, "%s", to);
         app_lock(g_state);
         g_state->presets = ps;
+        int was_active = !strcmp(g_state->cfg.preset, name);
         app_unlock(g_state);
-        if (fc_presets_save(&ps) != 0)
+        int failed = fc_presets_save(&ps) != 0;
+        if (was_active && set_active_preset(to) != 0)
+            failed = 1;
+        if (failed)
             send_save_failed(fd);
         else
             send_presets(fd);
