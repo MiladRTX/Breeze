@@ -62,6 +62,30 @@
 
 ## Quick start
 
+There are three ways to run Breeze. The app is the easiest: it shows your curve on the TV and starts Breeze for you.
+
+### The app from ProsperoStore (easiest)
+
+1. **Install it:** open **ProsperoStore** on your PS5, search for **Breeze** and install it. The store keeps it up to date too.
+2. **Open Breeze** from the home screen. It starts Breeze for you.
+3. **Switch on Custom curve** (top right). Until you do, the fan stays fully stock. Breeze remembers the switch, so after that it runs your curve on every launch.
+
+The app needs [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus) and an ELF loader on port 9021 (elfldr).
+
+### The app by hand, with the zip
+
+1. **Download** `PPSA92878.zip` from the [latest release](https://github.com/MiladRTX/Breeze/releases/latest).
+2. **Unzip it.** You get a folder called `PPSA92878`.
+3. **Copy the whole folder** to `/data/homebrew/` on the console, over FTP for example (ftpsrv listens on port 2121). You should end up with `/data/homebrew/PPSA92878/eboot.bin`.
+4. **Wait a few seconds:** ShadowMountPlus finds the folder and adds **Breeze** to the home screen.
+5. **Open Breeze** and switch on **Custom curve** (top right).
+
+To update by hand, close the app and copy the new `PPSA92878` folder over the old one.
+
+### Payload only
+
+No app, just the payload and the web panel on your phone or PC.
+
 1. **Download** `breeze.elf` from the [latest release](https://github.com/MiladRTX/Breeze/releases/latest).
 2. **Load it** with [Payload Manager](https://github.com/itsPLK/ps5-payload-manager): choose **Upload ELF Payload**, then launch it.
 3. **Open the panel.** The console pops up the address:
@@ -92,9 +116,12 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 
 Breeze also comes as an app for the PS5 home screen: the same curve, history, presets and settings as the web panel, on the TV with the DualSense.
 
-**Install it:** download `PPSA92878.zip` from the [latest release](https://github.com/MiladRTX/Breeze/releases/latest), unzip it and copy the `PPSA92878` folder to `/data/homebrew/` on the console (over FTP, for example). [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus) picks it up and adds **Breeze** to the home screen.
+**Install it** from ProsperoStore or by hand with `PPSA92878.zip`: see [Quick start](#quick-start).
 
-**It needs** ShadowMountPlus and an ELF loader on port 9021 (elfldr): the app carries its own `breeze.elf` and starts it when Breeze isn't running. Breeze keeps running after you close the app, and the app takes the place of the browser tile.
+**It needs** [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus) and an ELF loader on port 9021 (elfldr): the app carries its own `breeze.elf` and starts it when Breeze isn't running. Breeze keeps running after you close the app, and the app takes the place of the browser tile.
+
+- **After a reboot,** open the app once to start Breeze again, or add `breeze.elf` to Payload Manager's **Autoload** list so it starts by itself.
+- **After an update,** the Breeze that's already running keeps going until you restart the console. The version at the top of the app is the running Breeze's.
 
 | Tab | Controls |
 | --- | --- |
