@@ -3,16 +3,46 @@
 ## 1.8
 
 **The Breeze app**
-- **Breeze on the PS5 home screen:** a native app (PPSA92878) with the same curve, history, presets and settings as the web panel, on the TV with the DualSense. It starts breeze.elf when Breeze isn't running, and takes the place of the old browser tile, which it removes. Install `PPSA92878.zip` with ShadowMountPlus; it needs an ELF loader on port 9021.
-- **Curve editing on the controller:** the D-pad and L2/R2 nudge the selected point, sliding on the touchpad moves it, and L3/R3 undo and redo (up to 100 steps).
-- **Presets on the controller:** use, save, overwrite and delete. Only one preset is marked Active when several have the same curve, as in the web panel.
+- **Breeze on the PS5 home screen:** its own app (PPSA92878), with its own icon and background art. It looks like the web panel and works with the DualSense, so you can change your fan curve on the TV without a phone or PC.
+- **Starts Breeze for you** when Breeze isn't running; Breeze keeps running after you close the app.
+- **Four tabs,** switched with L1 and R1: Curve, History, Presets and Settings. The top of the screen shows the CPU temperature, the fan speed, what your curve wants and the target Breeze gives the PS5.
+
+**Curve tab**
+- Left and right choose a dot, up and down change its fan speed, L2 and R2 its temperature.
+- **Slide on the touchpad** to move the selected dot, no need to press the pad in.
+- Triangle adds a dot, Square removes one.
+- **Undo and redo** with L3 and R3, up to 100 steps. A run of presses on one dot counts as one step, and so does one touchpad slide.
+- Nothing changes until you press Cross to apply. Circle throws your changes away, and the grey line shows the curve that's running now.
+
+**History tab**
+- Temperature, fan speed and what the curve wanted, from 5 minutes up to 24 hours.
+- **Slide on the touchpad to look back:** a line follows your finger and shows how long ago that was and the values at that moment.
+
+**Presets tab**
+- Cross uses a preset, Triangle saves the curve you're editing as a new one.
+- OPTIONS overwrites the selected preset and Square deletes it; both ask for a second press.
+- Only one preset is marked Active, even when several have the same curve.
+
+**Settings tab**
+- Turn the custom curve on or off, or reset the curve to Breeze's default.
+- The About box shows the web panel's address, the console's own fan target and the fan minimum right now.
 
 **Curve**
-- **The smooth curve is gone:** dots are always joined by straight lines, so the fan between two dots is easy to read off. Curves and presets saved with Smooth on load as straight lines through the same dots.
+- **The smooth curve option is gone:** dots are always joined by straight lines, so the fan between two dots is easy to read. Curves and presets saved with Smooth on load as straight lines through the same dots.
 
 **History**
-- **24 hours of history,** with new 12h and 24h ranges in the web panel and the app. The history already saved carries over.
-- Past an hour, looking back reads "1h 10m ago"; the web panel no longer shows "1h 60m".
+- **24 hours of history** instead of 3, and the web panel has new 12h and 24h ranges. The history already saved carries over.
+- Past an hour, looking back reads "1h 10m ago", and the web panel no longer shows "1h 60m".
+
+**Good to know**
+- While the app is open, the PS5 treats it like a game, so the fan doesn't go below 23%.
+- With the app installed, Breeze no longer adds the browser tile to the home screen, and removes the old one.
+- After a reboot, open the app once to start Breeze, or add breeze.elf to Payload Manager's autoload.
+
+**Install**
+- Breeze is in the PS5 homebrew catalog, so ProsperoStore can install and update it.
+- By hand: unzip `PPSA92878.zip` and copy the `PPSA92878` folder to `/data/homebrew` on the console. It needs ShadowMountPlus and an ELF loader on port 9021.
+- Payload only: load `breeze.elf` with Payload Manager or elfldr, as before. A new launch replaces the running copy.
 
 ## 1.7
 
