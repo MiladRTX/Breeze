@@ -10,7 +10,6 @@ void fc_defaults(curve_config *c) {
     c->enabled = 0;
     c->web_enabled = 1;
     c->web_port = FC_DEFAULT_WEB_PORT;
-    c->update_check = 1;
     /* Also the "Breeze" starting preset: the curve play-tested on hardware,
      * so switching on is all a first start needs. It sits on the console's
      * in-game minimum (23%) up to 60 C and climbs to 40% by 80 C. */
@@ -64,7 +63,6 @@ void fc_sanitize_points(int *count, curve_point *points) {
 void fc_sanitize(curve_config *c) {
     c->enabled = c->enabled ? 1 : 0;
     c->web_enabled = c->web_enabled ? 1 : 0;
-    c->update_check = c->update_check ? 1 : 0;
     if (c->web_port < 1024 || c->web_port > 65535)
         c->web_port = FC_DEFAULT_WEB_PORT;
     fc_sanitize_points(&c->points_count, c->points);

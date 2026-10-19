@@ -34,8 +34,6 @@ struct State
     int at_floor;    // the fan sits at the console's minimum
     Curve curve;     // the running curve
     char preset[41]; // the active preset (an applied edit is saved into it), "" for none
-    int update_check; // Breeze asks GitHub once a day for a newer version
-    char latest[16];  // that newer version, "" for none
 };
 
 // The preset Breeze never changes, renames or deletes (FC_PRESET_BUILTIN).
@@ -85,9 +83,6 @@ bool load_token(int port) noexcept;
 // HTTP status (0 when nothing answered).
 int post_config(int port, int enabled, const Curve *curve, const char *preset = nullptr,
                 State *out = nullptr) noexcept;
-// POST /api/config with one setting (key=value), e.g. update_check=0. Returns the
-// HTTP status.
-int post_setting(int port, const char *key, int value) noexcept;
 // POST /api/presets action=apply|save|delete for the named preset. save stores
 // curve (the running one when null) as a new preset, and with use also runs it
 // as the active preset. Returns the HTTP status (409: name taken, list full, or

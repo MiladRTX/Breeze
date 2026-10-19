@@ -64,14 +64,11 @@ add_executable(breeze
     source/preset.c
     source/history.c
     source/httpd.c
-    source/version.c
-    source/update.c
     ${BREEZE_WEB_C})
 target_include_directories(breeze PRIVATE source)
 target_compile_options(breeze PRIVATE -Wall -Os -ffunction-sections -fdata-sections)
 target_link_options(breeze PRIVATE -Wl,--gc-sections)
-# SceNet + SceSsl + SceHttp2: the update check's HTTPS (source/update.c).
-target_link_libraries(breeze PRIVATE pthread kernel_sys SceNet SceSsl SceHttp2)
+target_link_libraries(breeze PRIVATE pthread kernel_sys)
 set_target_properties(breeze PROPERTIES OUTPUT_NAME breeze.elf)
 
 # One-shot home screen tile installer (see source/tile.c). Linked against the

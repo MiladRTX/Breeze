@@ -32,11 +32,6 @@ button,input{font:inherit;color:inherit}
 .top{display:flex;align-items:center;gap:14px;margin-bottom:20px}
 .brand{font-size:19px;font-weight:700;letter-spacing:-.025em}
 .ver{font:500 11.5px var(--mono);color:var(--faint);margin-left:8px;letter-spacing:0}
-/* a newer Breeze is out: "1.9 available", "↑ 1.9" on phones */
-.upd{display:inline-block;vertical-align:3px;margin-left:10px;padding:3px 8px;border-radius:var(--r-sm);font:600 12px/1.2 var(--sans);letter-spacing:0;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(142,162,255,.35);text-decoration:none}
-.upd:hover{background:rgba(142,162,255,.2)}.upd[hidden]{display:none}
-.upd .s{display:none}
-.row .t .updnote{color:var(--accent)}.row .t .updnote a{color:inherit}
 .grow{flex:1}
 .master{display:flex;align-items:center;gap:11px;font-size:13.5px;font-weight:600;cursor:pointer}
 
@@ -224,7 +219,6 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 @media (max-width:640px){
   .wrap{padding:16px 12px calc(16px + env(safe-area-inset-bottom))}
   .top{flex-wrap:wrap;gap:10px;margin-bottom:14px}
-  .upd .s{display:inline}.upd .l{display:none}
   .tile{padding:10px 12px}.tile .v{font-size:22px;margin-top:4px}
   .chart{height:min(78vw,380px)}
   /* one row that always fits: the button groups share the width instead
@@ -280,7 +274,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 <div class="wrap">
 
   <header class="top">
-    <div class="brand">Breeze<span class="ver" id="ver"></span><a class="upd" id="upd" hidden href="https://github.com/MiladRTX/Breeze/releases/latest" target="_blank" rel="noopener" title="A newer Breeze is out"><span class="s">↑ </span><span id="updVer"></span><span class="l"> available</span></a></div>
+    <div class="brand">Breeze<span class="ver" id="ver"></span></div>
     <div class="grow"></div>
     <label class="master wait">Custom curve<span class="sw"><input type="checkbox" id="enabled"><i></i></span></label>
   </header>
@@ -370,8 +364,6 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
         <div class="bd" style="padding-top:2px;padding-bottom:4px">
           <div class="row"><div class="t"><div>Web panel</div><div>Serve this page on port <span class="num" id="port">–</span></div></div>
             <span class="sw wait"><input type="checkbox" id="webEnabled" aria-label="Web panel"><i></i></span></div>
-          <div class="row"><div class="t"><div>Check for updates</div><div><span id="updIdle">Breeze asks GitHub once a day for a newer version.</span><span class="updnote" id="updNote" hidden>Breeze <span id="updNoteVer"></span> is out. Get it in ProsperoStore or from <a href="https://github.com/MiladRTX/Breeze/releases/latest" target="_blank" rel="noopener">GitHub</a>.</span></div></div>
-            <span class="sw wait"><input type="checkbox" id="updCheck" aria-label="Check for updates"><i></i></span></div>
         </div>
       </section>
     </div>
@@ -410,7 +402,7 @@ var TK='@@FC_TOKEN@@';
 if(TK.charAt(0)==='@')(function(){
   var pts=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]];
   var presets=[{name:'Breeze',points:[[50,13],[55,23],[60,23],[70,26],[75,32],[78,37],[80,40]]},{name:'2nd',points:pts}];
-  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,update_check:1,latest:'',cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,preset:'2nd',points:pts};
+  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,preset:'2nd',points:pts};
   function newName(){for(var k=1;;k++){var n=k>1?'My curve '+k:'My curve';if(find(n)<0)return n}}
   function want(t){return evalCurve(st.points,t)}
   function form(b){var o={};String(b||'').split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '))});return o}
@@ -439,7 +431,7 @@ if(TK.charAt(0)==='@')(function(){
           if(+f.use){st.points=p;st.preset=f.name}}}
       return reply(presets);
     }
-    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;if(f.web_enabled!==undefined)st.web_enabled=+f.web_enabled;if(f.update_check!==undefined)st.update_check=+f.update_check;var p=points(f);
+    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;if(f.web_enabled!==undefined)st.web_enabled=+f.web_enabled;var p=points(f);
       if(p.length){st.points=p;var t=f.preset===undefined?-1:f.preset&&f.preset!=='Breeze'?find(f.preset):-1;
         if(t>=0){presets[t].points=p;st.preset=f.preset}else if(f.preset===undefined)st.preset='';
         else if(presets.length<10){st.preset=newName();presets.push({name:st.preset,points:p})}else st.preset=''}}
@@ -836,16 +828,13 @@ function post(path,body){return limited(path,{method:'POST',headers:{'Content-Ty
 function fail(e,what){toast(e===403?'Session expired, reload the page':what,true)}
 /* requests out per switch: a poll leaves a switch alone only while its own
  * request is out (the time limit bounds that) */
-var busy={enabled:0,webEnabled:0,updCheck:0};
+var busy={enabled:0,webEnabled:0};
 function applyState(s){
   var wasOn=st?!!st.enabled:null,wasPreset=st?st.preset:null;
   st=s;
   if(wasOn!==!!s.enabled||wasPreset!==s.preset)renderPresets();
   if(wasPreset!==s.preset)renderAll();
   $('ver').textContent=s.ver?'v'+s.ver:'';
-  var lat=s.update_check==1&&s.latest||'';
-  $('upd').hidden=$('updNote').hidden=!lat;$('updIdle').hidden=!!lat;
-  $('updVer').textContent=$('updNoteVer').textContent=lat;
   $('vCpu').textContent=s.cpu<0?'–':s.cpu;$('vGpu').textContent=s.soc>0?s.soc:'–';
   $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
   // Fan above the curve only because the console won't go lower: say so.
@@ -862,7 +851,6 @@ function applyState(s){
   $('vTgt').textContent=s.target<0?'–':(+s.target).toFixed(1);$('port').textContent=s.web_port;
   if(!busy.enabled)$('enabled').checked=!!s.enabled;
   if(!busy.webEnabled)$('webEnabled').checked=!!s.web_enabled;
-  if(!busy.updCheck)$('updCheck').checked=s.update_check==1;
   document.querySelectorAll('.wait').forEach(function(e){e.classList.remove('wait')});
   var sp=copy(s.points),clean=!dirty();
   /* a point held but not moved is no edit: the new curve replaces the
@@ -911,11 +899,7 @@ function setRange(sec){
  * be a function of the new state. */
 async function sendConfig(pts,en,web,okMsg){
   var sent=pts?copy(pts):null;
-  return postConfig('enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent)+'&preset='+encodeURIComponent((st&&st.preset)||''):''),okMsg,sent);
-}
-/* POST /api/config (sendConfig, or one setting on its own) and take the
- * new state it answers with. */
-async function postConfig(body,okMsg,sent){
+  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent)+'&preset='+encodeURIComponent((st&&st.preset)||''):'');
   try{var r=await post('api/config',body);if(r.status===500)throw 500;if(!r.ok)throw r.status;var s=JSON.parse(r.body);
     shown=asked;applyState(s);if(sent&&same(draft,sent)){draft=copy(server);renderAll()}toast(typeof okMsg==='function'?okMsg(s):okMsg);return true}
   catch(e){fail(e,e===500?'Applied, but it could not be saved on the console':'Could not reach the console');await refresh(true);return e===500}
@@ -1028,12 +1012,6 @@ $('webEnabled').addEventListener('change',async function(){
   if(!on&&!confirm('Turn off the web panel? This page goes offline until you set web_enabled=1 in /data/breeze/breeze.conf over FTP.')){el.checked=true;return}
   busy.webEnabled++;var ok=await sendConfig(null,st.enabled,on,on?'Web panel on':'Web panel off');busy.webEnabled--;
   if(!ok&&!busy.webEnabled)el.checked=!!st.web_enabled;
-});
-$('updCheck').addEventListener('change',async function(){
-  var el=this,on=el.checked;
-  if(!st){el.checked=!on;toast('Still connecting to the console',true);return}
-  busy.updCheck++;var ok=await postConfig('update_check='+(on?1:0),on?'Update check on':'Update check off');busy.updCheck--;
-  if(!ok&&!busy.updCheck)el.checked=st.update_check==1;
 });
 document.addEventListener('keydown',function(e){
   var a=document.activeElement,typing=a&&a.tagName==='INPUT'&&a.type!=='checkbox',mod=e.ctrlKey||e.metaKey,key=keyOf(e),k=key.toLowerCase();

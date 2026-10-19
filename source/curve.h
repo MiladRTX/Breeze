@@ -73,7 +73,6 @@ typedef struct curve_config {
     char token[FC_TOKEN_LEN + 1]; /* required on web panel POSTs */
     /* The active preset, the one an applied edit is saved into; "" for none. */
     char preset[FC_PRESET_NAME_MAX + 1];
-    int update_check; /* ask GitHub once a day for a newer Breeze (update.c) */
 } curve_config;
 
 void fc_defaults(curve_config *c);

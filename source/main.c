@@ -10,7 +10,6 @@
 #include "history.h"
 #include "httpd.h"
 #include "launcher.h"
-#include "update.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -67,7 +66,7 @@ static void on_resume(int sig) {
     g_resumed = 1;
 }
 
-void fc_notify(const char *fmt, ...) {
+static void notify(const char *fmt, ...) {
     notify_request_t req;
     va_list ap;
 
@@ -253,16 +252,16 @@ static void notify_started(int replaced) {
      * where you pick one. */
     const char *lead = cfg.enabled ? "Panel:" : "Turn the curve on at";
     if (!cfg.web_enabled)
-        fc_notify("%s %s %s (%s)\nWeb panel is off", FC_PLUGIN_NAME,
+        notify("%s %s %s (%s)\nWeb panel is off", FC_PLUGIN_NAME,
                FC_PLUGIN_VERSION, verb, mode);
     else if (!srv_port)
-        fc_notify("%s %s %s (%s)\nWeb panel failed to start on port %d",
+        notify("%s %s %s (%s)\nWeb panel failed to start on port %d",
                FC_PLUGIN_NAME, FC_PLUGIN_VERSION, verb, mode, cfg.web_port);
     else if (local_ipv4(ip, sizeof ip) == 0)
-        fc_notify("%s %s %s (%s)\n%s http://%s:%d", FC_PLUGIN_NAME,
+        notify("%s %s %s (%s)\n%s http://%s:%d", FC_PLUGIN_NAME,
                FC_PLUGIN_VERSION, verb, mode, lead, ip, srv_port);
     else
-        fc_notify("%s %s %s (%s)\n%s port %d", FC_PLUGIN_NAME,
+        notify("%s %s %s (%s)\n%s port %d", FC_PLUGIN_NAME,
                FC_PLUGIN_VERSION, verb, mode, lead, srv_port);
 }
 
@@ -350,7 +349,7 @@ int main(void) {
     fc_log_open();
 
     if (access(FC_ONION_PLUGIN, F_OK) == 0) {
-        fc_notify("%s not started: the OnionHEN Fan Curve plugin is installed.\n"
+        notify("%s not started: the OnionHEN Fan Curve plugin is installed.\n"
                "Remove %s first.", FC_PLUGIN_NAME, FC_ONION_PLUGIN);
         fc_log_close();
         return 1;
@@ -362,7 +361,7 @@ int main(void) {
      * stale, and the pid inside is valid for as long as the lock is held. */
     int lock_fd = open(FC_LOCK_PATH, O_RDWR | O_CREAT, 0666);
     if (lock_fd < 0) {
-        fc_notify("%s could not open %s", FC_PLUGIN_NAME, FC_LOCK_PATH);
+        notify("%s could not open %s", FC_PLUGIN_NAME, FC_LOCK_PATH);
         fc_log_close();
         return 1;
     }
@@ -370,7 +369,7 @@ int main(void) {
     if (flock(lock_fd, LOCK_EX | LOCK_NB) != 0) {
         replaced_pid = take_over(lock_fd);
         if (replaced_pid < 0) {
-            fc_notify("%s is already running and would not stop", FC_PLUGIN_NAME);
+            notify("%s is already running and would not stop", FC_PLUGIN_NAME);
             fc_log_close();
             return 1;
         }
@@ -423,7 +422,7 @@ int main(void) {
 
     pthread_t ctl_thread;
     if (pthread_create(&ctl_thread, NULL, fc_control_loop, &g_state) != 0) {
-        fc_notify("%s failed to start its fan thread", FC_PLUGIN_NAME);
+        notify("%s failed to start its fan thread", FC_PLUGIN_NAME);
         fc_log_close();
         return 1;
     }
@@ -432,7 +431,6 @@ int main(void) {
     notify_started(replaced);
     /* Tile with the panel on (a no-op once it's installed and current). */
     start_launcher(srv_port);
-    fc_update_start(&g_state);
 
     if (local_ipv4(g_addr, sizeof g_addr) != 0)
         g_addr[0] = 0;

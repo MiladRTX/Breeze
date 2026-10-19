@@ -235,24 +235,11 @@ void header(Canvas &c) noexcept
     const int cy = layout::header_cy;
     const float base = ui::baseline_for(cy, Face::bold, px(19));
     const float bw = c.text(layout::left, base, "Breeze", Face::bold, px(19), Color::text, 255, -0.025f);
-    float vx = layout::left + bw + px(8);
     if (a.state.version[0])
-        vx += c.text(vx, base, a.state.version, Face::mono_medium, px(11.5f), Color::faint) + px(10);
+        c.text(layout::left + bw + px(8), base, a.state.version, Face::mono_medium, px(11.5f),
+               Color::faint);
     if (a.phase != Phase::running)
         return;
-
-    // A newer Breeze is out (the update check, see Settings).
-    if (a.state.latest[0])
-    {
-        char text[32];
-        (void)snprintf(text, sizeof text, "%s available", a.state.latest);
-        const int size = px(12), h = px(24), pad = px(9);
-        const int w = static_cast<int>(Canvas::text_width(text, Face::semibold, size)) + 2 * pad;
-        const int x = static_cast<int>(vx), y = cy - h / 2;
-        c.round_rect(x, y, w, h, ui::radius_sm, Color::accent, 26);        // --accent-dim
-        c.round_frame(x, y, w, h, ui::radius_sm, ui::border, Color::accent, 89); // .35
-        c.text(x + pad, ui::baseline_for(cy, Face::semibold, size), text, Face::semibold, size, Color::accent);
-    }
 
     // The tabs, as the panel's segmented buttons, L1 and R1 at their ends.
     static const char *const names[tab_count] = {"Curve", "History", "Presets", "Settings"};

@@ -61,7 +61,6 @@ int fc_config_save(const curve_config *c) {
     fprintf(f, "web_enabled=%d\n", c->web_enabled);
     fprintf(f, "web_port=%d\n", c->web_port);
     fprintf(f, "preset=%s\n", c->preset);
-    fprintf(f, "update_check=%d\n", c->update_check);
     fprintf(f, "token=%s\n", c->token);
     for (int i = 0; i < c->points_count; i++)
         fprintf(f, "point%d=%d,%d\n", i, c->points[i].temp_c,
@@ -99,8 +98,6 @@ int fc_config_load(curve_config *c) {
             c->web_enabled = atoi(p + 12);
         } else if (!strncmp(p, "web_port=", 9)) {
             c->web_port = atoi(p + 9);
-        } else if (!strncmp(p, "update_check=", 13)) {
-            c->update_check = atoi(p + 13);
         } else if (!strncmp(p, "preset=", 7)) {
             char raw[FC_PRESET_NAME_MAX * 2 + 1];
             snprintf(raw, sizeof raw, "%s", p + 7);
