@@ -68,6 +68,7 @@ int main(int argc, char **argv)
     strcpy(s.preset, "Mine");
     s.enabled = 1;
     s.cpu = 72;
+    s.soc = 71;
     s.duty = 33;
     s.desired = 32;
     s.target_c100 = 7206;

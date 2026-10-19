@@ -305,6 +305,7 @@ bool parse_state(State &out) noexcept
     json_str(g_reply, "preset", s.preset, sizeof s.preset);
     s.enabled = json_int(g_reply, "enabled");
     s.cpu = json_int(g_reply, "cpu");
+    s.soc = json_int(g_reply, "soc");
     s.duty = json_int(g_reply, "duty");
     s.desired = json_int(g_reply, "desired");
     if (!json_x100(g_reply, "target", s.target_c100) || s.target_c100 < 0)

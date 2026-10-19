@@ -25,6 +25,7 @@ struct State
     char version[16];
     int enabled;     // custom curve on
     int cpu;         // C
+    int soc;         // C, the chip sensor tools call GPU (shown only)
     int duty;        // fan %
     int desired;     // % the curve wants
     int target_c100; // fan target in 1/100 C

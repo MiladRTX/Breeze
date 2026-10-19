@@ -47,20 +47,23 @@ button,input{font:inherit;color:inherit}
 /* until the console answers, the switches don't know their state yet */
 .master.wait{pointer-events:none}.wait .sw,.sw.wait{opacity:.35;pointer-events:none}
 
-/* tiles */
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.tile{position:relative;outline:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 16px 12px}
+/* tiles: three boxes (CPU | GPU, Fan | Your curve, Target) of equal cells,
+   each cell a .tile with its own explanation */
+.tiles{display:grid;grid-template-columns:2fr 2fr 1fr;gap:10px;margin-bottom:16px}
+.box{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.tile{position:relative;outline:none;padding:13px 16px 12px}
+.tile+.tile:before{content:'';position:absolute;left:0;top:14px;bottom:14px;width:1px;background:var(--line)}
 /* hover (or tap) explanation under each tile */
 .tile[data-tip]:after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);z-index:10;width:max-content;max-width:230px;
   transform:translate(-50%,-4px);padding:8px 11px;border-radius:9px;background:#1c2128;border:1px solid var(--line2);
   box-shadow:0 8px 24px rgba(0,0,0,.45);color:var(--text);font-size:12px;font-weight:500;line-height:1.45;
   opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
 .tile[data-tip]:hover:after,.tile[data-tip]:focus:after{opacity:1;transform:translate(-50%,0)}
-/* edge tiles anchor their tip to the outer edge so it stays on screen */
-.tiles .tile:first-child:after{left:0;transform:translate(0,-4px)}
-.tiles .tile:last-child:after{left:auto;right:0;transform:translate(0,-4px)}
-.tiles .tile:first-child:hover:after,.tiles .tile:first-child:focus:after,
-.tiles .tile:last-child:hover:after,.tiles .tile:last-child:focus:after{transform:none}
+/* the row's edge cells anchor their tip to the outer edge so it stays on screen */
+.tiles .box:first-child .tile:first-child:after{left:0;transform:translate(0,-4px)}
+.tiles .box:last-child .tile:last-child:after{left:auto;right:0;transform:translate(0,-4px)}
+.tiles .box:first-child .tile:first-child:hover:after,.tiles .box:first-child .tile:first-child:focus:after,
+.tiles .box:last-child .tile:last-child:hover:after,.tiles .box:last-child .tile:last-child:focus:after{transform:none}
 .tile .v{display:flex;align-items:baseline;gap:3px;margin-top:6px;font:600 30px/1 var(--mono);letter-spacing:-.04em}
 .tile .v small{font:500 13px var(--sans);letter-spacing:0;color:var(--faint)}
 .tile.t .v{color:var(--temp)}.tile.f .v{color:var(--fan)}.tile.w .v{color:var(--accent)}
@@ -207,10 +210,10 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   .ptbl{max-height:none}   /* one column: no need to balance heights */
 }
 @media (max-width:760px){
-  .tiles{grid-template-columns:repeat(2,1fr);gap:8px}
-  /* 2 x 2: tips open inward from the left and right column */
-  .tiles .tile:nth-child(odd):after{left:0;right:auto;transform:translate(0,-4px)}
-  .tiles .tile:nth-child(even):after{left:auto;right:0;transform:translate(0,-4px)}
+  .tiles{grid-template-columns:minmax(0,1fr);gap:8px}
+  /* boxes stacked: tips open inward from each box's left and right cell */
+  .tiles .tile:first-child:after,.tiles .box:last-child .tile:first-child:after{left:0;right:auto;transform:translate(0,-4px)}
+  .tiles .tile+.tile:after{left:auto;right:0;transform:translate(0,-4px)}
   .tiles .tile:hover:after,.tiles .tile:focus:after{transform:none}
 }
 @media (max-width:640px){
@@ -277,10 +280,17 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
   </header>
 
   <section class="tiles">
-    <div class="tile t" tabindex="0" data-tip="CPU temperature. Breeze reads the fan speed off your curve at this temp."><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
-    <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan<span id="fanMin" hidden> · min</span></div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
-    <div class="tile w" tabindex="0" data-tip="What your curve asks for at the current CPU temp. Close to Fan means it is working."><div class="eyebrow">Curve wants</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
-    <div class="tile" tabindex="0" data-tip="The thermostat setting Breeze steers. Lower means more fan; above the CPU temp means stay quiet."><div class="eyebrow">Target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
+    <div class="box">
+      <div class="tile t" tabindex="0" data-tip="CPU temperature. Breeze reads the fan speed off your curve at this temp."><div class="eyebrow">CPU</div><div class="v"><span id="vCpu">–</span><small>°C</small></div></div>
+      <div class="tile t" tabindex="0" data-tip="The chip's own sensor, which PS5 tools call GPU (the CPU and GPU are one chip). Shown only: your curve follows the CPU."><div class="eyebrow">GPU</div><div class="v"><span id="vGpu">–</span><small>°C</small></div></div>
+    </div>
+    <div class="box">
+      <div class="tile f" tabindex="0" data-tip="How fast the fan is spinning right now."><div class="eyebrow">Fan<span id="fanMin" hidden> · min</span></div><div class="v"><span id="vFan">–</span><small>%</small></div></div>
+      <div class="tile w" tabindex="0" data-tip="What your curve asks for at the current CPU temp. Close to Fan means it is working."><div class="eyebrow">Your curve</div><div class="v"><span id="vWant">–</span><small>%</small></div></div>
+    </div>
+    <div class="box">
+      <div class="tile" tabindex="0" data-tip="The thermostat setting Breeze steers. Lower means more fan; above the CPU temp means stay quiet."><div class="eyebrow">Target</div><div class="v"><span id="vTgt">–</span><small>°C</small></div></div>
+    </div>
   </section>
 
   <div class="grid">
@@ -825,7 +835,7 @@ function applyState(s){
   if(wasOn!==!!s.enabled||wasPreset!==s.preset)renderPresets();
   if(wasPreset!==s.preset)renderAll();
   $('ver').textContent=s.ver?'v'+s.ver:'';
-  $('vCpu').textContent=s.cpu<0?'–':s.cpu;
+  $('vCpu').textContent=s.cpu<0?'–':s.cpu;$('vGpu').textContent=s.soc>0?s.soc:'–';
   $('vFan').textContent=s.duty<0?'–':s.duty;$('vWant').textContent=s.desired<0?'–':s.desired;
   // Fan above the curve only because the console won't go lower: say so.
   // Why the fan can sit above the curve: the console's minimum, or one of its

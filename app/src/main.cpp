@@ -261,12 +261,14 @@ void header(Canvas &c) noexcept
                    Face::semibold, px(13.5f), Color::text);
 }
 
-// .tiles: CPU, Fan, Curve wants, Target.
+// .tiles: three boxes, CPU | GPU, Fan | Your curve, Target, of equal cells
+// with a line between the two halves of a box.
 void tiles(Canvas &c) noexcept
 {
     const link::State &s = g_app.state;
-    char cpu[12], fan[12], wants[12], target[16];
+    char cpu[12], gpu[12], fan[12], wants[12], target[16];
     format_int(cpu, sizeof cpu, s.cpu);
+    format_int(gpu, sizeof gpu, s.soc > 0 ? s.soc : -1);
     format_int(fan, sizeof fan, s.duty);
     format_int(wants, sizeof wants, s.enabled == 1 ? s.desired : -1);
     format_c100(target, sizeof target, s.target_c100);
@@ -274,25 +276,39 @@ void tiles(Canvas &c) noexcept
     {
         const char *label, *value, *unit;
         Color color;
-    } t[4] = {
+    } t[5] = {
         {"CPU", cpu, "°C", Color::temp},
+        {"GPU", gpu, "°C", Color::temp},
         {s.at_floor == 1 ? "Fan · min" : "Fan", fan, "%", Color::fan},
-        {"Curve wants", wants, "%", Color::accent},
+        {"Your curve", wants, "%", Color::accent},
         {"Target", target, "°C", Color::text},
     };
-    const int gap = px(10);
-    const int w = (layout::right - layout::left - 3 * gap) / 4;
-    for (int i = 0; i < 4; ++i)
+    const struct
     {
-        const int x = layout::left + i * (w + gap);
+        int first, count;
+    } boxes[3] = {{0, 2}, {2, 2}, {4, 1}};
+    const int gap = px(10);
+    const int cell = (layout::right - layout::left - 2 * gap) / 5;
+    int x = layout::left;
+    for (int b = 0; b < 3; ++b)
+    {
+        const int w = b == 2 ? layout::right - x : boxes[b].count * cell;
         ui::card(c, x, layout::tiles_y, w, layout::tiles_h);
-        ui::eyebrow(c, x + px(16), layout::tiles_y + px(13) + font::cap_height(Face::semibold, px(11)),
-                    t[i].label);
-        const float base = layout::tiles_y + layout::tiles_h - px(14);
-        const float vw = c.text(x + px(16), base, t[i].value, Face::mono_semibold, px(30), t[i].color,
-                                255, -0.04f);
-        if (strcmp(t[i].value, "–") != 0)
-            c.text(x + px(16) + vw + px(3), base, t[i].unit, Face::medium, px(13), Color::faint);
+        for (int k = 0; k < boxes[b].count; ++k)
+        {
+            const int cx = x + k * w / boxes[b].count;
+            if (k > 0)
+                c.rect(cx, layout::tiles_y + px(14), ui::border, layout::tiles_h - px(28), Color::line);
+            const auto &ti = t[boxes[b].first + k];
+            ui::eyebrow(c, cx + px(16), layout::tiles_y + px(13) + font::cap_height(Face::semibold, px(11)),
+                        ti.label);
+            const float base = layout::tiles_y + layout::tiles_h - px(14);
+            const float vw = c.text(cx + px(16), base, ti.value, Face::mono_semibold, px(30), ti.color, 255,
+                                    -0.04f);
+            if (strcmp(ti.value, "–") != 0)
+                c.text(cx + px(16) + vw + px(3), base, ti.unit, Face::medium, px(13), Color::faint);
+        }
+        x += w + gap;
     }
 }
 
