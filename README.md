@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.8.1-8ea2ff?style=flat" alt="Release v1.8.1"/></a>
+  <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.9-8ea2ff?style=flat" alt="Release v1.9"/></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License GPLv3"/></a>
   <img src="https://img.shields.io/badge/Platform-PlayStation%205-003791?style=flat&logo=playstation" alt="PlayStation 5"/>
   <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c&logoColor=white" alt="C"/>
@@ -110,7 +110,7 @@ Breeze also comes as an app for the PS5 home screen: the same curve, history, pr
 **It needs** [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus) and an ELF loader on port 9021 (elfldr): the app carries its own `breeze.elf` and starts it when Breeze isn't running. Breeze keeps running after you close the app, and the app takes the place of the browser tile.
 
 - **After a reboot,** open the app once to start Breeze again, or add `breeze.elf` to Payload Manager's **Autoload** list so it starts by itself.
-- **After an update,** the Breeze that's already running keeps going until you restart the console. The version at the top of the app is the running Breeze's.
+- **After an update,** open the app once: if an older Breeze is running, the app replaces it with its own copy. The version at the top of the app is the running Breeze's.
 
 | Tab | Controls |
 | --- | --- |
@@ -133,7 +133,7 @@ L1 and R1 switch tabs. While the app is open the PS5 treats it like a game, so t
 
 | Part | What it does |
 | --- | --- |
-| **Readouts** | CPU temperature, fan speed, what your curve wants, and the target Breeze gives the PS5. Hover (or tap) any of them for a short explanation. |
+| **Readouts** | CPU and GPU temperature, fan speed, what your curve asks for, and the target Breeze gives the PS5. The curve follows the CPU; the GPU is shown only. Hover (or tap) any of them for a short explanation. |
 | **Curve** | Drag points, double-click empty space to add one or a point to remove it, arrow keys to nudge. The dashed lines show where the temperature and fan are right now; the shaded band is the 23% in-game minimum. |
 | **History** | 5 minutes to 24 hours of temperature and fan speed. Hover to see any moment. |
 | **Presets** | Use, rename or delete saved curves, or start a new one from the curve in the editor. The one in use is marked **Active**: Apply saves your edits into it. The built-in **Breeze** preset never changes: edits of it are saved as a new preset, "My curve". |

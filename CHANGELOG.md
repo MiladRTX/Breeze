@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.9
+
+**Updates**
+- **Updating the app updates Breeze too.** When the app finds an older Breeze running, it replaces it with its own copy ("Updating Breeze…") and tells you when it's done. Before, the old Breeze kept running until the console restarted.
+
+**Presets save themselves** (app and web panel)
+- **Apply saves your edits into the preset you're using.** That preset is marked Active and named above the curve, and the unsaved-changes bar says where Apply will save. Overwrite is gone.
+- **The built-in Breeze preset never changes.** Edits of it are saved as a new preset, "My curve" (then "My curve 2" and so on), and it can't be renamed or deleted.
+- **Use** runs a preset straight away (it was Load), **New** saves the curve as a new preset and uses it, and **Reset** switches to the built-in preset.
+- A curve from an older Breeze picks up the preset that matches it.
+
+**Readouts** (app and web panel)
+- **GPU temperature** next to the CPU's. It's shown only: your curve still follows the CPU.
+- **Three boxes:** CPU | GPU, Fan | Your curve, and Target. "Curve wants" is now "Your curve".
+- On phones the boxes stack, each keeping its two values side by side.
+
 ## 1.8.1
 
 **Fixes**
