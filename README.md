@@ -55,7 +55,7 @@ There are three ways to run Breeze. The app is the easiest: it shows your curve 
 
 ### The app from ProsperoStore (easiest)
 
-1. **Install it:** open **ProsperoStore** on your PS5, search for **Breeze** and install it. The store keeps it up to date too.
+1. **Install it:** open **[ProsperoStore](https://github.com/darkxex/ProsperoStore)** on your PS5, search for **Breeze** and install it. The store keeps it up to date too.
 2. **Open Breeze** from the home screen. It starts Breeze for you.
 3. **Switch on Custom curve** (top right). Until you do, the fan stays fully stock. Breeze remembers the switch, so after that it runs your curve on every launch.
 
@@ -105,7 +105,7 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 
 Breeze also comes as an app for the PS5 home screen: the same curve, history, presets and settings as the web panel, on the TV with the DualSense.
 
-**Install it** from ProsperoStore or by hand with `PPSA92878.zip`: see [Quick start](#quick-start).
+**Install it** from [ProsperoStore](https://github.com/darkxex/ProsperoStore) or by hand with `PPSA92878.zip`: see [Quick start](#quick-start).
 
 **It needs** [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus) and an ELF loader on port 9021 (elfldr): the app carries its own `breeze.elf` and starts it when Breeze isn't running. Breeze keeps running after you close the app, and the app takes the place of the browser tile.
 
