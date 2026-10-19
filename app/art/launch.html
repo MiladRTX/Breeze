@@ -1,0 +1,31 @@
+<!doctype html>
+<!-- Breeze app: the background while the app launches (pic1), 3840x2160. -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>Breeze launch background</title>
+<style>
+  html, body { margin: 0; width: 3840px; height: 2160px; overflow: hidden; background: #0b0d10; }
+  svg, img { position: absolute; }
+</style>
+</head>
+<body>
+<svg width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <radialGradient id="glowA" cx="0.46" cy="0.44" r="0.36">
+      <stop offset="0" stop-color="#8ea2ff" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#8ea2ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.58" cy="0.60" r="0.40">
+      <stop offset="0" stop-color="#4fd1a5" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#4fd1a5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="#0b0d10"/>
+  <rect width="3840" height="2160" fill="url(#glowA)"/>
+  <rect width="3840" height="2160" fill="url(#glowB)"/>
+</svg>
+<img src="../../docs/logo/logo-gradient.svg" width="1100" height="1100"
+     style="left: 1370px; top: 530px; filter: drop-shadow(0 0 90px rgba(142, 162, 255, 0.30));">
+</body>
+</html>

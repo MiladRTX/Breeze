@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- Breeze app: the home-screen background while the app is selected (pic0).
+     Rendered at 3840x2160; the PS5 puts the title and Play button on the left. -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>Breeze selection background</title>
+<style>
+  html, body { margin: 0; width: 3840px; height: 2160px; overflow: hidden; background: #0b0d10; }
+  svg, img { position: absolute; }
+</style>
+</head>
+<body>
+<svg width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <radialGradient id="glowA" cx="0.74" cy="0.48" r="0.40">
+      <stop offset="0" stop-color="#8ea2ff" stop-opacity="0.20"/>
+      <stop offset="1" stop-color="#8ea2ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0.92" cy="0.92" r="0.48">
+      <stop offset="0" stop-color="#4fd1a5" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#4fd1a5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fade" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0.30" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.72" stop-color="#fff" stop-opacity="1"/>
+    </linearGradient>
+    <mask id="right"><rect width="3840" height="2160" fill="url(#fade)"/></mask>
+    <linearGradient id="curve" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#8ea2ff"/>
+      <stop offset="1" stop-color="#4fd1a5"/>
+    </linearGradient>
+    <linearGradient id="under" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8ea2ff" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#8ea2ff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="3840" height="2160" fill="#0b0d10"/>
+  <rect width="3840" height="2160" fill="url(#glowA)"/>
+  <rect width="3840" height="2160" fill="url(#glowB)"/>
+  <g mask="url(#right)" stroke="#ffffff" stroke-opacity="0.035" stroke-width="3">
+    <path d="M1280 0V2160M1600 0V2160M1920 0V2160M2240 0V2160M2560 0V2160M2880 0V2160M3200 0V2160M3520 0V2160"/>
+    <path d="M0 1440H3840M0 1680H3840M0 1920H3840"/>
+  </g>
+  <!-- A fan curve: flat at the console's minimum, then climbing, like Breeze's own. -->
+  <g mask="url(#right)">
+    <path d="M1100 1960 L2150 1960 L2420 1800 L2760 1760 L3150 1700 L3390 1590 L3600 1480 L3840 1480 L3840 2160 L1100 2160 Z" fill="url(#under)"/>
+    <path d="M1100 1960 L2150 1960 L2420 1800 L2760 1760 L3150 1700 L3390 1590 L3600 1480 L3840 1480"
+          fill="none" stroke="url(#curve)" stroke-width="10" stroke-opacity="0.55" stroke-linejoin="round"/>
+    <g fill="url(#curve)" fill-opacity="0.7">
+      <circle cx="2150" cy="1960" r="18"/><circle cx="2420" cy="1800" r="18"/>
+      <circle cx="2760" cy="1760" r="18"/><circle cx="3150" cy="1700" r="18"/>
+      <circle cx="3390" cy="1590" r="18"/><circle cx="3600" cy="1480" r="18"/>
+    </g>
+  </g>
+</svg>
+<!-- Below the home screen's row of tiles (about the top 600 px at 4K). -->
+<img src="../../docs/logo/logo-gradient.svg" width="1180" height="1180"
+     style="left: 2270px; top: 470px; filter: drop-shadow(0 0 90px rgba(142, 162, 255, 0.30));">
+</body>
+</html>

@@ -8,9 +8,9 @@
  * Breeze was not running is filled with gap samples, so every slot is one
  * period and the newest sample is "now". */
 #define FC_HIST_PERIOD_S 2
-#define FC_HIST_SPAN_S (3 * 60 * 60)
+#define FC_HIST_SPAN_S (24 * 60 * 60)
 #define FC_HIST_CAP (FC_HIST_SPAN_S / FC_HIST_PERIOD_S)
-#define FC_HIST_SAVE_S 300 /* 16 KB per save, ~4.7 MB a day of writes */
+#define FC_HIST_SAVE_S 300 /* up to 130 KB per save, ~37 MB a day of writes */
 
 /* Stored for slots with no sample (Breeze not running, or the loop stalled).
  * fc_hist_json leaves them out like any negative value. */

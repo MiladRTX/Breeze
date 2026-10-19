@@ -1,4 +1,5 @@
-/* breeze-tile.elf: one-shot installer for the "Breeze" home screen tile.
+/* breeze-tile.elf: one-shot installer for the "Breeze" home screen tile, or
+ * its remover once the Breeze app is installed (the app replaces it).
  *
  * Kept out of breeze.elf on purpose. The firmware's app installer can block
  * forever (and a process stuck in it can't be killed), so it runs in its own
@@ -30,6 +31,7 @@ extern const size_t kIcon0PngLen;
 int sceAppInstUtilInitialize(void);
 int sceAppInstUtilTerminate(void);
 int sceAppInstUtilAppInstallAll(void *);
+int sceAppInstUtilAppUnInstall(const char *title_id);
 
 typedef struct notify_request {
     char useless1[45];
@@ -115,6 +117,22 @@ int main(void) {
         return 1;
     }
     logf_("installer ready");
+
+    struct stat st;
+    if (stat(APP_REGISTERED_DIR, &st) == 0) {
+        if (stat(APP_DIR, &st) != 0) {
+            sceAppInstUtilTerminate();
+            return 0;
+        }
+        err = sceAppInstUtilAppUnInstall(TITLE_ID);
+        sceAppInstUtilTerminate();
+        if (err) {
+            logf_("removing the browser tile failed (0x%08X)", err);
+            return 1;
+        }
+        logf_("the Breeze app replaces the browser tile: tile removed");
+        return 0;
+    }
 
     mkdir("/user/app", 0755);
     mkdir(APP_DIR, 0755);

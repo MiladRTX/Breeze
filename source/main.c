@@ -358,9 +358,8 @@ int main(void) {
     g_state.cfg = cfg;
     g_state.presets = ps;
     app_unlock(&g_state);
-    fc_log("%s %s starting (enabled=%d web=%d port=%d smooth=%d)",
-           FC_PLUGIN_NAME, FC_PLUGIN_VERSION, cfg.enabled, cfg.web_enabled,
-           cfg.web_port, cfg.smooth);
+    fc_log("%s %s starting (enabled=%d web=%d port=%d)", FC_PLUGIN_NAME,
+           FC_PLUGIN_VERSION, cfg.enabled, cfg.web_enabled, cfg.web_port);
     restore_left(left);
 
     /* SIGTERM or SIGINT while taking over: the old copy is gone, so no

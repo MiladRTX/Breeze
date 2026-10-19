@@ -34,7 +34,6 @@ button,input{font:inherit;color:inherit}
 .ver{font:500 11.5px var(--mono);color:var(--faint);margin-left:8px;letter-spacing:0}
 .grow{flex:1}
 .master{display:flex;align-items:center;gap:11px;font-size:13.5px;font-weight:600;cursor:pointer}
-.smooth{display:flex;align-items:center;gap:8px;flex:none;color:var(--muted);font-size:12.5px;font-weight:500;cursor:pointer}
 
 /* switch */
 .sw{position:relative;width:42px;height:24px;flex:none}
@@ -46,7 +45,7 @@ button,input{font:inherit;color:inherit}
 .sw input:checked+i:after{transform:translateX(18px);background:#fff}
 .sw input:focus-visible+i{outline:2px solid var(--accent);outline-offset:2px}
 /* until the console answers, the switches don't know their state yet */
-.master.wait,.smooth.wait{pointer-events:none}.wait .sw,.sw.wait{opacity:.35;pointer-events:none}
+.master.wait{pointer-events:none}.wait .sw,.sw.wait{opacity:.35;pointer-events:none}
 
 /* tiles */
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
@@ -245,7 +244,6 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
 .nogap .col>*+*{margin-top:16px}
 .nogap .top>*+*{margin-left:14px}
 .nogap .master .sw{margin-left:11px}
-.nogap .smooth .sw{margin-left:8px}
 .nogap .tile .v small{margin-left:3px}
 .nogap .btn svg+span{margin-left:6px}
 .nogap .hd>*+*,.nogap .bar>*+*,.nogap .credit>*+*{margin-left:10px}
@@ -289,8 +287,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
     <div class="col">
       <section class="card">
         <div class="hd"><h2>Curve</h2><span class="sub" id="ptCount"></span><div class="grow"></div>
-          <span class="sub num hide-sm" id="hoverTxt"></span>
-          <label class="smooth wait" data-tip="Join the points with a smooth curve instead of straight lines">Smooth<span class="sw"><input type="checkbox" id="smooth"><i></i></span></label></div>
+          <span class="sub num hide-sm" id="hoverTxt"></span></div>
         <div class="tools">
           <div class="seg">
             <button class="btn icon" id="bUndo" data-tip="Undo the last change (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
@@ -323,7 +320,7 @@ kbd{font:500 10.5px var(--mono);padding:1px 5px;border:1px solid var(--line2);bo
       <section class="card">
         <div class="hd"><h2>History</h2><div class="grow"></div>
           <div class="seg" id="ranges">
-            <button class="btn" data-range="300">5m</button><button class="btn" data-range="900">15m</button><button class="btn" data-range="1800">30m</button><button class="btn" data-range="3600">1h</button><button class="btn" data-range="10800">3h</button>
+            <button class="btn" data-range="300">5m</button><button class="btn" data-range="900">15m</button><button class="btn" data-range="1800">30m</button><button class="btn" data-range="3600">1h</button><button class="btn" data-range="10800">3h</button><button class="btn" data-range="43200">12h</button><button class="btn" data-range="86400">24h</button>
           </div></div>
         <div class="hist" id="hist"><svg id="hsvg"></svg><div class="readout htip" id="htip"></div></div>
         <div class="legend">
@@ -394,9 +391,9 @@ var TK='@@FC_TOKEN@@';
  * instead of showing empty readouts. Never active on the console. */
 if(TK.charAt(0)==='@')(function(){
   var pts=[[50,13],[55,15],[60,17],[65,20],[70,24],[75,28],[79,32],[82,38],[85,49]];
-  var presets=[{name:'2nd',smooth:0,points:pts}];
-  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,smooth:0,points:pts};
-  function want(t){return evalCurve(st.points,t,st.smooth)}
+  var presets=[{name:'2nd',points:pts}];
+  var st={ver:'1.2',enabled:1,web_enabled:1,web_port:2878,cpu:35,soc:34,duty:13,desired:13,target:77,floor:0,min:13,points:pts};
+  function want(t){return evalCurve(st.points,t)}
   function form(b){var o={};String(b||'').split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)o[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g,' '))});return o}
   function points(f){var p=[];for(var i=0;i<30;i++)if(f['p'+i]){var v=f['p'+i].split(',');p.push([+v[0],+v[1]])}return p}
   function find(n){for(var i=0;i<presets.length;i++)if(presets[i].name===n)return i;return -1}
@@ -414,14 +411,14 @@ if(TK.charAt(0)==='@')(function(){
     if(u.indexOf('api/history')>=0)return reply(history(+(u.split('s=')[1])||300));
     if(u.indexOf('api/presets')>=0){
       if(post){var i=find(f.name);
-        if(f.action==='apply'&&i>=0){st.points=presets[i].points;st.smooth=presets[i].smooth}
+        if(f.action==='apply'&&i>=0)st.points=presets[i].points;
         else if(f.action==='delete'&&i>=0)presets.splice(i,1);
         else if(f.action==='rename'&&i>=0){if(find(f.to)>=0)return reply('name taken',409);presets[i].name=f.to}
-        else if(f.action==='save'){var p=points(f),sm=p.length?(+f.smooth?1:0):st.smooth;if(!p.length)p=st.points;
-          if(i>=0){if(!+f.overwrite)return reply('name taken',409);presets[i].points=p;presets[i].smooth=sm}else if(presets.length<10)presets.push({name:f.name,smooth:sm,points:p});else return reply('preset limit reached',409)}}
+        else if(f.action==='save'){var p=points(f);if(!p.length)p=st.points;
+          if(i>=0){if(!+f.overwrite)return reply('name taken',409);presets[i].points=p}else if(presets.length<10)presets.push({name:f.name,points:p});else return reply('preset limit reached',409)}}
       return reply(presets);
     }
-    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;if(f.web_enabled!==undefined)st.web_enabled=+f.web_enabled;if(f.smooth!==undefined)st.smooth=+f.smooth?1:0;var p=points(f);if(p.length)st.points=p}
+    if(post&&u.indexOf('api/config')>=0){if(f.enabled!==undefined)st.enabled=+f.enabled;if(f.web_enabled!==undefined)st.web_enabled=+f.web_enabled;var p=points(f);if(p.length)st.points=p}
     st.desired=st.enabled?want(st.cpu):-1;st.duty=st.enabled?Math.max(13,st.desired):13;
     return reply(st);
   };
@@ -438,10 +435,10 @@ var MONO='JetBrains Mono,ui-monospace,Menlo,Consolas,monospace';
 
 var $=function(id){return document.getElementById(id)};
 var st=null,server=[],draft=[],sel=-1,undo=[],redo=[];
-var sSm=0,dSm=0; /* smooth flag: running curve, editor */
 var drag=null,hover=null,lastTap=null,presets=[],offline=false;
 var hist={step:2,d:[]},histRange=300,histTimer=null,hHover=null,hl=null;
-function ago2(s){return s>=3600?Math.floor(s/3600)+'h '+Math.round(s%3600/60)+'m':s>=60?Math.floor(s/60)+'m '+(s%60)+'s':s+'s'}
+/* past an hour, whole minutes: rounded first, so 1h 59m 50s reads 2h 0m */
+function ago2(s){var m=Math.round(s/60);return s>=3600?Math.floor(m/60)+'h '+m%60+'m':s>=60?Math.floor(s/60)+'m '+(s%60)+'s':s+'s'}
 try{histRange=+localStorage.getItem('fcRange')||300}catch(e){}
 var W=0,H=0,P={l:40,r:16,t:14,b:30};
 
@@ -450,40 +447,19 @@ function clamp(v,a,b){return v<a?a:v>b?b:v}
 function copy(a){return a.map(function(p){return[p[0],p[1]]})}
 function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-function dirty(){return !same(draft,server)||dSm!==sSm}
+function dirty(){return !same(draft,server)}
 /* Same integer math as fc_eval_points in curve.c: only the step from the
- * left point is truncated (toward zero), so falling segments match too.
- * Smooth tangents are fixed point (1/65536 % per C); at whole temps every
- * value stays far below 2^53, so doubles give exactly what C gives. */
-var SM=65536;
-/* tangent at point i minus the slope of segment k (i or i-1) */
-function tanDev(p,i,k){
-  var hk=p[k+1][0]-p[k][0],dk=p[k+1][1]-p[k][1];
-  if(i<=0||i>=p.length-1)return 0;
-  var h1=p[i][0]-p[i-1][0],d1=p[i][1]-p[i-1][1],h2=p[i+1][0]-p[i][0],d2=p[i+1][1]-p[i][1];
-  if(h1<=0||h2<=0||hk<=0)return 0;
-  if(d1*d2<=0)return Math.trunc(-dk*SM/hk);
-  var a=3*(h1+h2)*d1*d2,b=(2*h2+h1)*h1*d2+(h2+2*h1)*h2*d1;
-  if(b<0){a=-a;b=-b}
-  return Math.trunc((a*hk-dk*b)*SM/(b*hk));
-}
-function evalCurve(p,t,sm){
+ * left point is truncated (toward zero), so falling segments match too. */
+function evalCurve(p,t){
   if(!p.length)return 0;if(t<=p[0][0])return p[0][1];
   for(var i=1;i<p.length;i++)if(t<=p[i][0]){var a=p[i-1],b=p[i],h=b[0]-a[0],d=b[1]-a[1],x=t-a[0];
-    if(h<=0)return b[1];if(!sm)return a[1]+Math.trunc(x*d/h);
-    var u=h-x,e=tanDev(p,i-1,i-1),f=tanDev(p,i,i-1);
-    return a[1]+Math.trunc((d*x*h*SM+x*u*(e*u-f*x))/(h*h*SM))}
+    if(h<=0)return b[1];return a[1]+Math.trunc(x*d/h)}
   return p[p.length-1][1];
 }
-/* SVG path of a curve, flat out to both chart edges. A smooth segment is a
- * Bezier with control points a third of the way in, which is exactly the
- * cubic evalCurve computes. x/y map data to pixels. */
-function curvePath(p,sm,x,y){
+/* SVG path of a curve, flat out to both chart edges. x/y map data to pixels. */
+function curvePath(p,x,y){
   var n=p.length,d='M'+x(XMIN)+' '+y(p[0][1])+' L'+x(p[0][0])+' '+y(p[0][1]);
-  for(var k=0;k+1<n;k++){var a=p[k],b=p[k+1],h=b[0]-a[0],dy=b[1]-a[1];
-    if(!sm||h<=0){d+=' L'+x(b[0])+' '+y(b[1]);continue}
-    var e=tanDev(p,k,k),f=tanDev(p,k+1,k);
-    d+=' C'+x(a[0]+h/3)+' '+y(a[1]+(dy+e*h/SM)/3)+' '+x(b[0]-h/3)+' '+y(b[1]-(dy+f*h/SM)/3)+' '+x(b[0])+' '+y(b[1])}
+  for(var k=1;k<n;k++)d+=' L'+x(p[k][0])+' '+y(p[k][1]);
   return d+' L'+x(XMAX)+' '+y(p[n-1][1]);
 }
 /* Keys by name, falling back to keyCode when a key arrives without one
@@ -500,9 +476,9 @@ function tAt(x){return XMIN+(x-P.l)/(W-P.l-P.r)*(XMAX-XMIN)}
 function sAt(y){return FMIN+(1-(y-P.t)/(H-P.t-P.b))*(100-FMIN)}
 
 /* ---------- edits ---------- */
-/* undo entries: the points and the smooth flag */
-function snap(){return {p:copy(draft),sm:dSm}}
-function unsnap(u){draft=u.p;dSm=u.sm;sel=Math.min(sel,draft.length-1);renderAll()}
+/* undo entries: copies of the points */
+function snap(){return copy(draft)}
+function unsnap(u){draft=u;sel=Math.min(sel,draft.length-1);renderAll()}
 function commit(){undo.push(snap());if(undo.length>100)undo.shift();redo=[]}
 function setDraft(p){draft=p;sel=-1;renderAll()}
 function doUndo(){if(!undo.length)return;redo.push(snap());unsnap(undo.pop())}
@@ -524,7 +500,7 @@ function addInGap(){
   var best=0,bi=0;
   for(var i=1;i<draft.length;i++){var g=draft[i][0]-draft[i-1][0];if(g>best){best=g;bi=i}}
   if(best<2){toast('No room for another point',true);return}
-  var t=Math.round((draft[bi-1][0]+draft[bi][0])/2);addAt(t,evalCurve(draft,t,dSm));
+  var t=Math.round((draft[bi-1][0]+draft[bi][0])/2);addAt(t,evalCurve(draft,t));
 }
 function removeAt(i){
   if(draft.length<=MINP){toast('A curve needs at least '+MINP+' points',true);return}
@@ -575,11 +551,11 @@ function drawCurve(){
       // left end, inside the band: curves sit on the floor there, so it stays clear of the dots
       label(X(XMIN)+8,y+14,small?'app minimum':'console minimum while an app is running','start')}
   if(draft.length){
-    var d=curvePath(draft,dSm,X,Y);
+    var d=curvePath(draft,X,Y);
     o+='<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ea2ff" stop-opacity=".22"/><stop offset="1" stop-color="#8ea2ff" stop-opacity="0"/></linearGradient></defs>';
     o+='<path d="'+d+' L'+X(XMAX)+' '+Y(FMIN)+' L'+X(XMIN)+' '+Y(FMIN)+'Z" fill="url(#g)"/>';
     if(dirty()&&server.length){
-      o+='<path d="'+curvePath(server,sSm,X,Y)+'" fill="none" stroke="#8d96a5" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="4 4"/>';
+      o+='<path d="'+curvePath(server,X,Y)+'" fill="none" stroke="#8d96a5" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="4 4"/>';
     }
     o+='<path d="'+d+'" fill="none" stroke="#8ea2ff" stroke-width="2.4" stroke-linejoin="round"/>';
   }
@@ -595,7 +571,7 @@ function drawCurve(){
     o+='<rect x="'+(x-21)+'" y="'+(H-P.b+5)+'" width="42" height="19" rx="6" fill="#f2b25c"/>'+label(x,H-P.b+18.5,st.cpu+'°','middle','#0b0d10').replace('font-size','font-weight="600" font-size');
   }
   if(hover&&!drag){
-    x=X(hover.t);y=Y(evalCurve(draft,hover.t,dSm));
+    x=X(hover.t);y=Y(evalCurve(draft,hover.t));
     o+='<line x1="'+x+'" x2="'+x+'" y1="'+P.t+'" y2="'+(H-P.b)+'" stroke="#8d96a5" stroke-opacity=".3"/><circle cx="'+x+'" cy="'+y+'" r="3.5" fill="#8ea2ff"/>';
   }
   var R=small?7:6;
@@ -656,7 +632,7 @@ function onMove(e){
   }
   if(e.pointerType==='mouse'&&inPlot(p)){
     var t=clamp(Math.round(tAt(p.x)),XMIN,XMAX);hover={t:t};
-    $('hoverTxt').textContent=t+'°C → '+evalCurve(draft,t,dSm)+'%';
+    $('hoverTxt').textContent=t+'°C → '+evalCurve(draft,t)+'%';
     $('svg').style.cursor=nearest(p,false)>=0?'grab':'crosshair';drawSoon();
   }else if(hover){hover=null;$('hoverTxt').textContent='';drawCurve()}
 }
@@ -717,7 +693,7 @@ function renderAll(){
   if(rq){caf(rq);rq=0}rqAll=false;
   drawCurve();renderInsp();
   var a=document.activeElement;if(!(a&&a.dataset&&a.dataset.r))renderRows();
-  $('ptCount').textContent=draft.length+' / '+MAXP+' points';$('smooth').checked=!!dSm;
+  $('ptCount').textContent=draft.length+' / '+MAXP+' points';
   $('bUndo').disabled=!undo.length;$('bRedo').disabled=!redo.length;
   $('bar').classList.toggle('show',dirty()||armed);
   $('barMsg').textContent=dirty()?'Unsaved changes':'Custom curve is off';
@@ -732,7 +708,7 @@ function drawHist(){
   function hy(v){return pt+(1-v/100)*(h-pt-pb)}
   function ago(sec){return sec>=3600?'−'+(sec/3600)+'h':'−'+(sec/60)+'m'}
   for(var v=0;v<=100;v+=25)o+='<line x1="'+pl+'" x2="'+(w-pr)+'" y1="'+hy(v)+'" y2="'+hy(v)+'" stroke="#1c2129"/>'+label(pl-8,hy(v)+3.5,v,'end');
-  var tick={300:60,900:300,1800:600,3600:900,10800:1800}[R]||R/5;
+  var tick={300:60,900:300,1800:600,3600:900,10800:1800,43200:7200,86400:14400}[R]||R/5;
   for(var a=tick;a<=R;a+=tick){var x=hx(a);
     o+='<line x1="'+x+'" x2="'+x+'" y1="'+pt+'" y2="'+(h-pb)+'" stroke="#15191f"/>'+label(x,h-5,ago(a),a===R?'start':'middle')}
   o+=label(w-pr,h-5,'now','end');
@@ -781,7 +757,7 @@ function drawMinis(){
     var w=svg.clientWidth,h=svg.clientHeight;if(!w||!h)return;
     var on=idx===act,col=on?'#4fd1a5':'#8ea2ff',pad=3;
     function mx(t){return pad+(t-XMIN)/(XMAX-XMIN)*(w-2*pad)}function my(s){return pad+(1-(s-FMIN)/(100-FMIN))*(h-2*pad)}
-    var d=curvePath(p,presets[idx].smooth,function(t){return mx(t).toFixed(1)},function(s){return my(s).toFixed(1)});
+    var d=curvePath(p,function(t){return mx(t).toFixed(1)},function(s){return my(s).toFixed(1)});
     svg.setAttribute('viewBox','0 0 '+w+' '+h);
     svg.innerHTML='<line x1="'+pad+'" x2="'+(w-pad)+'" y1="'+my(50)+'" y2="'+my(50)+'" stroke="#1c2129"/>'+
       '<path d="'+d+' L'+mx(XMAX).toFixed(1)+' '+my(FMIN)+' L'+mx(XMIN).toFixed(1)+' '+my(FMIN)+'Z" fill="'+col+'" fill-opacity=".12"/>'+
@@ -803,14 +779,14 @@ function pick(n){picked=n;try{localStorage.setItem('fcActive',n)}catch(e){}}
 function activeIndex(){
   var first=-1;
   if(st&&!st.enabled)return -1; /* curve off: nothing is running */
-  for(var i=0;i<presets.length;i++)if(same(presets[i].points,server)&&!!presets[i].smooth===!!sSm){if(presets[i].name===picked)return i;if(first<0)first=i}
+  for(var i=0;i<presets.length;i++)if(same(presets[i].points,server)){if(presets[i].name===picked)return i;if(first<0)first=i}
   return first;
 }
 function renderPresets(){
   var h='',act=activeIndex();
   for(var i=0;i<presets.length;i++){var p=presets[i],on=i===act;
     h+='<div class="prow">'+
-      '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points'+(p.smooth?' · smooth':'')+'</div></div>'+
+      '<div class="nm"><div class="pn"><span title="'+esc(p.name)+'">'+esc(p.name)+'</span></div><div class="meta">'+p.points.length+' points</div></div>'+
       miniSvg(p.points,on,i)+'<div class="acts">'+(on?'<span class="btn active" data-tip="This preset is the curve running now">Active</span>':'<button class="btn" data-pa="load,'+i+'" data-tip="Load this preset into the editor (Apply to use it)">Load</button>')+
       '<button class="btn icon ghost" data-pa="ren,'+i+'" data-tip="Rename this preset" aria-label="Rename"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button>'+
       '<button class="btn icon ghost" data-pa="over,'+i+'" data-tip="Overwrite this preset with the curve in the editor" aria-label="Overwrite"><svg viewBox="0 0 24 24"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg></button>'+
@@ -863,10 +839,10 @@ function applyState(s){
   if(!busy.enabled)$('enabled').checked=!!s.enabled;
   if(!busy.webEnabled)$('webEnabled').checked=!!s.web_enabled;
   document.querySelectorAll('.wait').forEach(function(e){e.classList.remove('wait')});
-  var sp=copy(s.points),sm=s.smooth?1:0,clean=!dirty();
+  var sp=copy(s.points),clean=!dirty();
   /* a point held but not moved is no edit: the new curve replaces the
    * editor's and the press is dropped (its point may be gone) */
-  if(!same(sp,server)||sm!==sSm){server=sp;sSm=sm;if(clean&&!(drag&&drag.moved)){draft=copy(sp);dSm=sm;sel=-1;drag=null}renderAll();renderPresets()}
+  if(!same(sp,server)){server=sp;if(clean&&!(drag&&drag.moved)){draft=copy(sp);sel=-1;drag=null}renderAll();renderPresets()}
   if(s.enabled){if(armed){armed=false;renderAll()}markUsed()}
   $('firstHint').hidden=!!(s.enabled||used);fit();
 }
@@ -907,10 +883,10 @@ function setRange(sec){
 /* pts null = leave the curve alone (the toggles). A curve is sent as a
  * snapshot: edits made while the request is out stay in the editor. */
 async function sendConfig(pts,en,web,okMsg){
-  var sent=pts?copy(pts):null,sentSm=dSm;
-  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent)+'&smooth='+sentSm:'');
+  var sent=pts?copy(pts):null;
+  var body='enabled='+(en?1:0)+'&web_enabled='+(web?1:0)+(sent?pointQuery(sent):'');
   try{var r=await post('api/config',body);if(r.status===500)throw 500;if(!r.ok)throw r.status;var s=JSON.parse(r.body);
-    shown=asked;applyState(s);if(sent&&same(draft,sent)&&dSm===sentSm){draft=copy(server);dSm=sSm;renderAll()}toast(okMsg);return true}
+    shown=asked;applyState(s);if(sent&&same(draft,sent)){draft=copy(server);renderAll()}toast(okMsg);return true}
   catch(e){fail(e,e===500?'Applied, but it could not be saved on the console':'Could not reach the console');await refresh(true);return e===500}
 }
 function apply(){
@@ -959,13 +935,8 @@ svg.addEventListener('pointerup',onUp);svg.addEventListener('pointercancel',onUp
 $('bUndo').onclick=doUndo;$('bRedo').onclick=doRedo;$('bAdd').onclick=addInGap;
 document.querySelectorAll('[data-shift]').forEach(function(b){b.onclick=function(){var v=b.dataset.shift.split(',');shiftAll(+v[0],+v[1])}});
 $('bApply').onclick=apply;
-$('bRevert').onclick=function(){armed=false;commit();dSm=sSm;setDraft(copy(server))};
-$('bReset').onclick=function(){commit();dSm=0;setDraft(copy(DEF));toast('Default curve loaded, Apply to keep it')};
-/* The waiting state only stops the pointer; a key could flip it before the
- * editor has the console's points. */
-$('smooth').addEventListener('change',function(){
-  if(!st){this.checked=!!dSm;toast('Still connecting to the console',true);return}
-  commit();dSm=this.checked?1:0;renderAll()});
+$('bRevert').onclick=function(){armed=false;commit();setDraft(copy(server))};
+$('bReset').onclick=function(){commit();setDraft(copy(DEF));toast('Default curve loaded, Apply to keep it')};
 $('insp').addEventListener('click',function(e){
   var b=e.target.closest('button');if(!b)return;
   if(b.id==='bDel'){removeAt(sel);return}
@@ -986,15 +957,15 @@ $('plist').addEventListener('click',function(e){
   var b=e.target.closest('[data-pa]');if(!b)return;var a=b.dataset.pa.split(','),p=presets[+a[1]];if(!p)return;
   /* With the curve off, a loaded preset is ready to Apply even when it's
    * the curve already stored. */
-  if(a[0]==='load'){commit();pick(p.name);if(st&&!st.enabled)armed=true;dSm=p.smooth?1:0;setDraft(copy(p.points));renderPresets();toast('Loaded “'+p.name+'”, Apply to use it')}
+  if(a[0]==='load'){commit();pick(p.name);if(st&&!st.enabled)armed=true;setDraft(copy(p.points));renderPresets();toast('Loaded “'+p.name+'”, Apply to use it')}
   else if(a[0]==='ren')startRename(+a[1]);
-  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?')){pick(p.name);presetAction('action=save&overwrite=1&name='+encodeURIComponent(p.name)+pointQuery(draft)+'&smooth='+dSm,'Preset updated').then(function(ok){if(ok)renderPresets()})}}
+  else if(a[0]==='over'){if(confirm('Overwrite “'+p.name+'” with the curve in the editor?')){pick(p.name);presetAction('action=save&overwrite=1&name='+encodeURIComponent(p.name)+pointQuery(draft),'Preset updated').then(function(ok){if(ok)renderPresets()})}}
   else if(confirm('Delete preset “'+p.name+'”?'))presetAction('action=delete&name='+encodeURIComponent(p.name),'Preset deleted');
 });
 function saveAs(){var n=cleanName($('pName').value);if(!n){toast('Type a name first',true);$('pName').focus();return}
   var taken=findPreset(n)>=0;
   if(taken&&!confirm('A preset called “'+n+'” already exists. Overwrite it with the curve in the editor?'))return;
-  presetAction('action=save'+(taken?'&overwrite=1':'')+'&name='+encodeURIComponent(n)+pointQuery(draft)+'&smooth='+dSm,(taken?'Updated “':'Saved “')+n+'”','There is already a preset called “'+n+'”').then(function(ok){if(ok){$('pName').value='';pick(n);renderPresets()}})}
+  presetAction('action=save'+(taken?'&overwrite=1':'')+'&name='+encodeURIComponent(n)+pointQuery(draft),(taken?'Updated “':'Saved “')+n+'”','There is already a preset called “'+n+'”').then(function(ok){if(ok){$('pName').value='';pick(n);renderPresets()}})}
 function findPreset(n){for(var i=0;i<presets.length;i++)if(presets[i].name===n)return i;return -1}
 $('bSaveAs').onclick=saveAs;
 $('pName').addEventListener('keydown',function(e){if(keyOf(e)==='Enter')saveAs()});
@@ -1080,13 +1051,13 @@ $('ranges').addEventListener('click',function(e){var b=e.target.closest('[data-r
   });
   /* :focus-visible is a syntax error on engines that predate it (PS5 below ~5.x) */
   function focusVisible(el){try{return el.matches(':focus-visible')}catch(e){return false}}
-  /* the focused element can sit inside the one with the tip (the Smooth label) */
+  /* the focused element can sit inside the one with the tip */
   document.addEventListener('focusin',function(e){var el=e.target.closest('[data-tip]:not(.tile)');if(el&&focusVisible(e.target))show(el)});
   document.addEventListener('focusout',hide);
   document.addEventListener('pointerdown',hide,true);
   addEventListener('scroll',hide);
 })();
-setRange([300,900,1800,3600,10800].indexOf(histRange)>=0?histRange:300);
+setRange([300,900,1800,3600,10800,43200,86400].indexOf(histRange)>=0?histRange:300);
 
 /* Diagnostics for the PS5 browser: ?diag in the URL, or five quick clicks on
  * the brand (five more hide it). Shows what the engine supports and logs the

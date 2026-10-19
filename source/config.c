@@ -55,12 +55,10 @@ int fc_config_save(const curve_config *c) {
     fprintf(f, "# pointN=tempC,fan%% -- the plugin steers the ICC target until\n");
     fprintf(f, "# the measured fan duty matches this curve.\n");
     fprintf(f, "# token= guards web panel writes; delete the line to rotate it.\n");
-    fprintf(f, "# smooth=1 bends the curve through the points, 0 = straight lines.\n");
     fprintf(f, "controller=duty\n");
     fprintf(f, "enabled=%d\n", c->enabled);
     fprintf(f, "web_enabled=%d\n", c->web_enabled);
     fprintf(f, "web_port=%d\n", c->web_port);
-    fprintf(f, "smooth=%d\n", c->smooth);
     fprintf(f, "token=%s\n", c->token);
     for (int i = 0; i < c->points_count; i++)
         fprintf(f, "point%d=%d,%d\n", i, c->points[i].temp_c,
@@ -98,8 +96,6 @@ int fc_config_load(curve_config *c) {
             c->web_enabled = atoi(p + 12);
         } else if (!strncmp(p, "web_port=", 9)) {
             c->web_port = atoi(p + 9);
-        } else if (!strncmp(p, "smooth=", 7)) {
-            c->smooth = atoi(p + 7);
         } else if (!strncmp(p, "token=", 6)) {
             snprintf(c->token, sizeof c->token, "%.*s", FC_TOKEN_LEN,
                      p + 6);

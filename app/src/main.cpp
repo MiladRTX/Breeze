@@ -1,0 +1,398 @@
+/*
+ * Breeze app - Breeze on the PS5's own screen. The fan control stays in
+ * breeze.elf, a background payload, because an app is closed when a game
+ * starts; the app shows its state and edits its curve through the web panel's
+ * API, and starts it when it isn't running. It looks like the web panel.
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "app.hpp"
+#include "pad.hpp"
+#include "ui.hpp"
+
+#include <stdio.h>
+#include <string.h>
+
+namespace breeze::app
+{
+namespace
+{
+using screen::Canvas;
+using screen::Color;
+using font::Face;
+using ui::px;
+
+constexpr std::uint64_t state_period_ms = 1000;
+constexpr std::uint64_t start_wait_ms = 20000;
+constexpr std::uint64_t loader_retry_ms = 30000;
+constexpr std::uint64_t toast_ms = 3000;
+
+App g_app;
+std::uint64_t g_state_due = 0;
+std::uint64_t g_started_at = 0;
+bool g_started = false;
+int g_misses = 0;
+bool g_first = true;
+
+// Ask breeze.elf for its state, and start it the first time it isn't there.
+// Only once per launch (and again only while no loader answers), so a Breeze
+// whose panel is turned off isn't restarted over and over.
+bool poll_state(std::uint64_t now) noexcept
+{
+    App &a = g_app;
+    const Phase before = a.phase;
+    const link::State old = a.state;
+    link::State s{};
+    const link::Reply reply = link::fetch_state(a.port, s);
+    if (reply == link::Reply::ok)
+    {
+        a.state = s;
+        a.phase = Phase::running;
+        g_misses = 0;
+        if (!a.have_token)
+            a.have_token = link::load_token(a.port);
+        if (!a.dirty)
+            a.draft = s.curve;
+        else
+            a.dirty = !same_curve(a.draft, s.curve);
+        if (a.selected >= a.draft.count)
+            a.selected = a.draft.count - 1;
+        if (a.selected < 0)
+            a.selected = 0;
+    }
+    else
+    {
+        ++g_misses;
+        const bool may_start = reply == link::Reply::no_server &&
+                               ((a.phase == Phase::looking && !g_started) ||
+                                (a.phase == Phase::no_loader && now - g_started_at >= loader_retry_ms));
+        if (may_start)
+        {
+            const int sent = link::start_breeze();
+            g_started = true;
+            g_started_at = now;
+            a.phase = sent == 0 ? Phase::starting : sent == -1 ? Phase::no_copy : Phase::no_loader;
+        }
+        else if (a.phase == Phase::running && g_misses >= 3)
+            a.phase = Phase::stopped; // a replaced copy is back within a second or two
+        else if ((a.phase == Phase::starting && now - g_started_at >= start_wait_ms) ||
+                 a.phase == Phase::looking)
+            a.phase = Phase::no_answer;
+    }
+    return a.phase != before || memcmp(&old, &a.state, sizeof old) != 0;
+}
+
+bool handle(unsigned pressed) noexcept
+{
+    App &a = g_app;
+    if (a.phase != Phase::running)
+        return false;
+    if (pressed & (pad::l1 | pad::r1))
+    {
+        const int step = (pressed & pad::r1) ? 1 : tab_count - 1;
+        a.tab = static_cast<Tab>((static_cast<int>(a.tab) + step) % tab_count);
+        a.confirm_what = -1;
+        a.history_due = 0;
+        a.touching = false;
+        a.drag = -1;
+        a.last_edit = Edit::none;
+        a.presets_valid = a.presets_valid && a.tab != Tab::presets;
+        return true;
+    }
+    switch (a.tab)
+    {
+    case Tab::curve:
+        return views::curve_input(pressed);
+    case Tab::history:
+        return views::history_input(pressed);
+    case Tab::presets:
+        return views::presets_input(pressed);
+    case Tab::settings:
+        return views::settings_input(pressed);
+    }
+    return false;
+}
+
+bool update() noexcept
+{
+    App &a = g_app;
+    const std::uint64_t now = screen::now_ms();
+    bool redraw = g_first;
+    g_first = false;
+
+    if (now >= g_state_due)
+    {
+        g_state_due = now + state_period_ms;
+        redraw |= poll_state(now);
+    }
+    if (const unsigned pressed = pad::poll())
+        redraw |= handle(pressed);
+    if (a.phase == Phase::running && a.tab == Tab::curve)
+        redraw |= views::curve_touch(pad::touch());
+    else if (a.phase == Phase::running && a.tab == Tab::history)
+        redraw |= views::history_touch(pad::touch());
+
+    if (a.phase == Phase::running && a.tab == Tab::history && now >= a.history_due)
+    {
+        a.history_valid = link::fetch_history(a.port, views::history_seconds(), a.history) ==
+                          link::Reply::ok;
+        // Like the web panel: every bucket's length, 2 s to 30 s (longer
+        // ranges change slower).
+        const std::uint64_t step_ms = a.history_valid ? static_cast<std::uint64_t>(a.history.step_s) * 1000 : 0;
+        a.history_due = now + (step_ms < 2000 ? 2000 : step_ms > 30000 ? 30000 : step_ms);
+        redraw = true;
+    }
+    if (a.phase == Phase::running && a.tab == Tab::presets && !a.presets_valid)
+    {
+        a.presets_valid = link::fetch_presets(a.port, a.presets) == link::Reply::ok;
+        if (a.preset_selected >= a.presets.count)
+            a.preset_selected = a.presets.count > 0 ? a.presets.count - 1 : 0;
+        redraw = true;
+    }
+    if (a.toast_until && now >= a.toast_until)
+    {
+        a.toast_until = 0;
+        redraw = true;
+    }
+    if (a.confirm_what >= 0 && now >= a.confirm_until)
+    {
+        a.confirm_what = -1;
+        redraw = true;
+    }
+    return redraw;
+}
+
+void format_c100(char *out, size_t cap, int c100) noexcept
+{
+    if (c100 < 0)
+        (void)snprintf(out, cap, "–");
+    else
+        (void)snprintf(out, cap, "%d.%d", (c100 + 5) / 100, (c100 + 5) / 10 % 10);
+}
+
+void format_int(char *out, size_t cap, int v) noexcept
+{
+    if (v < 0)
+        (void)snprintf(out, cap, "–");
+    else
+        (void)snprintf(out, cap, "%d", v);
+}
+
+// .top: the brand, the version, the tabs and the curve switch.
+void header(Canvas &c) noexcept
+{
+    const App &a = g_app;
+    const int cy = layout::header_cy;
+    const float base = ui::baseline_for(cy, Face::bold, px(19));
+    const float bw = c.text(layout::left, base, "Breeze", Face::bold, px(19), Color::text, 255, -0.025f);
+    if (a.state.version[0])
+        c.text(layout::left + bw + px(8), base, a.state.version, Face::mono_medium, px(11.5f),
+               Color::faint);
+    if (a.phase != Phase::running)
+        return;
+
+    // The tabs, as the panel's segmented buttons, L1 and R1 at their ends.
+    static const char *const names[tab_count] = {"Curve", "History", "Presets", "Settings"};
+    char first[24];
+    (void)snprintf(first, sizeof first, "Curve%s", a.dirty ? " •" : "");
+    const char *labels[tab_count] = {first, names[1], names[2], names[3]};
+    const int size = px(13), pad_x = px(16);
+    const int total = ui::segmented(c, -1, cy, labels, tab_count, 0, Face::medium, size, pad_x);
+    const int x = (screen::width - total) / 2;
+    ui::segmented(c, x, cy, labels, tab_count, static_cast<int>(a.tab), Face::medium, size, pad_x);
+    const int l1_w = ui::key(c, -10000, 0, ui::Key::l1);
+    ui::key(c, x - px(10) - l1_w, cy, ui::Key::l1);
+    ui::key(c, x + total + px(10), cy, ui::Key::r1);
+
+    // .master: "Custom curve" and its switch.
+    const int sw_x = layout::right - ui::sw_w;
+    ui::toggle(c, sw_x, cy - ui::sw_h / 2, a.state.enabled == 1);
+    ui::text_right(c, sw_x - px(11), ui::baseline_for(cy, Face::semibold, px(13.5f)), "Custom curve",
+                   Face::semibold, px(13.5f), Color::text);
+}
+
+// .tiles: CPU, Fan, Curve wants, Target.
+void tiles(Canvas &c) noexcept
+{
+    const link::State &s = g_app.state;
+    char cpu[12], fan[12], wants[12], target[16];
+    format_int(cpu, sizeof cpu, s.cpu);
+    format_int(fan, sizeof fan, s.duty);
+    format_int(wants, sizeof wants, s.enabled == 1 ? s.desired : -1);
+    format_c100(target, sizeof target, s.target_c100);
+    const struct
+    {
+        const char *label, *value, *unit;
+        Color color;
+    } t[4] = {
+        {"CPU", cpu, "°C", Color::temp},
+        {s.at_floor == 1 ? "Fan · min" : "Fan", fan, "%", Color::fan},
+        {"Curve wants", wants, "%", Color::accent},
+        {"Target", target, "°C", Color::text},
+    };
+    const int gap = px(10);
+    const int w = (layout::right - layout::left - 3 * gap) / 4;
+    for (int i = 0; i < 4; ++i)
+    {
+        const int x = layout::left + i * (w + gap);
+        ui::card(c, x, layout::tiles_y, w, layout::tiles_h);
+        ui::eyebrow(c, x + px(16), layout::tiles_y + px(13) + font::cap_height(Face::semibold, px(11)),
+                    t[i].label);
+        const float base = layout::tiles_y + layout::tiles_h - px(14);
+        const float vw = c.text(x + px(16), base, t[i].value, Face::mono_semibold, px(30), t[i].color,
+                                255, -0.04f);
+        if (strcmp(t[i].value, "–") != 0)
+            c.text(x + px(16) + vw + px(3), base, t[i].unit, Face::medium, px(13), Color::faint);
+    }
+}
+
+void message(Canvas &c) noexcept
+{
+    const char *title = "Looking for Breeze…";
+    const char *line1 = "";
+    const char *line2 = "";
+    switch (g_app.phase)
+    {
+    case Phase::starting:
+        title = "Starting Breeze…";
+        line1 = "This takes a few seconds.";
+        break;
+    case Phase::stopped:
+        title = "Breeze stopped";
+        line1 = "The fan is back on the console's own setting.";
+        line2 = "Open this app again to start Breeze.";
+        break;
+    case Phase::no_loader:
+        title = "Breeze isn't running";
+        line1 = "No ELF loader answered on port 9021.";
+        line2 = "Start Breeze from Payload Manager instead.";
+        break;
+    case Phase::no_copy:
+        title = "Breeze isn't running";
+        line1 = "This app's own copy of breeze.elf is missing.";
+        line2 = "Install the app again.";
+        break;
+    case Phase::no_answer:
+        title = "Breeze doesn't answer";
+        line1 = "If its web panel is turned off,";
+        line2 = "the app can't reach it either.";
+        break;
+    default:
+        break;
+    }
+    const int w = px(560), h = px(190);
+    const int x = (screen::width - w) / 2, y = (screen::height - h) / 2;
+    ui::card(c, x, y, w, h);
+    const float cx = screen::width / 2.0f;
+    ui::text_center(c, cx, y + px(62), title, Face::semibold, px(20), Color::text, -0.01f);
+    ui::text_center(c, cx, y + px(110), line1, Face::regular, px(14), Color::muted);
+    ui::text_center(c, cx, y + px(138), line2, Face::regular, px(14), Color::muted);
+}
+
+// .toast, at the bottom right beside the key hints (above the apply bar
+// when that takes the row).
+void toast_box(Canvas &c) noexcept
+{
+    const App &a = g_app;
+    const int size = px(13), h = px(36);
+    const int w = static_cast<int>(Canvas::text_width(a.toast, Face::medium, size)) + 2 * px(14);
+    const int x = layout::right - w;
+    int y = screen::height - px(12) - h;
+    if (a.dirty && a.tab == Tab::curve)
+        y -= px(48);
+    c.round_rect(x, y, w, h, px(10), Color::hover);
+    c.round_frame(x, y, w, h, px(10), ui::border, a.toast_error ? Color::danger : Color::line2,
+                  a.toast_error ? 128 : 255);
+    c.text(x + px(14), ui::baseline_for(y + h / 2, Face::medium, size), a.toast, Face::medium, size,
+           a.toast_error ? Color::danger : Color::text);
+}
+
+void draw(Canvas &c) noexcept
+{
+    App &a = g_app;
+    c.clear(Color::bg);
+    header(c);
+    if (a.phase != Phase::running)
+    {
+        message(c);
+        return;
+    }
+    tiles(c);
+    switch (a.tab)
+    {
+    case Tab::curve:
+        views::curve_draw(c);
+        break;
+    case Tab::history:
+        views::history_draw(c);
+        break;
+    case Tab::presets:
+        views::presets_draw(c);
+        break;
+    case Tab::settings:
+        views::settings_draw(c);
+        break;
+    }
+    if (a.toast_until)
+        toast_box(c);
+}
+} // namespace
+
+App &state() noexcept
+{
+    return g_app;
+}
+
+void draw_screen(Canvas &c) noexcept
+{
+    draw(c);
+}
+
+void toast(const char *message, bool error) noexcept
+{
+    (void)snprintf(g_app.toast, sizeof g_app.toast, "%s", message);
+    g_app.toast_error = error;
+    g_app.toast_until = screen::now_ms() + toast_ms;
+}
+
+void refresh_now() noexcept
+{
+    g_state_due = 0;
+}
+
+bool same_curve(const link::Curve &a, const link::Curve &b) noexcept
+{
+    if (a.count != b.count)
+        return false;
+    for (int i = 0; i < a.count; ++i)
+        if (a.temp[i] != b.temp[i] || a.fan[i] != b.fan[i])
+            return false;
+    return true;
+}
+
+bool confirmed(int what) noexcept
+{
+    const std::uint64_t now = screen::now_ms();
+    if (g_app.confirm_what == what && now < g_app.confirm_until)
+    {
+        g_app.confirm_what = -1;
+        return true;
+    }
+    g_app.confirm_what = what;
+    g_app.confirm_until = now + 3000;
+    return false;
+}
+} // namespace breeze::app
+
+#ifndef BREEZE_PREVIEW
+int main()
+{
+    breeze::app::App &a = breeze::app::state();
+    if (!breeze::font::load("/app0/assets/fonts/"))
+        breeze::screen::notify("Breeze: the app's fonts are missing");
+    a.port = breeze::link::panel_port();
+    (void)breeze::link::local_ip(a.ip, sizeof a.ip);
+    (void)breeze::pad::init();
+    breeze::screen::run(breeze::app::update, breeze::app::draw);
+}
+#endif

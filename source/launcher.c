@@ -66,6 +66,18 @@ int fc_loader_send(const char *elf, size_t len) {
 }
 
 int fc_launcher_ensure(int port) {
+    struct stat st;
+    if (stat(APP_REGISTERED_DIR, &st) == 0) {
+        if (stat(TILE_APP_DIR, &st) != 0)
+            return 0; /* the app is the home screen entry, and no tile is left */
+        if (fc_loader_send(kTileElf, kTileElfLen) != 0) {
+            fc_log("launcher: could not reach the ELF loader on port %d", ELFLDR_PORT);
+            return -1;
+        }
+        fc_log("launcher: the Breeze app is installed, removing the browser tile");
+        return 1;
+    }
+
     char param[512];
     int plen = tile_param(param, sizeof param, port);
     if (!differs(TILE_SYS_DIR "/param.json", param, (size_t)plen) &&

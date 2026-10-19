@@ -8,6 +8,11 @@
 #define TILE_APP_DIR "/user/app/" TILE_TITLE_ID
 #define TILE_SYS_DIR TILE_APP_DIR "/sce_sys"
 
+/* The Breeze app (app/sce_sys/param.json), once ShadowMountPlus registered it.
+ * It replaces the tile: with it installed the tile is removed, not added. */
+#define APP_TITLE_ID "PPSA92878"
+#define APP_REGISTERED_DIR "/user/app/" APP_TITLE_ID
+
 /* param.json for a web launcher (category 65536) opening the panel. */
 static inline int tile_param(char *buf, size_t n, int port) {
     return snprintf(buf, n,

@@ -53,7 +53,7 @@
 - **The PS5 sets a minimum fan speed:** 13% in the menus, 23% while a game or app runs. Breeze can add fan on top of that but never go below it. The chart starts at 13% and shows the 23% line as a dashed band.
 - **So in a game, the fan only rises once your curve asks for more than 23%.** With the default curve that's from about 60 °C. Until then it sits at 23%, which is not a bug.
 - **Expect the fan within about 1–2% of your curve** once it settles. After a big change it takes 10–20 s to get there, because the console's temperature moves along with the fan. Gaps of 2% or less are left alone on purpose, so the fan doesn't keep shifting.
-- **Dots are joined by straight lines,** and the fan follows the line between them. Switch on **Smooth** (on the Curve card) to bend it through the dots instead; it never overshoots, so between two dots the fan stays between their values. Steep sections make the fan jumpy during loading screens, and Smooth makes the middle of a steep section a little steeper, so add a dot where you want a gentler bend.
+- **Dots are joined by straight lines,** and the fan follows the line between them: halfway between 60 °C at 30% and 70 °C at 40% is 35% at 65 °C. Steep sections make the fan jumpy during loading screens, so add a dot where you want a gentler bend.
 - **Other parts of the console can ask for more fan.** The PS5 cools some parts on its own, and when one of them needs more than your curve, the Fan readout says **console**. That's the PS5 protecting itself.
 - **Past 88 °C Breeze always asks for full cooling,** whatever your curve says.
 - **Stopping Breeze hands the fan back to stock,** whether you turn Custom curve off, reboot, or kill breeze.elf from Payload Manager's process list: within about a second the fan is back on the console's own setting. After a kill that's the job of **breeze-guard.elf**, the small helper next to breeze.elf in the process list. Leave it running (Breeze restarts it within 10 seconds if it's stopped); it exits by itself once the fan is back.
@@ -92,8 +92,8 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 | Part | What it does |
 | --- | --- |
 | **Readouts** | CPU temperature, fan speed, what your curve wants, and the target Breeze gives the PS5. Hover (or tap) any of them for a short explanation. |
-| **Curve** | Drag points, double-click empty space to add one or a point to remove it, arrow keys to nudge. **Smooth** bends the line through the points. The dashed lines show where the temperature and fan are right now; the shaded band is the 23% in-game minimum. |
-| **History** | 5 minutes to 3 hours of temperature and fan speed. Hover to see any moment. |
+| **Curve** | Drag points, double-click empty space to add one or a point to remove it, arrow keys to nudge. The dashed lines show where the temperature and fan are right now; the shaded band is the 23% in-game minimum. |
+| **History** | 5 minutes to 24 hours of temperature and fan speed. Hover to see any moment. |
 | **Presets** | Load, rename, overwrite or delete saved curves. The one running is marked **Active**. |
 | **Points** | The same curve as a table, for exact values. |
 
@@ -156,7 +156,7 @@ Found something off? [Open an issue](https://github.com/MiladRTX/Breeze/issues) 
 | --- | --- |
 | `/data/breeze/breeze.conf` | Curve, on/off, panel port, panel token |
 | `/data/breeze/presets.conf` | Saved presets |
-| `/data/breeze/history.bin` | The last 3 hours of history, so the graph survives a restart |
+| `/data/breeze/history.bin` | The last 24 hours of history, so the graph survives a restart |
 | `/data/breeze/stock.conf` | The console's own fan target, learned by Breeze (delete it to relearn) |
 | `/data/breeze/breeze.log` | Controller log, up to 256 KB; the one before is kept as `breeze.log.1` |
 

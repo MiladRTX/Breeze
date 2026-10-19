@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #define FC_CURVE_MAX_POINTS 30
 #define FC_TEMP_MIN_C 30
 #define FC_TEMP_MAX_C 100
@@ -64,7 +66,6 @@ typedef struct curve_config {
     int enabled;     /* custom curve active */
     int web_enabled; /* embedded web panel */
     int web_port;
-    int smooth;      /* 1: smooth curve through the points, 0: straight lines */
     int points_count;
     curve_point points[FC_CURVE_MAX_POINTS]; /* ascending by temp after sanitize */
     char token[FC_TOKEN_LEN + 1]; /* required on web panel POSTs */
@@ -79,12 +80,10 @@ void fc_sanitize(curve_config *c);
 void fc_sanitize_points(int *count, curve_point *points);
 
 /* Fan duty at a temperature, for sorted points with strictly increasing
- * temps. Straight lines between the points, or with smooth set a monotone
- * cubic (PCHIP tangents, the segment's slope at the end points) that passes
- * through every point and never leaves the range of the two around it.
- * Flat at the first/last point outside the range. Integer math, truncated
- * toward the left point; the web panel computes and draws the same values. */
-int fc_eval_points(const curve_point *p, int n, int smooth, int temp_c);
+ * temps: straight lines between the points, flat at the first/last point
+ * outside their range. Integer math, truncated toward the left point; the
+ * web panel and the Breeze app compute and draw the same values. */
+int fc_eval_points(const curve_point *p, int n, int temp_c);
 
-/* fc_eval_points with the config's points and smooth flag. */
+/* fc_eval_points with the config's points. */
 int fc_evaluate(const curve_config *c, int temp_c);
