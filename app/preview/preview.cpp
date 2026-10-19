@@ -155,8 +155,14 @@ int main(int argc, char **argv)
     a.tab = app::Tab::settings;
     a.setting_selected = 1;
     app::toast("Custom curve on");
+    s.update_check = 1;
     shot(out, "5_settings");
     a.toast_until = 0;
+    // A newer Breeze is out: the badge in the header, the line in Settings.
+    strcpy(s.latest, "1.9");
+    a.setting_selected = 2;
+    shot(out, "5b_settings_update");
+    s.latest[0] = '\0';
     a.phase = app::Phase::starting;
     shot(out, "6_starting");
     // An older Breeze answered: the app's own copy is replacing it.

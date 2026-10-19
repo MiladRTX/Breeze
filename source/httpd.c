@@ -122,11 +122,12 @@ static void handle_state(int fd) {
     int floor_state = 0;
     int cmin;
     fan_channel ch[FAN_CHANNELS];
-    char buf[1536], a[16], b[16];
+    char buf[1536], a[16], b[16], latest[16];
     size_t off = 0;
 
     app_lock(g_state);
     cfg = g_state->cfg;
+    snprintf(latest, sizeof latest, "%s", cfg.update_check ? g_state->latest : "");
     s = g_state->sample;
     setp = g_state->current_setpoint; /* 1/256 C */
     cmin = g_state->console_min;
@@ -145,11 +146,12 @@ static void handle_state(int fd) {
     catf(buf, sizeof buf, &off,
          "{\"ver\":\"%s\",\"enabled\":%d,\"web_enabled\":%d,\"web_port\":%d,"
          "\"cpu\":%d,\"soc\":%d,\"duty\":%d,\"desired\":%d,\"target\":%s,"
-         "\"stock\":%s,\"floor\":%d,\"min\":%d,\"preset\":\"%s\",\"ch\":[",
+         "\"stock\":%s,\"floor\":%d,\"min\":%d,\"preset\":\"%s\","
+         "\"update_check\":%d,\"latest\":\"%s\",\"ch\":[",
          FC_PLUGIN_VERSION, cfg.enabled ? 1 : 0, cfg.web_enabled ? 1 : 0,
          cfg.web_port, s.cpu_c, s.soc_c, s.duty_pct, desired,
          c256_str(setp, a, sizeof a), c256_str(fan_stock_c256(), b, sizeof b),
-         floor_state, cmin, cfg.preset);
+         floor_state, cmin, cfg.preset, cfg.update_check, latest);
     /* per servo channel: [target C, temperature C, duty %] */
     for (int i = 0; i < FAN_CHANNELS; i++) {
         char t[16], u[16];
@@ -259,6 +261,8 @@ static int apply_form(const char *body) {
             cfg.enabled = atoi(val) ? 1 : 0;
         } else if (!strcmp(key, "web_enabled")) {
             cfg.web_enabled = atoi(val) ? 1 : 0;
+        } else if (!strcmp(key, "update_check")) {
+            cfg.update_check = atoi(val) ? 1 : 0;
         } else if (!strcmp(key, "web_port")) {
             cfg.web_port = atoi(val);
         } else if (!strcmp(key, "preset")) {

@@ -303,6 +303,8 @@ bool parse_state(State &out) noexcept
     State s{};
     json_str(g_reply, "ver", s.version, sizeof s.version);
     json_str(g_reply, "preset", s.preset, sizeof s.preset);
+    json_str(g_reply, "latest", s.latest, sizeof s.latest);
+    s.update_check = json_int(g_reply, "update_check");
     s.enabled = json_int(g_reply, "enabled");
     s.cpu = json_int(g_reply, "cpu");
     s.soc = json_int(g_reply, "soc");
@@ -413,6 +415,13 @@ int post_config(int port, int enabled, const Curve *curve, const char *preset, S
     if (out && status == 200 && !parse_state(*out))
         out->version[0] = '\0';
     return status;
+}
+
+int post_setting(int port, const char *key, int value) noexcept
+{
+    char body[64];
+    (void)snprintf(body, sizeof body, "%s=%d", key, value);
+    return request(port, "POST", "/api/config", body);
 }
 
 int post_preset(int port, const char *action, const char *name, const Curve *curve,

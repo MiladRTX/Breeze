@@ -286,18 +286,9 @@ void undo_redo(App &a, bool undo) noexcept
     select_clamp(a);
 }
 
-// Sends a curve (or only the switch) and says how it went: done on success,
-// nothing when done is null (the caller words it from out). A curve goes as an
-// edit of preset (the active one), which Breeze saves it into.
-bool send_config(App &a, int enabled, const link::Curve *curve, const char *done, const char *preset = nullptr,
-                 link::State *out = nullptr) noexcept
+// A config POST's status as a toast: done on success (nothing when null).
+bool say_status(App &a, int status, const char *done) noexcept
 {
-    if (!a.have_token)
-        a.have_token = link::load_token(a.port);
-    const int status = link::post_config(a.port, enabled, curve, preset, out);
-    app::refresh_now();
-    if (curve)
-        a.presets_valid = false; // the edit went into a preset
     if (status == 200)
     {
         if (done)
@@ -317,6 +308,31 @@ bool send_config(App &a, int enabled, const link::Curve *curve, const char *done
     else
         app::toast("Could not reach Breeze", true);
     return false;
+}
+
+// Sends a curve (or only the switch) and says how it went: done on success,
+// nothing when done is null (the caller words it from out). A curve goes as an
+// edit of preset (the active one), which Breeze saves it into.
+bool send_config(App &a, int enabled, const link::Curve *curve, const char *done, const char *preset = nullptr,
+                 link::State *out = nullptr) noexcept
+{
+    if (!a.have_token)
+        a.have_token = link::load_token(a.port);
+    const int status = link::post_config(a.port, enabled, curve, preset, out);
+    app::refresh_now();
+    if (curve)
+        a.presets_valid = false; // the edit went into a preset
+    return say_status(a, status, done);
+}
+
+// One setting (key=value) and how it went, as send_config.
+bool send_setting(App &a, const char *key, int value, const char *done) noexcept
+{
+    if (!a.have_token)
+        a.have_token = link::load_token(a.port);
+    const int status = link::post_setting(a.port, key, value);
+    app::refresh_now();
+    return say_status(a, status, done);
 }
 
 // .step: a value in a bordered box with its controller keys beside it.
@@ -1061,7 +1077,7 @@ void presets_draw(Canvas &c) noexcept
 
 namespace
 {
-constexpr int setting_count = 2;
+constexpr int setting_count = 3;
 constexpr int reset_confirm = 200;
 } // namespace
 
@@ -1082,7 +1098,7 @@ bool settings_input(unsigned pressed) noexcept
         (void)send_config(a, s.enabled != 1, nullptr,
                           s.enabled != 1 ? "Custom curve on" : "Stock fan: the console runs it");
         break;
-    default:
+    case 1:
         if (app::confirmed(reset_confirm))
         {
             // The built-in preset, which keeps the default curve.
@@ -1093,6 +1109,10 @@ bool settings_input(unsigned pressed) noexcept
         }
         else
             app::toast("Press Cross again to reset the curve", true);
+        break;
+    default:
+        (void)send_setting(a, "update_check", s.update_check != 1,
+                           s.update_check != 1 ? "Update check on" : "Update check off");
         break;
     }
     return true;
@@ -1105,6 +1125,12 @@ void settings_draw(Canvas &c) noexcept
     const int top = L::content_top, h = L::content_bottom - L::content_top;
     ui::card(c, L::left, top, main_w, h);
     const int hd = ui::card_header(c, L::left, top, main_w, "Settings", "");
+    char update_line[128];
+    if (s.latest[0])
+        (void)snprintf(update_line, sizeof update_line,
+                       "Breeze %s is out. Get it in ProsperoStore or from github.com/MiladRTX/Breeze.", s.latest);
+    else
+        (void)snprintf(update_line, sizeof update_line, "Breeze asks GitHub once a day for a newer version.");
 
     const struct
     {
@@ -1116,6 +1142,7 @@ void settings_draw(Canvas &c) noexcept
          s.enabled == 1},
         {"Reset the curve", "Switches to the built-in Breeze preset: 23% up to 60 °C, rising to 40% at 80 °C.", 1,
          false},
+        {"Check for updates", update_line, 0, s.update_check == 1},
     };
     const int bx = L::left + px(16), bw = main_w - 2 * px(16), row_h = px(66);
     for (int i = 0; i < setting_count; ++i)
@@ -1128,7 +1155,7 @@ void settings_draw(Canvas &c) noexcept
         c.text(bx + px(6), ui::baseline_for(cy - px(10), Face::semibold, px(13.5f)), rows[i].title, Face::semibold,
                px(13.5f), Color::text);
         c.text(bx + px(6), ui::baseline_for(cy + px(10), Face::regular, px(12)), rows[i].sub, Face::regular, px(12),
-               Color::faint);
+               i == 2 && s.latest[0] ? Color::accent : Color::faint);
         if (rows[i].kind == 0)
             ui::toggle(c, bx + bw - px(6) - ui::sw_w, cy - ui::sw_h / 2, rows[i].on);
         else

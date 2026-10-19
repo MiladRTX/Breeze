@@ -22,6 +22,7 @@ typedef struct app_state {
     int console_min;      /* console's own minimum fan %, measured; -1 unknown */
     fan_channel ch[FAN_CHANNELS]; /* servo channels, read every 2 s */
     int last_c256;        /* Breeze's last fan write still in place, -1 none */
+    char latest[16];      /* a newer release found by update.c, "" none */
 } app_state;
 
 void app_state_init(app_state *st);
@@ -37,6 +38,9 @@ int fc_fan_restore_locked(app_state *st);
 void fc_log_open(void);
 void fc_log_close(void);
 void fc_log(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+
+/* A PS5 notification (and a log line). */
+void fc_notify(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 /* Call once breeze.lock is held: only then may this copy rotate breeze.log
  * (a starting copy that has not taken over never does). */
