@@ -51,7 +51,7 @@
 
 ## Quick start
 
-There are three ways to run Breeze. The app is the easiest: it shows your curve on the TV and starts Breeze for you.
+There are three ways to run Breeze. The app is the easiest: it shows your curve on the screen and starts Breeze for you.
 
 ### The app from ProsperoStore (easiest)
 
