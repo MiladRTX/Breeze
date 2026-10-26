@@ -107,7 +107,7 @@ nc -q0 <PS5-IP> 9021 < breeze.elf
 
 ## The app
 
-Breeze also comes as an app for the PS5 home screen: the same curve, history, presets and settings as the web panel, on the TV with the DualSense.
+Breeze also comes as an app for the PS5 home screen: the same curve, history, presets and settings as the web panel, on the screen with the DualSense.
 
 **Install it** from [ProsperoStore](https://github.com/darkxex/ProsperoStore), [RecompStore](https://recompstore.com/game/PPSA92878) or by hand with `PPSA92878.zip`: see [Quick start](#quick-start).
 
