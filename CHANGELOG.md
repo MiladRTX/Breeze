@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.1
+
+**Breeze is a Media app now**
+- **The app moved from Games to Media** on the home screen. It stays open next to a game: check your fan mid-game, then jump straight back where you left off. Before, opening Breeze closed your game.
+- **To start a different game while Breeze is open, close the current game first.** Picking the new one directly gives error CE-105773-3. Every Media homebrew app does this (Stremio too).
+- **Coming from 1.9 or older, delete Breeze first,** then copy the new PPSA92878 folder. The PS5 only moves an app to Media on a fresh install.
+- `breeze.elf` itself is unchanged apart from its version.
+
 ## 1.9
 
 **Updates**

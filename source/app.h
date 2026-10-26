@@ -8,7 +8,7 @@
 #include "preset.h"
 
 #define FC_PLUGIN_ID "Breeze"
-#define FC_PLUGIN_VERSION "1.9"
+#define FC_PLUGIN_VERSION "1.9.1"
 #define FC_PLUGIN_NAME "Breeze"
 
 typedef struct app_state {
