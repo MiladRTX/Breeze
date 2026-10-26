@@ -12,11 +12,7 @@
 <p align="center">
   <a href="https://github.com/MiladRTX/Breeze/releases/latest"><img src="https://img.shields.io/badge/Release-v1.9.1-8ea2ff?style=flat" alt="Release v1.9.1"/></a>
   <a href="https://github.com/MiladRTX/Breeze/releases"><img src="https://img.shields.io/github/downloads/MiladRTX/Breeze/total?style=flat&color=8ea2ff&label=Downloads" alt="Downloads"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License GPLv3"/></a>
   <img src="https://img.shields.io/badge/Platform-PlayStation%205-003791?style=flat&logo=playstation" alt="PlayStation 5"/>
-  <img src="https://img.shields.io/badge/C-00599C?style=flat&logo=c&logoColor=white" alt="C"/>
-  <img src="https://img.shields.io/badge/Build-CMake-064F8C?style=flat&logo=cmake" alt="CMake"/>
-  <a href="https://github.com/ps5-payload-dev/sdk"><img src="https://img.shields.io/badge/SDK-ps5--payload--sdk-555?style=flat" alt="ps5-payload-sdk"/></a>
 </p>
 
 <p align="center">
