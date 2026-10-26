@@ -2,23 +2,16 @@
   "ageLevel": {
     "default": 0
   },
-  "applicationCategoryType": 0,
+  "applicationCategoryType": 65536,
   "applicationDrmType": "free",
-  "attribute": 1644167168,
+  "attribute": 0,
   "attribute2": 0,
-  "attribute3": 1048576,
+  "attribute3": 0,
   "conceptId": "92878",
-  "contentBadgeType": 1,
+  "contentBadgeType": 2,
   "contentId": "UP9000-PPSA92878_00-BREEZEAPP0000001",
   "contentVersion": "01.009.000",
-  "downloadDataSize": 256,
-  "gameIntent": {
-    "permittedIntents": [
-      {
-        "intentType": "launchActivity"
-      }
-    ]
-  },
+  "downloadDataSize": 0,
   "localizedParameters": {
     "defaultLanguage": "en-US",
     "en-US": {

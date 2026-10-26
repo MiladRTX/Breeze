@@ -66,10 +66,10 @@ The app needs [ShadowMountPlus](https://github.com/drakmor/ShadowMountPlus) and 
 1. **Download** `PPSA92878.zip` from the [latest release](https://github.com/MiladRTX/Breeze/releases/latest).
 2. **Unzip it.** You get a folder called `PPSA92878`.
 3. **Copy the whole folder** to `/data/homebrew/` on the console, over FTP for example (ftpsrv listens on port 2121). You should end up with `/data/homebrew/PPSA92878/eboot.bin`.
-4. **Wait a few seconds:** ShadowMountPlus finds the folder and adds **Breeze** to the home screen.
+4. **Wait a few seconds:** ShadowMountPlus finds the folder and adds **Breeze** to the home screen, under **Media**.
 5. **Open Breeze** and switch on **Custom curve** (top right).
 
-To update by hand, close the app and copy the new `PPSA92878` folder over the old one.
+To update by hand, close the app and copy the new `PPSA92878` folder over the old one. Coming from a Breeze that sits under Games (1.9 and older)? Delete it first, then copy the new folder: the PS5 only moves an app to Media on a fresh install.
 
 ### Payload only
 
@@ -111,6 +111,7 @@ Breeze also comes as an app for the PS5 home screen: the same curve, history, pr
 
 - **After a reboot,** open the app once to start Breeze again, or add `breeze.elf` to Payload Manager's **Autoload** list so it starts by itself.
 - **After an update,** open the app once: if an older Breeze is running, the app replaces it with its own copy. The version at the top of the app is the running Breeze's.
+- **It's a Media app,** so it stays open next to a game: check the fan mid-game and jump straight back. To start a *different* game while Breeze is open, close the current game first; picking the new one directly gives error CE-105773-3. Every Media homebrew app does this (Stremio too).
 
 | Tab | Controls |
 | --- | --- |
